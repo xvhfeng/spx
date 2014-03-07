@@ -1,0 +1,101 @@
+#ifndef SPX_TYPES_H
+#define SPX_TYPES_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <stdint.h>
+#include <sys/types.h>
+#include <stddef.h>
+
+#ifndef bool_t
+typedef enum {
+    false = 0,
+    true = 1
+}bool_t;
+#endif
+
+#ifndef byte_t
+    typedef signed char byte_t;
+#endif
+
+#ifndef ubyte_t
+    typedef unsigned char ubyte_t;
+#endif
+
+#ifndef uchar_t
+    typedef unsigned char uchar_t;
+#endif
+
+#ifndef bstring_t
+    typedef struct {
+        size_t s;
+        uchar_t v[0];
+    }bstring_t;
+#endif
+
+//i think we do not need to define the struct for string
+//and string not must need length in the struct
+//but i think we must have the sign('\0') of the string end
+#ifndef string_t
+    typedef unsigned char * string_t;
+#endif
+
+#ifndef u64_t
+    typedef u_int64_t u64_t;
+#endif
+
+#ifndef u32_t
+    typedef u_int32_t u32_t;
+#endif
+
+#ifndef u16_t
+    typedef u_int16_t u16_t;
+#endif
+
+#ifndef u8_t
+    typedef u_int8_t u8_t;
+#endif
+
+#ifndef i64_t
+    typedef int64_t i64_t;
+#endif
+
+#ifndef i32_t
+    typedef int32_t i32_t;
+#endif
+
+#ifndef i16_t
+    typedef int16_t i16_t;
+#endif
+
+#ifndef i8_t
+    typedef int8_t i8_t;
+#endif
+
+#ifndef log_t
+    typedef void (*log_t)(int level,char *fmt,...);
+#endif
+
+
+#ifndef err_t
+#define err_t int
+#endif
+
+#ifndef spx_inline
+#define spx_inline inline
+#endif
+
+#ifndef spx_private
+#define spx_private static
+#endif
+
+#ifndef spx_public
+#define spx_public
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+
