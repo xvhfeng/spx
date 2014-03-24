@@ -7,6 +7,7 @@ extern "C" {
 #include <stdint.h>
 #include <sys/types.h>
 #include <stddef.h>
+#include <wchar.h>
 
 #ifndef bool_t
 typedef enum {
@@ -39,6 +40,10 @@ typedef enum {
 //but i think we must have the sign('\0') of the string end
 #ifndef string_t
     typedef unsigned char * string_t;
+#endif
+
+#ifndef wstring_t
+    typedef wchar_t * wstring_t;
 #endif
 
 #ifndef u64_t
@@ -77,6 +82,9 @@ typedef enum {
     typedef void (*log_t)(int level,char *fmt,...);
 #endif
 
+#ifndef ptr_t
+    typedef char * ptr_t;
+#endif
 
 #ifndef err_t
 #define err_t int

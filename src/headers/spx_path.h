@@ -12,6 +12,7 @@ err_t spx_is_dir(const string_t path,bool_t *isdir);
 err_t spx_mkdir(const log_t log,const string_t path,const mode_t mode);
 err_t spx_fullname(const string_t path,const string_t filename,\
         string_t fullname);
+err_t spx_basepath(const string_t path,string_t basepath);
 
 #ifdef __splusplus
 }

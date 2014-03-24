@@ -32,6 +32,7 @@ extern "C" {
 #define SpxStringAllCpy2(d,offset,s) (SpxString2Char2(d) + offset,SpxString2Char1(s),SpxStringLength(s))
 #define SpxStringAllCpy3(d,s) ((string_t) memcpy(SpxString2Char1(d),SpxString2Char1(s),SpxStringLength(s)) + SpxStringLength(s))
 #define SpxSnprintf(dest,size,fmt,...) snprintf(SpxString2Char1(dest),size,fmt,__VA_ARGS__)
+#define SpxString(buf,len) char _spx_string_##buf[len] = {0}; string_t buf = SpxChar2String1(_spx_string_##buf)
 
 
 

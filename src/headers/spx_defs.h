@@ -33,7 +33,11 @@ const char *SpxLogInfo[] = {
                             __FILE__,__LINE__,__FUNCTION__,info,err,spx_strerror(err)
 
 #define SpxErrReset errno = 0
+#define SpxErr1 (0 != errno)
+#define SpxErr2(rc) (0 != (rc = errno))
+
 #define SpxPathMode 0777
+#define SpxFileMode 0777
 #define SpxPathSize 1023
 #define SpxPathDlmt '/'
 

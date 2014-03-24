@@ -29,11 +29,19 @@ err_t spx_is_dir(const string_t path,bool_t *isdir) {/*{{{*/
 
 err_t spx_mkdir(const log_t log,const string_t path,const mode_t mode){/*{{{*/
     err_t rc = 0;
-    if(spx_string_is_null_or_empty(path)) {
+    if(SpxStringIsNullOrEmpty(path)) {
         return EINVAL;
     }
     char ptr[SpxPathSize + 1] = {0};
     memcpy(ptr,SpxString2Char2(path),SpxStringLength(path));
+    bool_t isdir = false;
+    if(0 != (rc = spx_is_dir(path,&isdir))){
+        if(NULL != log) {
+            log(SpxLogError,SpxLogInfo3("check dir:%s is exist is fail.",path,rc));
+        }
+        return rc;
+    }
+    if(isdir) return rc;
     char *p = ptr;
     while(NULL != (p = strchr(p,SpxPathDlmt))){
         *p = 0;
@@ -68,4 +76,18 @@ err_t spx_fullname(const string_t path,const string_t filename,\
         SpxSnprintf(fullname,SpxPathSize,"%s%c%s",path,SpxPathDlmt,filename);
     }
     return 0;
+}/*}}}*/
+
+err_t spx_basepath(const string_t path,string_t basepath){/*{{{*/
+    if(SpxStringIsNullOrEmpty(path)){
+        return EINVAL;
+    }
+    const char *tmp = SpxString2Char2(path);
+    ptr_t p = NULL;
+    if(NULL != (p =(ptr_t) rindex(tmp,(int) SpxPathDlmt))){
+        ptrdiff_t pd = p - tmp;
+        memcpy(basepath,path,pd + sizeof(SpxPathDlmt));//add the path dlmt
+        return 0;
+    }
+    return ENODLMT;
 }/*}}}*/
