@@ -142,7 +142,7 @@ spx_private err_t logf_create(SpxLogDelegate log,\
             SpxYear(&dt),SpxMonth(&dt),SpxDay(&dt),\
             SpxHour(&dt),SpxMinute(&dt),SpxSecond(&dt));
 
-    *fd = open(SpxString2Char2(fp),O_RDWR|O_APPEND|O_CREAT);
+    *fd = open(SpxString2Char2(fp),O_RDWR|O_APPEND|O_CREAT,SpxFileMode);
     if(0 == *fd) {
         err = 0 == errno ? EACCES : errno;
         return err;
@@ -151,7 +151,7 @@ spx_private err_t logf_create(SpxLogDelegate log,\
         err = 0 == errno ? EACCES : errno;
         goto r1;
     }
-    *p = mmap(NULL,max_size,PROT_READ | PROT_WRITE , MAP_PRIVATE,*fd,0);
+    *p = mmap(NULL,max_size,PROT_READ | PROT_WRITE , MAP_SHARED,*fd,0);
     if(MAP_FAILED == *p){
         err = errno;
         goto r1;
