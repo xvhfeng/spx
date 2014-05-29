@@ -3,10 +3,15 @@
 #include <errno.h>
 #include <math.h>
 
-#include "spx_types.h"
-#include "spx_errno.h"
+#include "headers/spx_types.h"
+#include "headers/spx_errno.h"
 
-const char *c_strerror(err_t err){
+const char *spx_err_info_list[] = {
+    "Success.",
+    "No delimiter."
+};
+
+const char *spx_strerror(err_t err){
     int e = 0;
     e = 0 > err ? (0 - err) : err;
     if(err >= SpxSuccess) {

@@ -16,9 +16,9 @@ extern "C" {
 #endif
 #include <stdlib.h>
 
-#include "headers/spx_types.h"
+#include "spx_types.h"
 
-typedef err_t (spx_mpool_cleanup_handle)(void *e);
+typedef err_t (SpxMempoolCleanDelegate)(void *e);
 
 struct spx_mpool_buf;
 struct spx_mpool_alone;
@@ -32,7 +32,7 @@ extern err_t spx_mpool_alloc(struct spx_mpool * const p,\
         const size_t s,void **e);
 extern err_t spx_mpool_alloc_string(struct spx_mpool * const p,\
         const size_t l,char **s);
-extern err_t spx_mpool_free(struct spx_mpool * const p,void **e);
+extern err_t spx_mpool_free(struct spx_mpool * const p,void **e,size_t size);
 extern err_t spx_mpool_destroy(struct spx_mpool **p);
 
 #ifdef __cplusplus

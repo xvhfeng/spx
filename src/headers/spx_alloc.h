@@ -19,7 +19,7 @@ extern "C" {
     #define SPX_ALIGN_SIZE 8
 #endif
 
-#define spx_free(ptr) do\
+#define SpxFree(ptr) do\
     {\
         if(NULL != ptr)\
         {\
@@ -39,5 +39,5 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-#endif 
+#endif
 

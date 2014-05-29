@@ -11,8 +11,8 @@ extern "C" {
 
 
 struct spx_msg_ctx{
-    uchar_t *b;
-    uchar_t *e;
+    uchar_t *buf;
+    uchar_t *last;
     size_t s;
     err_t err;
 };

@@ -13,11 +13,6 @@ extern "C" {
 #define SpxSuccess 512
 #define ENODLMT 513
 
-const char *spx_err_info_list[] = {
-    "Success.",
-    "No delimiter."
-};
-
 const char *spx_strerror(err_t err);
 
 #ifdef __cplusplus

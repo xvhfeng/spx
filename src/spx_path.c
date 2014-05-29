@@ -7,27 +7,32 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stdarg.h>
-#include <sys/vfs.h>
-#include <sys/sendfile.h>
+//#include <sys/vfs.h>
+//#include <sys/sendfile.h>
 
 
-#include "spx_types.h"
-#include "spx_path.h"
-#include "spx_defs.h"
-#include "spx_string.h"
-#include "spx_errno.h"
+#include "headers/spx_types.h"
+#include "headers/spx_path.h"
+#include "headers/spx_defs.h"
+#include "headers/spx_string.h"
+#include "headers/spx_errno.h"
 
 err_t spx_is_dir(const string_t path,bool_t *isdir) {/*{{{*/
     SpxErrReset;
-	struct stat buf;
-	if (-1 == stat(SpxString2Char2(path), &buf)) {
-	    return 0 == errno ? EACCES : errno;
-	}
-	*isdir = S_ISDIR(buf.st_mode);
-	return 0;
+    struct stat buf;
+    if (-1 == stat(SpxString2Char2(path), &buf)) {
+        if(ENOENT == errno){
+            *isdir = false;
+            SpxErrReset;
+            return 0;
+        }
+        return 0 == errno ? EACCES : errno;
+    }
+    *isdir = S_ISDIR(buf.st_mode);
+    return 0;
 }/*}}}*/
 
-err_t spx_mkdir(const log_t log,const string_t path,const mode_t mode){/*{{{*/
+err_t spx_mkdir(SpxLogDelegate *log,const string_t path,const mode_t mode){/*{{{*/
     err_t rc = 0;
     if(SpxStringIsNullOrEmpty(path)) {
         return EINVAL;
@@ -36,10 +41,12 @@ err_t spx_mkdir(const log_t log,const string_t path,const mode_t mode){/*{{{*/
     memcpy(ptr,SpxString2Char2(path),SpxStringLength(path));
     bool_t isdir = false;
     if(0 != (rc = spx_is_dir(path,&isdir))){
-        if(NULL != log) {
-            log(SpxLogError,SpxLogInfo3("check dir:%s is exist is fail.",path,rc));
+        if(ENOENT != rc) {
+            SpxLogFmt2(log,SpxLogError,rc,\
+                    "check dir:%s is exist is fail.",path);
+            return rc;
         }
-        return rc;
+        SpxErrReset;
     }
     if(isdir) return rc;
     char *p = ptr;
@@ -47,22 +54,35 @@ err_t spx_mkdir(const log_t log,const string_t path,const mode_t mode){/*{{{*/
         *p = 0;
         bool_t isdir = false;
         if(0 != (rc = spx_is_dir(SpxChar2String2(ptr),&isdir))){
-            if(NULL != log) {
-                log(SpxLogError,SpxLogInfo3("check dir:%s is fail.",ptr,rc));
+            if(ENOENT != rc) {
+                SpxLogFmt2(log,SpxLogError,rc,\
+                        "check dir:%s is fail.",ptr);
+                break;
             }
-            break;
         }
         if(!isdir && (0 != (rc = mkdir(ptr,mode)))){
-            if(NULL != log){
-                log(SpxLogError,SpxLogInfo3("create dir is fail,dir:%s.",ptr,rc));
-            }
+            SpxLogFmt2(log,SpxLogError,rc,\
+                    "create dir:%s is fail.",ptr);
             break;
         }
         *p = SpxPathDlmt;
         p += sizeof(SpxPathDlmt);
     }
+    if(0 != (rc = spx_is_dir(SpxChar2String2(ptr),&isdir))){
+            if(ENOENT != rc) {
+                SpxLogFmt2(log,SpxLogError,rc,\
+                        "check dir:%s is fail.",ptr);
+                return rc;
+            }
+        }
+        if(!isdir && (0 != (rc = mkdir(ptr,mode)))){
+            SpxLogFmt2(log,SpxLogError,rc,\
+                    "create dir:%s is fail.",ptr);
+            return rc;
+        }
     return rc;
 }/*}}}*/
+
 
 err_t spx_fullname(const string_t path,const string_t filename,\
         string_t fullname){/*{{{*/

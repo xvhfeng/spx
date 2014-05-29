@@ -78,12 +78,20 @@ typedef enum {
     typedef int8_t i8_t;
 #endif
 
-#ifndef log_t
-    typedef void (*log_t)(int level,char *fmt,...);
+#ifndef SpxLogDelegate
+    typedef void (SpxLogDelegate)(int level,string_t fmt,...);
 #endif
 
 #ifndef ptr_t
     typedef char * ptr_t;
+#endif
+
+#ifndef spx_atomic_t
+typedef long spx_atomic_t;
+#endif
+
+#ifndef spx_uatomit_t
+typedef unsigned long spx_uatomic_t;
 #endif
 
 #ifndef err_t

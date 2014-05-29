@@ -1,4 +1,4 @@
-#include <stdlib.h>=C_JumpCtrlJ()
+#include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 
@@ -35,7 +35,7 @@ struct spx_mpool{
 };
 
 struct spx_mpool_cleanup {
-    spx_mpool_cleanup_handle *f;
+    SpxMempoolCleanDelegate *f;
     struct spx_mpool_cleanup *n;
     struct spx_mpool_cleanup *p;
     ubyte_t e[0];
@@ -120,7 +120,7 @@ err_t spx_mpool_string(struct spx_mpool * const p,
 }/*}}}*/
 
 err_t spx_mpool_cleanup_alloc(struct spx_mpool * const p,
-        const size_t size,spx_mpool_cleanup_handle *f,
+        const size_t size,SpxMempoolCleanDelegate *f,
         void **e){/*{{{*/
     //if the f is null,you must use spx_mpool_alloc
     if(0 == size || NULL == f){
@@ -154,7 +154,7 @@ err_t spx_mpool_cleanup_free(const struct spx_mpool * const p,
         return ENXIO;
     }
     ptr->f(&ptr);
-    spx_free(ptr);
+    SpxFree(ptr);
     return 0;
 }/*}}}*/
 
@@ -167,14 +167,14 @@ err_t spx_mpool_reset(struct spx_mpool * const p){/*{{{*/
     while((NULL != (pup = p->cs))){
         pup->f(pup + sizeof(struct spx_mpool_cleanup));
         p->cs = pup->n;
-        spx_free(pup);
+        SpxFree(pup);
     }
 
     //lager object
     struct spx_mpool_alone *pa = NULL;
     while((NULL != (pa = p->as))){
         p->as = pa->n;
-        spx_free(pa);
+        SpxFree(pa);
     }
 
     //buf
@@ -188,10 +188,9 @@ err_t spx_mpool_reset(struct spx_mpool * const p){/*{{{*/
     return 0;
 }/*}}}*/
 
-err_t spx_mpool_free(struct spx_mpool *const p,void **e){/*{{{*/
-    size_t s = sizeof(**e);
+err_t spx_mpool_free(struct spx_mpool *const p,void **e,size_t size){/*{{{*/
     err_t rc = 0;
-    if(s > p->limit){
+    if(size > p->limit){
         struct spx_mpool_alone *ptr =(struct spx_mpool_alone *)\
                                    *e - sizeof(struct spx_mpool_alone);
         if(NULL == ptr){
@@ -203,7 +202,7 @@ err_t spx_mpool_free(struct spx_mpool *const p,void **e){/*{{{*/
         } else {
             p->as = ptr->n;
         }
-        spx_free(ptr);
+        SpxFree(ptr);
     }
     return rc;
 }/*}}}*/
@@ -220,24 +219,24 @@ err_t spx_mpool_destroy(struct spx_mpool **p){/*{{{*/
     while((NULL != (pup = (*p)->cs))){
         pup->f(pup + sizeof(struct spx_mpool_cleanup));
         (*p)->cs = pup->n;
-        spx_free(pup);
+        SpxFree(pup);
     }
 
     //lager object
     struct spx_mpool_alone *pa = NULL;
     while((NULL != (pa = (*p)->as))){
         (*p)->as = pa->n;
-        spx_free(pa);
+        SpxFree(pa);
     }
 
     //buf
     struct spx_mpool_buff *pb = NULL;
     while(NULL != (pb = (*p)->hbuf)){
         (*p)->hbuf = pb->n;
-        spx_free(pb);
+        SpxFree(pb);
     }
 
-    spx_free(*p);
+    SpxFree(*p);
     return 0;
 }/*}}}*/
 
