@@ -97,6 +97,7 @@ void spx_log(int level,string_t fmt,...){/*{{{*/
         logf_create(g_log->log,g_log->path,g_log->name\
                 ,g_log->size,&(g_log->fd),&(g_log->ptr));
     }
+    fprintf(stdout,"%s",SpxString2Char2(line));
     memcpy(((char *) g_log->ptr) + g_log->offset,line,s);
     g_log->offset += s;
 }/*}}}*/
@@ -174,7 +175,8 @@ spx_private spx_inline void get_log_line(u8_t level,string_t line,size_t size,st
 
 spx_private spx_inline void logf_close(){
     if(NULL != g_log->ptr){
-        munmap(g_log->ptr,g_log->offset);
+    fprintf(stdout,"%s",(char *) g_log->ptr);
+        munmap(g_log->ptr,g_log->size);
     }
     if(0 != g_log->fd){
         close(g_log->fd);
