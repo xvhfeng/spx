@@ -83,7 +83,7 @@ void spx_log(int level,string_t fmt,...){/*{{{*/
     va_end(ap);
 
     if(NULL == g_log || 0 == g_log->fd || NULL == g_log->ptr){
-        fprintf(stdout,SpxString2Char2(line));
+        fprintf(stdout,"%s",SpxString2Char2(line));
         return;
     }
 
