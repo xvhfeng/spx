@@ -82,6 +82,7 @@ void spx_log(int level,string_t fmt,...){/*{{{*/
     get_log_line(level,line,SpxLineSize,fmt,ap);
     va_end(ap);
 
+//    if(NULL == g_log || 0 == g_log->fd ){
     if(NULL == g_log || 0 == g_log->fd || NULL == g_log->ptr){
         fprintf(stdout,"%s",SpxString2Char2(line));
         return;
@@ -99,6 +100,7 @@ void spx_log(int level,string_t fmt,...){/*{{{*/
     }
     fprintf(stdout,"%s",SpxString2Char2(line));
     memcpy(((char *) g_log->ptr) + g_log->offset,line,s);
+    //write(g_log->fd,line,s);
     g_log->offset += s;
 }/*}}}*/
 
@@ -149,7 +151,6 @@ spx_private err_t logf_create(SpxLogDelegate log,\
         err = 0 == errno ? EACCES : errno;
         goto r1;
     }
-
     *p = mmap(NULL,max_size,PROT_READ | PROT_WRITE , MAP_PRIVATE,*fd,0);
     if(MAP_FAILED == *p){
         err = errno;
@@ -175,8 +176,10 @@ spx_private spx_inline void get_log_line(u8_t level,string_t line,size_t size,st
 
 spx_private spx_inline void logf_close(){
     if(NULL != g_log->ptr){
-    fprintf(stdout,"%s",(char *) g_log->ptr);
+        fprintf(stdout,"%s",(char *) g_log->ptr);
+        msync(g_log->ptr,g_log->offset,MS_SYNC);
         munmap(g_log->ptr,g_log->size);
+        g_log->ptr = NULL;
     }
     if(0 != g_log->fd){
         close(g_log->fd);
