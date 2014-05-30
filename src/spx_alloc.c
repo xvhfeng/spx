@@ -60,3 +60,13 @@ err_t spx_memalign_alloc(const size_t size,void **p) {
     }
     return rc;
 }
+
+void *spx_alloc_mptr(const size_t numbs,err_t *err){
+    void *p = calloc(numbs,SpxPtrSize);
+    if(NULL == p){
+        *err = 0 == errno ? ENOMEM : errno;
+    }
+    return p;
+}
+
+

@@ -39,10 +39,8 @@ extern "C" {
             void *k1,u32_t l1,void *k2,u32_t l2);
     typedef bool_t SpxSkipListUniqueInspectorDelegate(\
             void *v1,size_t l1,void *v2,size_t l2);
-    typedef err_t SpxSkipListValueFreeDelegate(\
-            SpxLogDelegate *log,void **v);
-    typedef err_t SpxSkipListKeyFreeDelegate(\
-            SpxLogDelegate *log,void **k);
+    typedef err_t SpxSkipListValueFreeDelegate(void **v);
+    typedef err_t SpxSkipListKeyFreeDelegate(void **k);
     typedef void SpxSkipListKeySnprintfDelegate(\
            string_t buf,size_t size,void *k);
 

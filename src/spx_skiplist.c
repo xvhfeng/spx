@@ -44,8 +44,8 @@ spx_private int get_skiplist_level(u32_t max_level){/*{{{*/
     seedVal=((((unsigned int)tv.tv_sec&0xFFFF)+
                 (unsigned int)tv.tv_usec)^
             (unsigned int)tv.tv_usec);
-    srand((unsigned int)seedVal);
-    return rand() % max_level;
+    srand((unsigned int)seedVal +  rand());
+    return rand() % max_level + 1;
 }/*}}}*/
 
 
@@ -161,6 +161,7 @@ err_t spx_skiplist_new(SpxLogDelegate *log,\
     (*spl)->inspector = inspector;
     (*spl)->allow_conflict = allow_conflict;
     (*spl)->maxlevel =level;
+    (*spl)->log = log;
     (*spl)->type =type;
     (*spl)->vfree = vfree;
     (*spl)->kfree = kfree;
@@ -197,9 +198,8 @@ err_t spx_skiplist_insert(struct spx_skiplist *spl,\
     struct spx_skiplist_v *value = NULL;
     struct spx_skiplist_n *node = NULL;
 
-    if(0 != (err = spx_alloc(spl->maxlevel - 1,\
-                    sizeof(struct spx_skiplist_n *),\
-                    (void **) up))){
+    up = spx_alloc_mptr(spl->maxlevel,&err);
+    if(0 != err){
         SpxLog2(spl->log,SpxLogError,err,"alloc skiplist node is fail.");
         return err;
     }
@@ -208,43 +208,39 @@ err_t spx_skiplist_insert(struct spx_skiplist *spl,\
 
     struct spx_skiplist_n *p = spl->header;
     struct spx_skiplist_n *q = NULL;
-    int l = 0;
-    bool_t is_found =false;
+    i32_t l = 0;
+    int r = 0;
     for(l = spl->level - 1; l >= 0; l--){
         while(NULL != (q = p->next[l])){
-            int r = spl->cmp(k,kl,q->k,q->kl);
+            r = spl->cmp(k,kl,q->k,q->kl);
             if( 0 < r){
                 up[l] = q;
                 p = q;
                 continue;
-            }else if( 0 > r){
-                up[l] = p;
-                break;
-            }else if(0 == r) {
-                if(!spl->allow_conflict){
-                    if(NULL == spl->kprintf){
-                        SpxLogFmt1(spl->log,SpxLogError,\
-                                "the key:%s is exist and skiplist is not allow conflict.",
-                                SpxString2Char2(k));
-                    } else {
-                        SpxString(skey,SpxStringRealSize(SpxKeyStringSize));
-                        spl->kprintf(skey,SpxKeyStringSize,k);
-                        SpxLogFmt1(spl->log,SpxLogError,\
-                                "the key:%s is exist and skiplist is not allow conflict.",
-                                skey);
-                    }
-                    err = EEXIST;
-                    goto r2;
-                }
-                is_found = true;
-                goto r1;//add the same key,so not change the skiplist structure
             }
+            break;
         }
+        up[l] = p;
     }
-    //是不是准备要放弃看这个算法了？这才刚刚开始
-    //is not giving up understanding this function? this is begin,just so so.
-r1:
-    if(is_found){
+
+    if(0 == r && 0 != spl->key_count) {
+        //if have same key,the r must == 0 except first insert
+        if(!spl->allow_conflict){
+            if(NULL == spl->kprintf){
+                SpxLogFmt1(spl->log,SpxLogError,\
+                        "the key:%s is exist and skiplist is not allow conflict.",
+                        SpxString2Char2(k));
+            } else {
+                SpxString(skey,SpxStringRealSize(SpxKeyStringSize));
+                spl->kprintf(skey,SpxKeyStringSize,k);
+                SpxLogFmt1(spl->log,SpxLogError,\
+                        "the key:%s is exist and skiplist is not allow conflict.",
+                        skey);
+            }
+            err = EEXIST;
+            goto r2;
+        }
+        //add the same key,so not change the skiplist structure
         if(0 != (err = spx_alloc_alone(sizeof(struct spx_skiplist_v),\
                         ((void **) &value)))){
             SpxLog2(spl->log,SpxLogError,err,\
@@ -260,47 +256,59 @@ r1:
         }
         spl->val_count ++;
         goto r2;
-    } else {
-        l = 0 > level ? get_skiplist_level(spl->maxlevel) : level;
-        int i = 0;
-        if((u32_t) l > spl->level){
-            for(i = l -1; ((u32_t) i) >= spl->level; l--){
-                up[i] = spl->header;
-            }
+    }
+
+    //是不是准备要放弃看这个算法了？这才刚刚开始
+    //is not giving up understanding this function? this is begin,just so so.
+    l = 0 > level ? get_skiplist_level(spl->maxlevel) : level;
+    int i = 0;
+    if(l >(i32_t) spl->level){
+        for(i = l -1; i >= (int) spl->level; i--){
+            up[i] = spl->header;
         }
-        if(0 != (err = spx_alloc_alone(SkipListNodeSize(l),(void **)node))){
+    }
+    if(0 != (err = spx_alloc_alone(SkipListNodeSize(l),(void **) &node))){
+        SpxLog2(spl->log,SpxLogError,err,\
+                "alloc node for skiplist is fail.");
+        goto r3;
+    }
+    node->k = k;
+    node->kl = kl;
+    node->level = l;
+    //add the same key,so not change the skiplist structure
+    if(0 != (err = spx_alloc_alone(sizeof(struct spx_skiplist_v),\
+                    ((void **) &value)))){
+        SpxLog2(spl->log,SpxLogError,err,\
+                "alloc skiplist value is fail.");
+        goto r3;
+    }
+    value->s = vl;
+    value->v = v;
+
+    if(spl->allow_conflict){
+        if(0 != (err = spx_vector_init(spl->log,&(node->v.list),spl->vfree))){
             SpxLog2(spl->log,SpxLogError,err,\
-                    "alloc node for skiplist is fail.");
+                    "alloc vector for skiplist node is fail.");
             goto r3;
         }
-        node->k = k;
-        node->kl = kl;
-        node->level = l;
-        if(spl->allow_conflict){
-            if(0 != (err = spx_vector_init(spl->log,&(node->v.list),NULL))){
-                SpxLog2(spl->log,SpxLogError,err,\
-                        "alloc vector for skiplist node is fail.");
-                goto r3;
-            }
-            if(0 != (err = spx_vector_push(node->v.list,value))){
-                SpxLog2(spl->log,SpxLogError,err,\
-                        "push value to vector is fail.");
-                goto r3;
-            }
-        }else {
-            node->v.obj = value;
+        if(0 != (err = spx_vector_push(node->v.list,value))){
+            SpxLog2(spl->log,SpxLogError,err,\
+                    "push value to vector is fail.");
+            goto r3;
         }
-        for(i = l - 1; i >= 0; i--){
-            node->next[i] = up[i]->next[i];
-            up[i]->next[i] =node;
-        }
-        if(l > (int) spl->level){
-            spl->level = l;
-        }
-        spl->key_count ++;
-        spl->val_count ++;
-        goto r2;
+    }else {
+        node->v.obj = value;
     }
+    for(i = l - 1; i >= 0; i--){
+        node->next[i] = up[i]->next[i];
+        up[i]->next[i] =node;
+    }
+    if(l > (int) spl->level){
+        spl->level = l;
+    }
+    spl->key_count ++;
+    spl->val_count ++;
+    goto r2;
 r3:
     if(NULL != value){
         SpxFree(value);
@@ -325,14 +333,13 @@ err_t spx_skiplist_delete(struct spx_skiplist *spl,\
                 "argument is fail.");
         return EINVAL;
     }
+    if(0 == spl->key_count) return 0;
     int err = 0;
     struct spx_skiplist_n **up = NULL;
 
-    if(0 != (err = spx_alloc(spl->maxlevel - 1,\
-                    sizeof(struct spx_skiplist_n *),\
-                    (void **) up))){
-        SpxLog2(spl->log,SpxLogError,err,\
-                "alloc skiplist node is fail.");
+    up = spx_alloc_mptr(spl->maxlevel,&err);
+    if(0 != err){
+        SpxLog2(spl->log,SpxLogError,err,"alloc skiplist node is fail.");
         return err;
     }
     //if you understand the code behand this line very hard,please donot modify it
@@ -342,24 +349,21 @@ err_t spx_skiplist_delete(struct spx_skiplist *spl,\
     struct spx_skiplist_n *q = NULL;
     int l = 0;
     int i = 0;
-    bool_t is_found =false;
+    int r = 0;
     for(l = spl->level - 1; l >= 0; l--){
         while(NULL != (q = p->next[l])){
-            int r = spl->cmp(k,kl,q->k,q->kl);
+            r = spl->cmp(k,kl,q->k,q->kl);
             if( 0 < r){
                 up[l] = q;
                 p = q;
                 continue;
-            }else if( 0 > r){
-                up[l] = p;
-                break;
-            }else if(0 == r) {
-                is_found = true;
-                continue;//get the whole structure
             }
+            break;
         }
+        up[l] = p;
     }
-    if(!is_found){
+
+    if(0 != r && 0 != spl->key_count){
         if(NULL == spl->kprintf){
             SpxLogFmt1(spl->log,SpxLogWarn,\
                     "the key:%s is not exist.",
@@ -376,7 +380,6 @@ err_t spx_skiplist_delete(struct spx_skiplist *spl,\
     if(spl->allow_conflict){
         struct spx_vector *vector = q->v.list;
         if(NULL == vector){
-
             if(NULL == spl->kprintf){
                 SpxLogFmt1(spl->log,SpxLogWarn,\
                         "the value of vector for key %s is exist and value is null.",\
@@ -409,6 +412,9 @@ err_t spx_skiplist_delete(struct spx_skiplist *spl,\
         for(i = q->level - 1; i >= 0; i--){
             up[i]->next[i] = q->next[i];
         }
+        if(NULL != spl->kfree) {
+            spl->kfree(&(q->k));
+        }
         SpxFree(q);
         spl->val_count -= numbs;
         spl->key_count --;
@@ -416,7 +422,13 @@ err_t spx_skiplist_delete(struct spx_skiplist *spl,\
         for(i = q->level - 1; i >= 0; i--){
             up[i]->next[i] = q->next[i];
         }
-        SpxFree(q->v.obj);
+
+        if(NULL != spl->vfree){
+            spl->vfree((void **) &(q->v.obj));
+        }
+        if(NULL != spl->kfree){
+            spl->kfree(&(q->k));
+        }
         SpxFree(q);
         spl->val_count --;
         spl->key_count --;
@@ -439,41 +451,40 @@ err_t spx_skiplist_get_and_move(struct spx_skiplist *spl,\
                 "argument is fail.");
         return EINVAL;
     }
+    if(0 == spl->key_count) return 0;
     int err = 0;
     struct spx_skiplist_n **up = NULL;
-
-    if(0 != (err = spx_alloc(spl->maxlevel - 1,\
-                    sizeof(struct spx_skiplist_n *),(void **) up))){
-        SpxLog2(spl->log,SpxLogError,err,\
-                "alloc skiplist node is fail.");
+    up = spx_alloc_mptr(spl->maxlevel,&err);
+    if(0 != err){
+        SpxLog2(spl->log,SpxLogError,err,"alloc skiplist node is fail.");
         return err;
     }
+
     //if you understand the code behand this line very hard,please donot modify it
     //警告：如果你理解以下的语句比较吃力，不要修改它。
 
     struct spx_skiplist_n *p = spl->header;
     struct spx_skiplist_n *q = NULL;
     int l = 0;
-    bool_t is_found =false;
+    int r = 0;
     for(l = spl->level - 1; l >= 0; l--){
         while(NULL != (q = p->next[l])){
-            int r = (NULL == searcher) \
-                    ? spl->cmp(k,kl,q->k,q->kl)\
-                    : searcher(k,kl,q->k,q->kl);
+            if(NULL == searcher) {
+                r = spl->cmp(k,kl,q->k,q->kl);
+            } else {
+                r = searcher(k,kl,q->k,q->kl);
+            }
             if( 0 < r){
                 up[l] = q;
                 p = q;
                 continue;
-            }else if( 0 > r){
-                up[l] = p;
-                break;
-            }else if(0 == r) {
-                is_found = true;
-                continue;//get the whole structure
             }
+            break;
         }
+        up[l] = p;
     }
-    if(!is_found){
+
+    if(0 != r && 0 != spl->key_count){
         if(NULL == spl->kprintf){
             SpxLogFmt1(spl->log,SpxLogError,\
                     "not found the key:%s in the skiplist.",\
@@ -530,7 +541,9 @@ err_t spx_skiplist_get_and_move(struct spx_skiplist *spl,\
             for(i = q->level - 1; i >= 0; i--){
                 up[i]->next[i] = q->next[i];
             }
-            spl->kfree(spl->log,&(q->k));
+            if(NULL != spl->kfree) {
+                spl->kfree(&(q->k));
+            }
             SpxFree(q);
             spl->key_count --;
         }
@@ -542,7 +555,9 @@ err_t spx_skiplist_get_and_move(struct spx_skiplist *spl,\
         }
         *v = q->v.obj->v;
         *vl = q->v.obj->s;
-        spl->kfree(spl->log,&(q->k));
+        if(NULL != spl->kfree) {
+            spl->kfree(&(q->k));
+        }
         SpxFree(q);
         spl->key_count --;
         spl->val_count --;
@@ -555,13 +570,13 @@ r1:
 }/*}}}*/
 
 /*
-err_t spx_skiplist_search(struct spx_skiplist *spl,\
-        void *min,u32_t l1,void *max,u32_t l2,
-        struct spx_vector **rc);
+   err_t spx_skiplist_search(struct spx_skiplist *spl,\
+   void *min,u32_t l1,void *max,u32_t l2,
+   struct spx_vector **rc);
 
-err_t spx_skiplist_find(struct spx_skiplist *spl,\
-        void *k,u32_t l,void **rc);
- */
+   err_t spx_skiplist_find(struct spx_skiplist *spl,\
+   void *k,u32_t l,void **rc);
+   */
 void spx_skiplist_destory(struct spx_skiplist **spl){/*{{{*/
     if(NULL == *spl){
         return;
@@ -574,15 +589,15 @@ void spx_skiplist_destory(struct spx_skiplist **spl){/*{{{*/
             struct spx_vector *list =  q->v.list;
             spx_vector_destory(&list);
             node = q->next[0];
-            (*spl)->kfree((*spl)->log,&(q->k));
+            (*spl)->kfree(&(q->k));
             SpxFree(q);
         }
     } else {
         q = node->next[0];
         while(NULL != q){
-            (*spl)->vfree((*spl)->log,(void **) &(q->v.obj));
+            (*spl)->vfree((void **) &(q->v.obj));
             node = q->next[0];
-            (*spl)->kfree((*spl)->log,&(q->k));
+            (*spl)->kfree(&(q->k));
             SpxFree(q);
         }
     }

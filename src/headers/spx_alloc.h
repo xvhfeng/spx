@@ -34,6 +34,8 @@ extern "C" {
     err_t spx_alloc_bstring(const size_t s,bstring_t **p);
     err_t spx_alloc_alone(const size_t s,void **p);
     err_t spx_memalign_alloc(const size_t size,void **p);
+    /* alloc the pointer array */
+    void *spx_alloc_mptr(const size_t numbs,err_t *err);
 
 
 #ifdef __cplusplus
