@@ -7,6 +7,7 @@ extern "C" {
 #endif
 
 #include <stdio.h>
+#include <unistd.h>
 
 #include "spx_types.h"
 #include "spx_errno.h"
@@ -115,6 +116,8 @@ extern "C" {
 #else
 #define SpxI32Max  (u32_t) 0xffffffff
 #endif
+
+#define SpxClose(fd) close(fd);fd = 0
 
 #ifdef __cplusplus
 }

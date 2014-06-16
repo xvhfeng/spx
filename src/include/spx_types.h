@@ -39,7 +39,7 @@ typedef enum {
 //and string not must need length in the struct
 //but i think we must have the sign('\0') of the string end
 #ifndef string_t
-    typedef unsigned char * string_t;
+    typedef char * string_t;
 #endif
 
 #ifndef wstring_t

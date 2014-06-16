@@ -4,7 +4,7 @@ CC = gcc
 CFLAG = -pipe -o1  -W -Wall -Werror -g \
  		-Wpointer-arith -Wno-unused-parameter -Wunused-function -Wunused-variable -Wunused-value 
 INC_PATH = -I/usr/local/include \
-			-I../../headers
+			-I../../include
 LIB_PATH = 
 DEFS := 
 TARGET_PATH = ./

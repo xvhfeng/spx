@@ -23,6 +23,7 @@ extern "C" {
 
 #include "spx_types.h"
 #include "spx_vector.h"
+#include "spx_collection.h"
 
 #define SPX_SKIPLIST_LEVEL_DEFAULT 16
 #define SPX_SKIPLIST_IDX_I32 0
@@ -33,30 +34,11 @@ extern "C" {
 #define SPX_SKIPLIST_IDX_TIME 5
 #define SPX_SKIPLIST_IDX_OBJECT 6
 
-    typedef int SpxSkipListCmperDelegate(\
-            void *k1,u32_t l1,void *k2,u32_t l2);
     typedef int SpxSkipListRangeCmperDelegate(\
             void *k1,u32_t l1,void *k2,u32_t l2);
     typedef bool_t SpxSkipListUniqueInspectorDelegate(\
             void *v1,size_t l1,void *v2,size_t l2);
-    typedef err_t SpxSkipListValueFreeDelegate(void **v);
-    typedef err_t SpxSkipListKeyFreeDelegate(void **k);
-    typedef void SpxSkipListKeySnprintfDelegate(\
-           string_t buf,size_t size,void *k);
 
-
-    int spx_skiplist_i32_default_cmper(void *k1,u32_t l1,void *k2,u32_t l2);
-    int spx_skiplist_i64_default_cmper(void *k1,u32_t l1,void *k2,u32_t l2);
-    int spx_skiplist_u32_deault_cmper(void *k1,u32_t l1,void *k2,u32_t l2);
-    int spx_skiplist_u64_default_cmper(void *k1,u32_t l1,void *k2,u32_t l2);
-    int spx_skiplist_string_default_cmper(void *k1,u32_t l1,void *k2,u32_t l2);
-    int spx_skiplist_time_default_cmper(void *k1,u32_t l1,void *k2,u32_t l2);
-
-    void spx_skiplist_i32_default_printf(string_t buf,size_t size,void *k);
-    void spx_skiplist_u32_default_printf(string_t buf,size_t size,void *k);
-    void spx_skiplist_i64_default_printf(string_t buf,size_t size,void *k);
-    void spx_skiplist_u64_default_printf(string_t buf,size_t size,void *k);
-    void spx_skiplist_time_default_printf(string_t buf,size_t size,void *k);
 
     struct spx_skiplist_n{
         u32_t level;
@@ -82,29 +64,29 @@ extern "C" {
         u64_t val_count;
         bool_t allow_conflict;
         struct spx_skiplist_n *header;
-        SpxSkipListCmperDelegate *cmp;
+        SpxCollectionCmperDelegate *cmp;
         SpxSkipListUniqueInspectorDelegate *inspector;
-        SpxSkipListKeyFreeDelegate *kfree;
-        SpxSkipListValueFreeDelegate *vfree;
-        SpxSkipListKeySnprintfDelegate *kprintf;
+        SpxCollectionKeyFreeDelegate *kfree;
+        SpxCollectionValueFreeDelegate *vfree;
+        SpxCollectionKeyPrintfDelegate *kprintf;
         SpxLogDelegate *log;
     };
 
-    err_t spx_skiplist_new(SpxLogDelegate *log,\
+    struct spx_skiplist *spx_skiplist_new(SpxLogDelegate *log,\
             int type,u32_t maxlevel,\
             bool_t allow_conflict,
-            SpxSkipListCmperDelegate cmper,\
+            SpxCollectionCmperDelegate cmper,\
             SpxSkipListUniqueInspectorDelegate *inspector,\
-            SpxSkipListKeySnprintfDelegate *printf,\
-            SpxSkipListKeyFreeDelegate *kfree,\
-            SpxSkipListValueFreeDelegate *vfree,\
-            struct spx_skiplist **spl);
+            SpxCollectionKeyPrintfDelegate *printf,\
+            SpxCollectionKeyFreeDelegate *kfree,\
+            SpxCollectionValueFreeDelegate *vfree,\
+            err_t *err);
 
     err_t spx_skiplist_insert(struct spx_skiplist *spl,\
             void *k,u32_t kl,void *v,u64_t vl,
             int level);
 
-err_t spx_skiplist_get_and_move(struct spx_skiplist *spl,\
+err_t spx_skiplist_out(struct spx_skiplist *spl,\
         void *k,u32_t kl,void **v,u64_t *vl,
         SpxSkipListRangeCmperDelegate *searcher);
 
@@ -122,4 +104,4 @@ err_t spx_skiplist_get_and_move(struct spx_skiplist *spl,\
 #ifdef __cplusplus
 }
 #endif
-#endif
+ #endif

@@ -2,10 +2,10 @@
 #include <errno.h>
 #include <string.h>
 
-#include "headers/spx_mpool.h"
-#include "headers/spx_alloc.h"
-#include "headers/spx_types.h"
-#include "headers/spx_errno.h"
+#include "include/spx_mpool.h"
+#include "include/spx_alloc.h"
+#include "include/spx_types.h"
+#include "include/spx_errno.h"
 
 #define mem_align(d, a)     (((d) + (a - 1)) & ~(a - 1))
 #define mem_align_ptr(p, a)                                                   \
@@ -41,30 +41,33 @@ struct spx_mpool_cleanup {
     ubyte_t e[0];
 };
 
-err_t spx_mpool_init(const size_t size,
-        const size_t limit,struct spx_mpool **p){/*{{{*/
+struct spx_mpool *spx_mpool_init(const size_t size,
+        const size_t limit,err_t *err){/*{{{*/
     if(0 == size || 0 == limit || (size < limit)){
-        return EINVAL;
+        *err = EINVAL;
+        return NULL;
     }
-    err_t rc = 0;
-    if(0 !=(rc = spx_alloc_alone(sizeof(struct spx_mpool),(void **) p))){
-        return rc;
+    struct spx_mpool *p = spx_alloc_alone(sizeof(*p),err);
+    if(NULL == p){
+        return NULL;
     }
-    (*p)->size = size;
-    (*p)->limit = limit;
-    return rc;
+    p->size = size;
+    p->limit = limit;
+    return p;
 }/*}}}*/
 
-err_t spx_mpool_alloc(struct spx_mpool * const p,
-        const size_t s,void **e){/*{{{*/
+void *spx_mpool_alloc(struct spx_mpool * const p,
+        const size_t s,err_t *err){/*{{{*/
     if(0 == s || NULL == p){
-        return EINVAL;
+        *err = EINVAL;
+        return NULL;
     }
-    err_t rc = 0;
+    void *e = NULL;
     struct spx_mpool_alone *a = NULL;
     if(s > p->limit){//alone
-        if(0 != (rc = spx_alloc_alone(sizeof(struct spx_mpool_alone) + s,(void **) &a))){
-            return rc;
+        a = spx_alloc_alone(sizeof(*a),err);
+        if(NULL == a){
+            return NULL;
         }
         if(NULL == p->as){
             p->as = a;
@@ -73,12 +76,13 @@ err_t spx_mpool_alloc(struct spx_mpool * const p,
             a->n = p->as;
             p->as = a;
         }
-        *e = a + sizeof(struct spx_mpool_alone);
+       e = a + sizeof(struct spx_mpool_alone);
     } else {
         struct spx_mpool_buff *b = p->cbuf;
         if(NULL == b) {
-            if(0 != (rc = spx_memalign_alloc(sizeof(struct spx_mpool_buff) + p->size,(void **) &b))){
-                return rc;
+            b = spx_memalign_alloc(sizeof(*b) + p->size,err);
+            if(NULL == b){
+                return NULL;
             }
             b->last = b + sizeof(struct spx_mpool_buff);;
             b->end = b + p->size;
@@ -91,10 +95,9 @@ err_t spx_mpool_alloc(struct spx_mpool * const p,
             if(((size_t) ((char *) b->end - (char *) o)) < s){ // ptr diff
                 b = p->cbuf->n;
                 if(NULL == b){
-                    if(0 != (rc = spx_memalign_alloc(\
-                                    sizeof(struct spx_mpool_buff) + p->size,\
-                                    (void **) &b))){
-                        return rc;
+                    b = spx_memalign_alloc(sizeof(*b) + p->size,err);
+                    if(NULL == b){
+                        return NULL;
                     }
                     b->last = b + sizeof(struct spx_mpool_buff);
                     b->end = b + p->size;
@@ -104,32 +107,25 @@ err_t spx_mpool_alloc(struct spx_mpool * const p,
                 continue;
             }
             b->last += s;
-            *e = (void *) o;
+           e = (void *) o;
             break;
         }
     }
-    return rc;
+    return e;
 }/*}}}*/
 
-err_t spx_mpool_string(struct spx_mpool * const p,
-        const size_t l,char **s){/*{{{*/
-    if(NULL == p || 0 == l){
-        return EINVAL;
-    }
-    return  spx_mpool_alloc(p,l + 1,(void **)s);
-}/*}}}*/
-
-err_t spx_mpool_cleanup_alloc(struct spx_mpool * const p,
+void *spx_mpool_cleanup_alloc(struct spx_mpool * const p,
         const size_t size,SpxMempoolCleanDelegate *f,
-        void **e){/*{{{*/
+        err_t *err){/*{{{*/
     //if the f is null,you must use spx_mpool_alloc
     if(0 == size || NULL == f){
-        return EINVAL;
+        *err = EINVAL;
+        return NULL;
     }
-    err_t rc = 0;
     struct spx_mpool_cleanup *ptr = NULL;
-        if(0 != (rc = spx_alloc_alone(size + sizeof( struct spx_mpool_cleanup),(void **) &ptr))){
-            return rc;
+    ptr = spx_alloc_alone(size + sizeof(*ptr),err);
+    if(NULL == ptr){
+            return NULL;
         }
     ptr->f = f;
     if(NULL == p->cs){
@@ -139,8 +135,8 @@ err_t spx_mpool_cleanup_alloc(struct spx_mpool * const p,
         p->cs->p = ptr;
         p->cs = ptr;
     }
-    *e = ptr + sizeof(struct spx_mpool_cleanup);
-    return rc;
+    void *e = ptr + sizeof(struct spx_mpool_cleanup);
+    return e;
 
 }/*}}}*/
 

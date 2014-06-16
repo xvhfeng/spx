@@ -1,0 +1,309 @@
+/*****************************
+ * this is the string function from the spx_string_ lib
+ *
+ * thanks for redis and author
+ * **************************/
+
+#ifndef SPX_STRING_H
+#define SPX_STRING_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
+#include <stdarg.h>
+
+#include "spx_types.h"
+#include "spx_vector.h"
+
+struct sds{
+    int len;
+    int free;
+    char buf[];
+};
+
+spx_private spx_inline size_t spx_string_len(const string_t s) {
+    struct sds *sh = (void*)(s-sizeof *sh);
+    return sh->len;
+}
+
+spx_private spx_inline size_t spx_string_avail(const string_t s) {
+    struct sds *sh = (void*)(s-sizeof *sh);
+    return sh->free;
+}
+
+string_t spx_string_newlen(const void *init, size_t initlen,err_t *err);
+
+string_t spx_string_new(const char *init,err_t *err);
+
+string_t spx_string_empty(err_t *err);
+
+string_t spx_string_dup(const string_t s,err_t *err);
+
+void spx_string_free(string_t s);
+
+/* Grow the sds to have the specified length. Bytes that were not part of
+ * the original length of the sds will be set to zero.
+ *
+ * if the specified length is smaller than the current length, no operation
+ * is performed. */
+string_t spx_string_grow_zero(string_t s, size_t len,err_t *err);
+
+string_t spx_string_catlen(string_t s, const void *t, size_t len,err_t *err);
+
+string_t spx_string_cat(string_t s, const char *t,err_t *err);
+
+string_t spx_string_cat_string(string_t s, const string_t t,err_t *err);
+
+string_t spx_string_cpylen(string_t s, const char *t, size_t len,err_t *err);
+
+string_t spx_string_cpy(string_t s, const char *t,err_t *err);
+
+string_t spx_string_cat_vprintf(err_t *err,string_t s, \
+        const char *fmt, va_list ap);
+
+string_t spx_string_cat_printf(err_t *err,string_t s, const char *fmt, ...);
+
+/* Remove the part of the string from left and from right composed just of
+ * contiguous characters found in 'cset', that is a null terminted C string.
+ *
+ * After the call, the modified sds string is no longer valid and all the
+ * references must be substituted with the new pointer returned by the call.
+ *
+ * Example:
+ *
+        x = sdsnew("xxciaoyyy");
+        sdstrim(x,"xy");
+ * printf("%s\n", s);
+ *
+ * Output will be just "Hello World".
+ */
+void spx_string_trim(string_t s, const char *cset);
+
+/* Turn the string into a smaller (or equal) string containing only the
+ * substring specified by the 'start' and 'end' indexes.
+ *
+ * start and end can be negative, where -1 means the last character of the
+ * string, -2 the penultimate character, and so forth.
+ *
+ * The interval is inclusive, so the start and end characters will be part
+ * of the resulting string.
+ *
+ * The string is modified in-place.
+ *
+ * Example:
+ *
+ * s = sdsnew("Hello World");
+ * sdsrange(s,1,-1); => "ello World"
+ */
+void spx_string_range(string_t s, int start, int end);
+
+/* Set the sds string length to the length as obtained with strlen(), so
+ * considering as content only up to the first null term character.
+ *
+ * This function is useful when the sds string is hacked manually in some
+ * way, like in the following example:
+ *
+ * s = sdsnew("foobar");
+ * s[2] = '\0';
+ * sdsupdatelen(s);
+ * printf("%d\n", sdslen(s));
+ *
+ * The output will be "2", but if we comment out the call to sdsupdatelen()
+ * the output will be "6" as the string was modified but the logical length
+ * remains 6 bytes. */
+void spx_string_updatelen(string_t s);
+
+void spx_string_clear(string_t s);
+
+int spx_string_cmp(const string_t s1, const string_t s2);
+
+string_t *spx_string_splitlen(const char *s,\
+        int len, const char *sep, int seplen, \
+        int *count,err_t *err);
+
+void spx_string_free_splitres(string_t *tokens, int count);
+
+void spx_string_tolower(string_t s);
+
+void spx_string_toupper(string_t s);
+
+string_t spx_string_from_i64(i64_t value,err_t *err);
+
+/* Append to the sds string "s" an escaped string representation where
+ * all the non-printable characters (tested with isprint()) are turned into
+ * escapes in the form "\n\r\a...." or "\x<hex-number>".
+ *
+        x = sdsnewlen("\a\n\0foo\r",7);
+        y = sdscatrepr(sdsempty(),x,sdslen(x));
+        test_cond("sdscatrepr(...data...)",
+            memcmp(y,"\"\\a\\n\\x00foo\\r\"",15) == 0)
+ * After the call, the modified sds string is no longer valid and all the
+ * references must be substituted with the new pointer returned by the call. */
+string_t spx_string_catrepr(string_t s, const char *p, size_t len,err_t *err);
+
+
+/* Helper function for sdssplitargs() that returns non zero if 'c'
+ * is a valid hex digit. */
+int is_hex_digit(char c);
+
+/* Helper function for sdssplitargs() that converts a hex digit into an
+ * integer from 0 to 15 */
+int hex_digit_to_int(char c);
+
+/* Split a line into arguments, where every argument can be in the
+ * following programming-language REPL-alike form:
+ *
+ * foo bar "newline are supported\n" and "\xff\x00otherstuff"
+ *
+ * The number of arguments is stored into *argc, and an array
+ * of sds is returned.
+ *
+ * The caller should free the resulting array of sds strings with
+ * sdsfreesplitres().
+ *
+ * Note that sdscatrepr() is able to convert back a string into
+ * a quoted string in the same format sdssplitargs() is able to parse.
+ *
+ * The function returns the allocated tokens on success, even when the
+ * input string is empty, or NULL if the input contains unbalanced
+ * quotes or closed quotes followed by non space characters
+ * as in: "foo"bar or "foo'
+ */
+string_t *spx_string_splitargs(const char *line, int *argc,err_t *err);
+
+/* Modify the string substituting all the occurrences of the set of
+ * characters specified in the 'from' string to the corresponding character
+ * in the 'to' array.
+ *
+ * For instance: sdsmapchars(mystring, "ho", "01", 2)
+ * will have the effect of turning the string "hello" into "0ell1".
+ *
+ * The function returns the sds string pointer, that is always the same
+ * as the input pointer since no resize is needed. */
+string_t spx_string_map_chars(string_t s,\
+        const char *from, const char *to, size_t setlen);
+
+string_t spx_string_join(char **argv, int argc, char *sep, size_t seplen,err_t *err);
+
+string_t spx_string_join_string(string_t *argv,\
+        int argc, const char *sep, size_t seplen,err_t *err);
+
+/* Low level functions exposed to the user API */
+/* Enlarge the free space at the end of the sds string so that the caller
+ * is sure that after calling this function can overwrite up to addlen
+ * bytes after the end of the string, plus one more byte for nul term.
+ *
+ * Note: this does not change the *length* of the sds string as returned
+ * by sdslen(), but only the free buffer space we have. */
+string_t spxStringMakeRoomFor(string_t s, size_t addlen,err_t *err);
+
+/* Increment the sds length and decrements the left free space at the
+ * end of the string according to 'incr'. Also set the null term
+ * in the new end of the string.
+ *
+ * This function is used in order to fix the string length after the
+ * user calls sdsMakeRoomFor(), writes something after the end of
+ * the current string, and finally needs to set the new length.
+ *
+ * Note: it is possible to use a negative increment in order to
+ * right-trim the string.
+ *
+ * Usage example:
+ *
+ * Using sdsIncrLen() and sdsMakeRoomFor() it is possible to mount the
+ * following schema, to cat bytes coming from the kernel to the end of an
+ * sds string without copying into an intermediate buffer:
+ *
+ * oldlen = sdslen(s);
+ * s = sdsMakeRoomFor(s, BUFFER_SIZE);
+ * nread = read(fd, s+oldlen, BUFFER_SIZE);
+ * ... check for nread <= 0 and handle it ...
+ * sdsIncrLen(s, nread);
+ */
+void spxStringIncrLen(string_t s, int incr);
+
+string_t spxStringRemoveFreeSpace(string_t s,err_t *err);
+
+size_t spxStringAllocSize(string_t s);
+
+
+#define SpxString2Char1(s) ((char *)(s))
+#define SpxString2Char2(s) ((const char *)(s))
+
+#define SpxStringIsNullOrEmpty(s) (NULL == s \
+        || (0 == spx_string_len(s)))
+#define SpxStringIsEmpty(s) (NULL != s \
+        && (0 == spx_string_len(s)))
+
+#define SpxStringEndWith(s,c) \
+        (!SpxStringIsNullOrEmpty(s) \
+        && (c == *(s +  spx_string_len(s))))
+#define SpxStringBeginWith(s,c) ( c == *s)
+#define SpxStringRealSize(l) ((l) + 1)
+
+#define SpxZeroPtr(v) memset(v,0,sizeof(*(v)))
+#define SpxZero(v) memset(&(v),0,sizeof(v))
+#define SpxZeroLen(v,len) memset(v,0,len)
+
+#define SpxMemcpy(d,s,l) (((uchar_t *) memcpy(d,s,l)) + l)
+
+
+/*
+
+//#define SpxMemcpy(d,s,l) (((uchar_t *) memcpy(d,s,l)) + l)
+
+
+//#define SpxBinary2String(s) ((string_t) (s + sizeof(size_t)))
+//#define SpxChar2String1(s) ((string_t) s)
+//#define SpxChar2String2(s) ((const string_t) s)
+
+#define SpxStringLength(s) (strlen(SpxString2Char2(s)))
+
+
+
+#define SpxStringCpy1(d,s,l) memcpy(SpxString2Char1(d),SpxString2Char1(s),l)
+#define SpxStringCpy2(d,s, offset,l) \
+    memcpy(SpxString2Char1(d) + offset,SpxString2Char1(s),l)
+
+#define SpxStringAllCpy1(d,s) memcpy(SpxString2Char1(d),SpxString2Char1(s),SpxStringLength(s))
+#define SpxStringAllCpy2(d,offset,s) memcpy(SpxString2Char2(d) + offset,SpxString2Char1(s),SpxStringLength(s))
+#define SpxStringAllCpy3(d,s) ((string_t) memcpy(SpxString2Char1(d),SpxString2Char1(s),SpxStringLength(s)) + SpxStringLength(s))
+
+#define SpxSnprintf(dest,size,fmt,...) snprintf(SpxString2Char1(dest),size,fmt,__VA_ARGS__)
+#define SpxVSnprintf(dest,size,fmt,ap) vsnprintf(SpxString2Char1(dest),size,fmt,ap)
+#define SpxVSnprintf2(dest,size,offset,fmt,ap) \
+    vsnprintf((SpxString2Char1(dest) + offset),\
+            (size - offset),SpxString2Char2(fmt),ap)
+
+#define SpxString(buf,len)\
+    char _spx_string_##buf[len] = {0}; \
+    string_t buf = SpxChar2String1(_spx_string_##buf)
+
+#define SpxStringCmp(s1,s2,l) memcmp(SpxString2Char2(s1),\
+                                    SpxString2Char2(s2),l)
+
+
+
+    err_t spx_string_split(SpxLogDelegate *log,const string_t s,\
+            const string_t d,const bool_t isrs,struct spx_vector **dest);
+
+    spx_inline err_t spx_strcpy(string_t dest,string_t src,size_t len);
+
+    string_t  spx_snprintf(string_t buf,\
+            size_t max, const string_t fmt, ...);
+
+    string_t spx_vsnprintf(string_t buf,\
+            const size_t max,const string_t fmt,\
+            va_list args);
+string_t spx_numb_tostring(string_t buf,\
+        size_t size,u64_t n);
+
+*/
+
+#ifdef __cplusplus
+}
+#endif
+#endif

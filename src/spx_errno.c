@@ -3,8 +3,8 @@
 #include <errno.h>
 #include <math.h>
 
-#include "headers/spx_types.h"
-#include "headers/spx_errno.h"
+#include "include/spx_types.h"
+#include "include/spx_errno.h"
 
 const char *spx_err_info_list[] = {
     "Success.",

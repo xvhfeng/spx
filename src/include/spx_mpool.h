@@ -26,12 +26,17 @@ struct spx_mpool_cleanup;
 struct spx_mpool;
 
 
-extern err_t spx_mpool_init(const size_t size,\
-        const size_t limit,struct spx_mpool **p);
-extern err_t spx_mpool_alloc(struct spx_mpool * const p,\
-        const size_t s,void **e);
-extern err_t spx_mpool_alloc_string(struct spx_mpool * const p,\
-        const size_t l,char **s);
+extern struct spx_mpool *spx_mpool_init(const size_t size,\
+        const size_t limit,err_t *err);
+extern void *spx_mpool_alloc(struct spx_mpool * const p,\
+        const size_t s,err_t *err);
+
+void *spx_mpool_cleanup_alloc(struct spx_mpool * const p,
+        const size_t size,SpxMempoolCleanDelegate *f,
+        err_t *err);
+err_t spx_mpool_cleanup_free(const struct spx_mpool * const p,
+        void **e);
+err_t spx_mpool_reset(struct spx_mpool * const p);
 extern err_t spx_mpool_free(struct spx_mpool * const p,void **e,size_t size);
 extern err_t spx_mpool_destroy(struct spx_mpool **p);
 

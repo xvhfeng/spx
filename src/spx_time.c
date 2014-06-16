@@ -19,9 +19,9 @@
 #include <time.h>
 #include <sys/time.h>
 
-#include "headers/spx_types.h"
-#include "headers/spx_defs.h"
-#include "headers/spx_time.h"
+#include "include/spx_types.h"
+#include "include/spx_defs.h"
+#include "include/spx_time.h"
 
 void spx_get_curr_datetime(struct spx_datetime *dt){
     time_t timep;

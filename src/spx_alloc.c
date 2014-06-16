@@ -2,63 +2,49 @@
 #include <errno.h>
 #include <string.h>
 
-#include "headers/spx_types.h"
-#include "headers/spx_defs.h"
-#include "headers/spx_alloc.h"
+#include "include/spx_types.h"
+#include "include/spx_defs.h"
+#include "include/spx_alloc.h"
 
-err_t spx_malloc(const size_t s,void **p){
-    err_t rc = 0;
+void *spx_malloc(const size_t s,err_t *err){
     if(0 == s){
-        return EINVAL;
+        *err = EINVAL;
+        return NULL;
     }
-    *p = (void *) malloc(s);
-    if(NULL == *p){
-        rc = 0 == errno ? ENOMEM : errno;
+    void *p = malloc(s);
+    if(NULL == p){
+        *err = 0 == errno ? ENOMEM : errno;
     }
-    return rc;
+    return p;
 }
 
-err_t spx_alloc(const size_t numbs,const size_t s,void **p){
-    err_t rc = 0;
+void *spx_alloc(const size_t numbs,const size_t s,err_t *err){
     if(0 == s || 0 == numbs){
-        return EINVAL;
+        *err = EINVAL;
+        return NULL;
     }
-    *p = (void *) calloc(numbs,s);
-    if(NULL == *p){
-        rc = 0 == errno ? ENOMEM : errno;
+    void *p = calloc(numbs,s);
+    if(NULL == p){
+        *err = 0 == errno ? ENOMEM : errno;
+        return NULL;
     }
-    return rc;
+    return p;
 }
-err_t spx_alloc_string(const size_t s,string_t *p){
+
+void *spx_alloc_alone(const size_t s,err_t *err){
     if(0 == s){
-        return EINVAL;
+        *err = EINVAL;
+        return NULL;
     }
-    return spx_alloc(s + 1,sizeof(char),(void **)p);
-
-}
-err_t spx_alloc_alone(const size_t s,void **p){
-    if(0 == s){
-        return EINVAL;
-    }
-    return spx_alloc(1,s,p);
+    return spx_alloc(1,s,err);
 }
 
-err_t spx_alloc_bstring(const size_t s,bstring_t **p){
-    err_t rc = 0;
-    if(0 != (rc = spx_alloc_alone(sizeof(bstring_t) + s + 1 , (void **)p))){
-        return rc;
+void *spx_memalign_alloc(const size_t size,err_t *err) {
+    void *p = NULL;
+    if(0 != (*err = posix_memalign(&p, SPX_ALIGN_SIZE, size))){
+        return NULL;
     }
-    (*p)->s = s;
-    return rc;
-}
-
-err_t spx_memalign_alloc(const size_t size,void **p) {
-    err_t rc = 0;
-    if(0 != (rc = posix_memalign(p, SPX_ALIGN_SIZE, size))){
-        p = NULL;
-        return rc;
-    }
-    return rc;
+    return p;
 }
 
 void *spx_alloc_mptr(const size_t numbs,err_t *err){
@@ -69,4 +55,11 @@ void *spx_alloc_mptr(const size_t numbs,err_t *err){
     return p;
 }
 
-
+void *spx_realloc(void *p,const size_t size,err_t *err){
+    void *ptr = realloc(p,size);
+    if(NULL == ptr){
+        *err = 0 == errno ? ENOMEM : errno;
+        return NULL;
+    }
+    return ptr;
+}

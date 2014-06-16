@@ -21,8 +21,8 @@ extern "C" {
         size_t size;
 //        size_t csize;//current size of context
         u8_t level;
-        uchar_t path[SpxStringRealSize(SpxPathSize)];
-        uchar_t name[SpxStringRealSize(SpxFileNameSize)];
+        string_t path;
+        string_t name;
         SpxLogDelegate *log;
     };
 

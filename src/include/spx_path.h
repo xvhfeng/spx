@@ -8,11 +8,11 @@ extern "C" {
 
 #include "spx_types.h"
 
-err_t spx_is_dir(const string_t path,bool_t *isdir);
+bool_t spx_is_dir(const string_t path,err_t *err);
 err_t spx_mkdir(SpxLogDelegate *log,const string_t path,const mode_t mode);
-err_t spx_fullname(const string_t path,const string_t filename,\
-        string_t fullname);
-err_t spx_basepath(const string_t path,string_t basepath);
+string_t spx_fullname(const string_t path,const string_t filename,\
+        err_t *err);
+string_t spx_basepath(const string_t path,err_t *err);
 
 #ifdef __splusplus
 }

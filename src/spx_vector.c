@@ -2,25 +2,27 @@
 #include <errno.h>
 #include <string.h>
 
-#include "headers/spx_vector.h"
-#include "headers/spx_types.h"
-#include "headers/spx_defs.h"
-#include "headers/spx_errno.h"
-#include "headers/spx_alloc.h"
+#include "include/spx_vector.h"
+#include "include/spx_types.h"
+#include "include/spx_defs.h"
+#include "include/spx_errno.h"
+#include "include/spx_alloc.h"
 
-err_t spx_vector_init(SpxLogDelegate *log,struct spx_vector **vector,\
-        SpxVectorNodeFreeDelegate *handle){/*{{{*/
+struct spx_vector *spx_vector_init(SpxLogDelegate *log,\
+        SpxVectorValueFreeDelegate *handle,err_t *err){/*{{{*/
     err_t rc = 0;
-    if(0 != (rc = spx_alloc_alone(sizeof(struct spx_vector),(void **)vector))){
+    struct spx_vector *vector = NULL;
+    vector = spx_alloc_alone(sizeof(*vector),err);
+    if(NULL == vector) {
         SpxLog2(log,SpxLogError,rc,\
                 "alloc vector is fail.");
-        return rc;
+        return NULL;
     }
-    (*vector)->log = log;
-    (*vector)->handle = handle;
-    (*vector)->size = 0;
-    (*vector)->header = NULL;
-    return rc;
+    vector->log = log;
+    vector->handle = handle;
+    vector->size = 0;
+    vector->header = NULL;
+    return vector;
 }/*}}}*/
 
 err_t spx_vector_destory(struct spx_vector **vector) {/*{{{*/
@@ -45,86 +47,111 @@ err_t spx_vector_destory(struct spx_vector **vector) {/*{{{*/
 err_t spx_vector_add(struct spx_vector *vector,void *v){/*{{{*/
     err_t rc = 0;
     struct spx_vector_node *node = NULL;
-    if(0 != (rc = spx_alloc_alone(sizeof(struct spx_vector_node),(void **) &node))){
+    node = spx_alloc_alone(sizeof(*node),&rc);
+    if(NULL == node) {
         SpxLog2(vector->log,SpxLogError,rc,\
                 "alloc vector node is fail.");
         return rc;
     }
     node->v = v;
     node->next = NULL;
-    vector->tail->next = node;
-    vector->tail = node;
-    vector->size++;
+    if(NULL == vector->header){
+        vector->header = node;
+        vector->tail = node;
+    }else {
+        vector->tail->next = node;
+        node->prev = vector->tail;
+        vector->tail = node;
+        vector->size++;
+    }
     return rc;
 }/*}}}*/
 
-err_t spx_vector_get(struct spx_vector *vector,size_t idx,void **v){/*{{{*/
-    err_t rc = 0;
+void *spx_vector_get(struct spx_vector *vector,size_t idx,err_t *err){/*{{{*/
     if(idx > vector->size){
-        rc = EINVAL;
+        *err = EINVAL;
         SpxLog1(vector->log,SpxLogError,"the idx overflow the vector size.");
-        return rc;
+        return NULL;
     }
     struct spx_vector_node *node = vector->header;
+    void *v = NULL;
     size_t i = 0;
     for (i = 0; i < vector->size; i++) {
         if(i == idx){
-            *v = node->v;
+            v = node->v;
             break;
         }
         node = node->next;
     }
-    return rc;
+    return v;
 }/*}}}*/
 
 err_t spx_vector_push(struct spx_vector *vector,void *v){
     err_t rc = 0;
     struct spx_vector_node *node = NULL;
-    if(0 != (rc = spx_alloc_alone(sizeof(struct spx_vector_node),(void **) &node))){
+    node = spx_alloc_alone(sizeof(*node),&rc);
+    if(NULL == node){
         SpxLog2(vector->log,SpxLogError,rc,\
                 "alloc vector node is fail.");
         return rc;
     }
     node->v = v;
     node->next = NULL;
-    vector->tail->next = node;
-    vector->tail = node;
+    if(NULL == vector->header){
+        vector->header = node;
+        vector->tail = node;
+    }else {
+        vector->tail->next = node;
+        node->prev = vector->tail;
+        vector->tail = node;
+        vector->size++;
+    }
     vector->size++;
     return rc;
 }
 
-err_t spx_vector_pop(struct spx_vector *vector, void **v){
-    err_t rc = 0;
+void *spx_vector_pop(struct spx_vector *vector, err_t *err){
+    if(NULL == vector || 0 ==  vector->size){
+        *err = EINVAL;
+        SpxLog1(vector->log,SpxLogError,"the vector argument is fail.");
+        return NULL;
+    }
+
     struct spx_vector_node *node = NULL;
+    void *v = NULL;
     if(NULL != vector->header){
         node = vector->header;
         vector->header = node->next;
-        *v = node->v;
+        if(NULL != vector->header){
+            vector->header->prev = NULL;
+        }
+        v = node->v;
         vector->size --;
         SpxFree(node);
     } else {
-        *v = NULL;
+        v = NULL;
     }
     if(NULL == vector->header){
         vector->tail = NULL;
     }
-    return rc;
+    return v;
 }
 
-err_t spx_vector_iter_create(struct spx_vector *vector,\
-        struct spx_vector_iter **iter){/*{{{*/
+struct spx_vector_iter  *spx_vector_iter_create(struct spx_vector *vector,err_t *err){/*{{{*/
     if(NULL == vector){
-        return EINVAL;
+        *err = EINVAL;
+        return NULL;
     }
-    err_t rc = 0;
-    if(0 != (rc = spx_alloc_alone(sizeof(struct spx_vector_iter),(void **) iter))){
-        SpxLog2(vector->log,SpxLogError,rc,\
+    struct spx_vector_iter *iter = NULL;
+    iter = spx_alloc_alone(sizeof(*iter),err);
+    if(NULL == iter){
+        SpxLog2(vector->log,SpxLogError,*err,\
                 "allo the vector iter is fail.");
-        return rc;
+        return NULL;
     }
-    (*iter)->vector = vector;
-    (*iter)->curr = NULL;
-    return rc;
+    iter->vector = vector;
+    iter->curr = NULL;
+    return iter;
 }/*}}}*/
 
 err_t spx_vector_iter_destroy(struct spx_vector_iter **iter){/*{{{*/
@@ -144,6 +171,9 @@ void *spx_vector_iter_next(struct spx_vector_iter *iter) {/*{{{*/
     }
     struct spx_vector *vector = iter->vector;
     if(NULL == vector){
+        return NULL;
+    }
+    if(iter->curr == iter->vector->tail){
         return NULL;
     }
     void *v= NULL;
