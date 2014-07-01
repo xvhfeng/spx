@@ -99,7 +99,7 @@ err_t spx_skiplist_out(struct spx_skiplist *spl,\
        err_t spx_skiplist_find(struct spx_skiplist *spl,\
        void *k,u32_t l);
        */
-    void spx_skiplist_destory(struct spx_skiplist **spl);
+    void spx_skiplist_free(struct spx_skiplist **spl);
 
 #ifdef __cplusplus
 }

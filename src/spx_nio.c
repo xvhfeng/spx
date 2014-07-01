@@ -20,27 +20,28 @@
 
 #include "include/spx_types.h"
 #include "include/spx_nio_context.h"
-#include "include/spx_socket.h"
 #include "include/spx_io.h"
 #include "include/spx_defs.h"
 #include "include/spx_nio.h"
+#include "include/spx_errno.h"
+
 
 err_t  spx_nio_regedit_reader(struct spx_nio_context *nio_context){
     if (NULL == nio_context) {
         return EINVAL;
     }
 
-    err_t err = 0;
-    if (0!= (err = spx_socket_nb(nio_context->watcher.fd))) {
-        return err;
+    if (0 >= nio_context->fd) {
+        return EINVAL;
     }
 
+
     nio_context->lifecycle = SpxNioLifeCycleHeader;
-    ev_io_init(&(nio_context->watcher),nio_context->nio_reader,nio_context->watcher.fd,EV_READ);
+    ev_io_init(&(nio_context->watcher),nio_context->nio_reader,nio_context->fd,EV_READ);
     nio_context->watcher.data = nio_context;//libev not the set function
     ev_io_start(nio_context->loop,&(nio_context->watcher));
     ev_run(nio_context->loop,0);
-    return err;
+    return 0;
 }
 
 err_t  spx_nio_regedit_writer(struct spx_nio_context *nio_context){
@@ -48,21 +49,16 @@ err_t  spx_nio_regedit_writer(struct spx_nio_context *nio_context){
         return EINVAL;
     }
 
-    if (0 >= nio_context->watcher.fd) {
+    if (0 >= nio_context->fd) {
         return EINVAL;
     }
 
-    err_t err = 0;
-    if (0!= (err = spx_socket_nb(nio_context->watcher.fd))) {
-        return err;
-    }
-
     nio_context->lifecycle = SpxNioLifeCycleHeader;
-    ev_io_init(&(nio_context->watcher),nio_context->nio_writer,nio_context->watcher.fd,EV_WRITE);
+    ev_io_init(&(nio_context->watcher),nio_context->nio_writer,nio_context->fd,EV_WRITE);
     nio_context->watcher.data = nio_context;
     ev_io_start(nio_context->loop,&(nio_context->watcher));
     ev_run(nio_context->loop,0);
-    return err;
+    return 0;
 }
 
 
@@ -80,7 +76,6 @@ void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents){
             SpxLog2(nio_context->log,SpxLogError,err,\
                     "alloc request header msg is fail.");
             nio_context->err = err;
-            spx_nio_context_pool_push(g_spx_nio_context_pool,nio_context);
             return;
         }
         nio_context->request_header_ctx = ctx;
@@ -90,7 +85,6 @@ void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents){
                     "read request header msg is fail.client:%s.",\
                     nio_context->client_ip);
             nio_context->err = err;
-            spx_nio_context_pool_push(g_spx_nio_context_pool,nio_context);
             return;
         }
         if(SpxMsgHeaderSize != len){
@@ -98,7 +92,6 @@ void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents){
                     "read request header msg is fail,read len is %d.",\
                     len);
             nio_context->err = err;
-            spx_nio_context_pool_push(g_spx_nio_context_pool,nio_context);
             return;
         }
         struct spx_msg_header *header = spx_msg_to_header(ctx,&err);
@@ -106,7 +99,6 @@ void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents){
             SpxLog2(nio_context->log,SpxLogError,err,\
                     "parser msg to header is fail.");
             nio_context->err = err;
-            spx_nio_context_pool_push(g_spx_nio_context_pool,nio_context);
             return;
         }
         nio_context->request_header = header;
@@ -119,13 +111,16 @@ void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents){
                 "validate header is fail.client:%s.",\
                 nio_context->client_ip);
         // must send msg to client
-        spx_nio_regedit_writer(nio_context);
+        nio_context->err = EBADHEADER;
+        if(NULL != nio_context->request_header_validator_fail){
+            nio_context->request_header_validator_fail(nio_context);
+        }
         return;
     }
 
     len = 0;
     if(SpxNioLifeCycleBody == nio_context->lifecycle){
-        nio_context->request_body_process(nio_context);
+        nio_context->request_body_process(watcher->fd, nio_context);
     }
     return;
 }
@@ -144,7 +139,6 @@ void spx_nio_writer(struct ev_loop *loop,ev_io *watcher,int revents){
             SpxLog2(nio_context->log,SpxLogError,err,\
                     "response serial to ctx is fail.");
             nio_context->err = err;
-            spx_nio_context_pool_push(g_spx_nio_context_pool,nio_context);
             return;
         }
         nio_context->response_header_ctx = ctx;
@@ -154,7 +148,6 @@ void spx_nio_writer(struct ev_loop *loop,ev_io *watcher,int revents){
                     "write response header is fail.client:&s.",\
                     nio_context->client_ip);
             nio_context->err = err;
-            spx_nio_context_pool_push(g_spx_nio_context_pool,nio_context);
             return;
         }
 
@@ -163,7 +156,6 @@ void spx_nio_writer(struct ev_loop *loop,ev_io *watcher,int revents){
                     "write response header is fail.len:%d.",\
                     len);
             nio_context->err = err;
-            spx_nio_context_pool_push(g_spx_nio_context_pool,nio_context);
             return;
         }
         nio_context->lifecycle = SpxNioLifeCycleBody;
@@ -171,7 +163,7 @@ void spx_nio_writer(struct ev_loop *loop,ev_io *watcher,int revents){
 
     len = 0;
     if(SpxNioLifeCycleBody == nio_context->lifecycle){
-        nio_context->response_body_process(nio_context);
+        nio_context->response_body_process(watcher->fd,nio_context);
     }
     return;
 }

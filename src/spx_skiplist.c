@@ -323,7 +323,7 @@ err_t spx_skiplist_delete(struct spx_skiplist *spl,\
             goto r1;
         }
         size_t numbs = vector->size;
-        if(0 != (err = spx_vector_destory(&vector))){
+        if(0 != (err = spx_vector_free(&vector))){
             if(NULL == spl->kprintf){
                 SpxLogFmt1(spl->log,SpxLogError,\
                         "delete the key %s from skiplist is fail.",\
@@ -458,7 +458,7 @@ err_t spx_skiplist_out(struct spx_skiplist *spl,\
             *vl = nv->s;
         }
         if(0 == vector->size){
-            if(0 != (err = spx_vector_destory(&vector))){
+            if(0 != (err = spx_vector_free(&vector))){
 
                 if(NULL == spl->kprintf){
                     SpxLogFmt1(spl->log,SpxLogError,\
@@ -514,7 +514,7 @@ r1:
    err_t spx_skiplist_find(struct spx_skiplist *spl,\
    void *k,u32_t l,void **rc);
    */
-void spx_skiplist_destory(struct spx_skiplist **spl){/*{{{*/
+void spx_skiplist_free(struct spx_skiplist **spl){/*{{{*/
     if(NULL == *spl){
         return;
     }
@@ -524,7 +524,7 @@ void spx_skiplist_destory(struct spx_skiplist **spl){/*{{{*/
         q = node->next[0];
         while(NULL != q){
             struct spx_vector *list =  q->v.list;
-            spx_vector_destory(&list);
+            spx_vector_free(&list);
             node = q->next[0];
             (*spl)->kfree(&(q->k));
             SpxFree(q);

@@ -18,14 +18,15 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <grp.h>
+#include <pwd.h>
+
+#include "include/spx_types.h"
+#include "include/spx_string.h"
+#include "include/spx_defs.h"
 
 
-#include "spx_types.h"
-#include "spx_string.h"
-#include "spx_defs.h"
-
-void spx_env_daemon(bool_t isdaemon) {
-    if (isdaemon) {
+void spx_env_daemon() {
         pid_t pid;
 
         if ((pid = fork()) != 0) {
@@ -37,12 +38,11 @@ void spx_env_daemon(bool_t isdaemon) {
         if ((pid = fork()) != 0) {
             exit(0);
         }
-    }
     return;
 }
 
 err_t spx_set_group_and_user(SpxLogDelegate *log,string_t gname,string_t uname){
-    err = 0;
+    err_t err = 0;
     SpxErrReset;
     if(!SpxStringIsNullOrEmpty(gname)){
         struct group *g = getgrnam(gname);
@@ -76,5 +76,6 @@ err_t spx_set_group_and_user(SpxLogDelegate *log,string_t gname,string_t uname){
         }
         return err;
     }
+    return err;
 }
 

@@ -37,7 +37,7 @@ void *spx_mpool_cleanup_alloc(struct spx_mpool * const p,
 err_t spx_mpool_cleanup_free(const struct spx_mpool * const p,
         void **e);
 err_t spx_mpool_reset(struct spx_mpool * const p);
-extern err_t spx_mpool_free(struct spx_mpool * const p,void **e,size_t size);
+extern err_t spx_mpool_free(struct spx_mpool * const p,void **e);
 extern err_t spx_mpool_destroy(struct spx_mpool **p);
 
 #ifdef __cplusplus

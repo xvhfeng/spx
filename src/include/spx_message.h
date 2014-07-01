@@ -22,7 +22,7 @@ struct spx_msg{
 };
 
 struct spx_msg *spx_msg_new(const size_t len,err_t *err);
-err_t spx_msg_destroy(struct spx_msg **ctx);
+err_t spx_msg_free(struct spx_msg **ctx);
 err_t spx_msg_seek(struct spx_msg *ctx,off_t offset,int whence);
 
 err_t spx_msg_pack_int( struct spx_msg *ctx,const int v);
@@ -36,7 +36,8 @@ err_t spx_msg_pack_double( struct spx_msg *ctx,const double v);
 err_t spx_msg_pack_float( struct spx_msg *ctx,const float v);
 err_t spx_msg_pack_true( struct spx_msg *ctx);
 err_t spx_msg_pack_false( struct spx_msg *ctx);
-err_t spx_msg_pack_string( struct spx_msg *ctx,const uchar_t *s,const size_t len);
+err_t spx_msg_pack_string( struct spx_msg *ctx,string_t s);
+err_t spx_msg_pack_fixed_string( struct spx_msg *ctx,string_t s,size_t len);
 err_t spx_msg_pack_ubytes( struct spx_msg *ctx,const ubyte_t *b,const size_t len);
 err_t spx_msg_pack_bytes( struct spx_msg *ctx,const byte_t *b,const size_t len);
 
@@ -50,9 +51,9 @@ u64_t spx_msg_unpack_u64( struct spx_msg *ctx);
 double spx_msg_unpack_double( struct spx_msg *ctx);
 float spx_msg_unpack_float( struct spx_msg *ctx);
 bool_t spx_msg_unpack_bool( struct spx_msg *ctx);
-string_t spx_msg_unpack_string( struct spx_msg *ctx,const size_t len,const bool_t iscp);
-ubyte_t *spx_msg_unpack_ubytes( struct spx_msg *ctx,const size_t len,const bool_t iscp);
-byte_t *spx_msg_unpack_bytes( struct spx_msg *ctx,const size_t len,const bool_t iscp);
+string_t spx_msg_unpack_string( struct spx_msg *ctx,const size_t len,err_t *err);
+ubyte_t *spx_msg_unpack_ubytes( struct spx_msg *ctx,const size_t len,err_t *err);
+byte_t *spx_msg_unpack_bytes( struct spx_msg *ctx,const size_t len,err_t *err);
 
 spx_private spx_inline size_t spx_msg_size(struct spx_msg *ctx){
     return ctx->s;

@@ -11,6 +11,10 @@
 #define mem_align_ptr(p, a)                                                   \
     (ubyte_t *) (((uintptr_t) (p) + ((uintptr_t) a - 1)) & ~((uintptr_t) a - 1))
 
+//one tips,haha!
+#define SpxObject \
+    size_t size; \
+    ubyte_t e[0]
 
 struct spx_mpool_buff{
     struct spx_mpool_buff *last;
@@ -22,7 +26,11 @@ struct spx_mpool_buff{
 struct spx_mpool_alone{
     struct spx_mpool_alone *p;
     struct spx_mpool_alone *n;
-    ubyte_t e[0];
+    SpxObject;
+};
+
+struct spx_mpool_node{
+    SpxObject;
 };
 
 struct spx_mpool{
@@ -76,7 +84,8 @@ void *spx_mpool_alloc(struct spx_mpool * const p,
             a->n = p->as;
             p->as = a;
         }
-       e = a + sizeof(struct spx_mpool_alone);
+        a->size = s;
+        e = a + sizeof(struct spx_mpool_alone);
     } else {
         struct spx_mpool_buff *b = p->cbuf;
         if(NULL == b) {
@@ -89,10 +98,11 @@ void *spx_mpool_alloc(struct spx_mpool * const p,
             p->cbuf = b;
             p->hbuf = b;
         }
+        size_t size = s + sizeof(struct spx_mpool_node);
         while(true) {
-            ubyte_t *o = NULL;
-            o = mem_align_ptr(b->last,s);
-            if(((size_t) ((char *) b->end - (char *) o)) < s){ // ptr diff
+            struct spx_mpool_node *o = NULL;
+            o =(struct spx_mpool_node *) mem_align_ptr(b->last,size);
+            if(((size_t) ((char *) b->end - (char *) o)) < size){ // ptr diff
                 b = p->cbuf->n;
                 if(NULL == b){
                     b = spx_memalign_alloc(sizeof(*b) + p->size,err);
@@ -106,8 +116,9 @@ void *spx_mpool_alloc(struct spx_mpool * const p,
                 }
                 continue;
             }
-            b->last += s;
-           e = (void *) o;
+            b->last += size;
+            o->size = s;
+            e = (void *) (o + sizeof(struct spx_mpool_node));
             break;
         }
     }
@@ -184,9 +195,10 @@ err_t spx_mpool_reset(struct spx_mpool * const p){/*{{{*/
     return 0;
 }/*}}}*/
 
-err_t spx_mpool_free(struct spx_mpool *const p,void **e,size_t size){/*{{{*/
+err_t spx_mpool_free(struct spx_mpool *const p,void **e){/*{{{*/
     err_t rc = 0;
-    if(size > p->limit){
+    struct spx_mpool_node *n =(struct spx_mpool_node *) ((*e) - sizeof(struct spx_mpool_node));
+    if(n->size > p->limit){
         struct spx_mpool_alone *ptr =(struct spx_mpool_alone *)\
                                    *e - sizeof(struct spx_mpool_alone);
         if(NULL == ptr){

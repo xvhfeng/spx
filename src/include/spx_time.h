@@ -46,6 +46,7 @@ extern "C" {
 
 
     void spx_get_curr_datetime(struct spx_datetime *dt);
+    time_t spx_now();
 
 #if __cplusplus
 }

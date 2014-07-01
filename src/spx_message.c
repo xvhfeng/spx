@@ -8,7 +8,7 @@
 #include "include/spx_types.h"
 #include "include/spx_string.h"
 
- union d2i{
+union d2i{
     double v;
     uint64_t i;
 };
@@ -44,7 +44,7 @@ r1:
     return NULL;
 }/*}}}*/
 
-err_t spx_msg_pack_destroy(struct spx_msg **ctx){/*{{{*/
+err_t spx_msg_free(struct spx_msg **ctx){/*{{{*/
     if(NULL != (*ctx)->buf){
         SpxFree((*ctx)->buf);
     }
@@ -54,7 +54,7 @@ err_t spx_msg_pack_destroy(struct spx_msg **ctx){/*{{{*/
     return 0;
 }/*}}}*/
 
-err_t spx_msg_lseek(struct spx_msg *ctx,off_t offset,int whence){
+err_t spx_msg_seek(struct spx_msg *ctx,off_t offset,int whence){
     if(NULL == ctx || NULL == ctx->buf){
         return EINVAL;
     }
@@ -72,9 +72,8 @@ err_t spx_msg_lseek(struct spx_msg *ctx,off_t offset,int whence){
                                break;
                            }
     }
-
+    return 0;
 }
-
 err_t spx_msg_pack_int( struct spx_msg *ctx,const int v){/*{{{*/
     return spx_msg_pack_i32(ctx,(i32_t) v);
 }/*}}}*/
@@ -141,11 +140,16 @@ err_t spx_msg_pack_false( struct spx_msg *ctx){/*{{{*/
     (ctx->last)++;
     return 0;
 }/*}}}*/
-err_t spx_msg_pack_string( struct spx_msg *ctx,const uchar_t *s,const size_t len){/*{{{*/
+err_t spx_msg_pack_string( struct spx_msg *ctx,string_t s){/*{{{*/
     if (NULL == ctx) return EINVAL;
-    ctx->last = SpxMemcpy(ctx->last,s,len);
+    ctx->last = SpxMemcpy(ctx->last,s,spx_string_len(s));
     return 0;
 }/*}}}*/
+err_t spx_msg_pack_fixed_string( struct spx_msg *ctx,string_t s,size_t len){/*{{{*/
+    if (NULL == ctx) return EINVAL;
+    ctx->last = SpxMemcpy(ctx->last,s,spx_string_len(s));
+    ctx->last += len - spx_string_len(s);
+    return 0;
 err_t spx_msg_pack_ubytes( struct spx_msg *ctx,const ubyte_t *b,const size_t len){/*{{{*/
     if (NULL == ctx) return EINVAL;
     ctx->last = SpxMemcpy(ctx->last,b,len);
@@ -153,7 +157,7 @@ err_t spx_msg_pack_ubytes( struct spx_msg *ctx,const ubyte_t *b,const size_t len
 }/*}}}*/
 err_t spx_msg_pack_bytes( struct spx_msg *ctx,const byte_t *b,const size_t len){/*{{{*/
     if (NULL == ctx) return EINVAL;
-   ctx->last =  SpxMemcpy(ctx->last,b,len);
+    ctx->last =  SpxMemcpy(ctx->last,b,len);
     return 0;
 }/*}}}*/
 
@@ -210,29 +214,24 @@ bool_t spx_msg_unpack_bool( struct spx_msg *ctx){/*{{{*/
     return (bool_t) n;
 }/*}}}*/
 string_t spx_msg_unpack_string( struct spx_msg *ctx,\
-        const size_t len,const bool_t iscp){/*{{{*/
+        const size_t len,err_t *err){/*{{{*/
     string_t p = NULL;
-    err_t err = 0;
-    if(iscp){
-        p = spx_string_newlen(ctx->last,len,&err);
-    } else {
-        p =(string_t) ctx->last;
-    }
+    p = spx_string_newlen(ctx->last,len,err);
     ctx->last += len;
     return p;
 }/*}}}*/
-ubyte_t *spx_msg_unpack_ubytes( struct spx_msg *ctx,const size_t len,const bool_t iscp){/*{{{*/
-    return (ubyte_t *)spx_msg_unpack_string(ctx,len, iscp);
+ubyte_t *spx_msg_unpack_ubytes( struct spx_msg *ctx,const size_t len,err_t *err){/*{{{*/
+    return (ubyte_t *)spx_msg_unpack_string(ctx,len, err);
 }/*}}}*/
-byte_t *spx_msg_unpack_bytes( struct spx_msg *ctx,const size_t len,const bool_t iscp){/*{{{*/
-    return (byte_t *) spx_msg_unpack_string(ctx,len, iscp);
+byte_t *spx_msg_unpack_bytes( struct spx_msg *ctx,const size_t len,err_t *err){/*{{{*/
+    return (byte_t *) spx_msg_unpack_string(ctx,len, err);
 }/*}}}*/
 
 spx_private void spx_msg_i2b(uchar_t *b,const i32_t n){/*{{{*/
-	*b++ = (n >> 24) & 0xFF;
-	*b++ = (n >> 16) & 0xFF;
-	*b++ = (n >> 8) & 0xFF;
-	*b++ = n & 0xFF;
+    *b++ = (n >> 24) & 0xFF;
+    *b++ = (n >> 16) & 0xFF;
+    *b++ = (n >> 8) & 0xFF;
+    *b++ = n & 0xFF;
 }/*}}}*/
 spx_private i32_t spx_msg_b2i(uchar_t *b){/*{{{*/
     i32_t n =  (i32_t ) ((((i32_t) (*b)) << 24)
@@ -243,14 +242,14 @@ spx_private i32_t spx_msg_b2i(uchar_t *b){/*{{{*/
     return n;
 }/*}}}*/
 spx_private void spx_msg_l2b(uchar_t *b,const i64_t n){/*{{{*/
-	*b++ = (n >> 56) & 0xFF;
-	*b++ = (n >> 48) & 0xFF;
-	*b++ = (n >> 40) & 0xFF;
-	*b++ = (n >> 32) & 0xFF;
-	*b++ = (n >> 24) & 0xFF;
-	*b++ = (n >> 16) & 0xFF;
-	*b++ = (n >> 8) & 0xFF;
-	*b++ = n & 0xFF;
+    *b++ = (n >> 56) & 0xFF;
+    *b++ = (n >> 48) & 0xFF;
+    *b++ = (n >> 40) & 0xFF;
+    *b++ = (n >> 32) & 0xFF;
+    *b++ = (n >> 24) & 0xFF;
+    *b++ = (n >> 16) & 0xFF;
+    *b++ = (n >> 8) & 0xFF;
+    *b++ = n & 0xFF;
 }/*}}}*/
 spx_private i64_t spx_msg_b2l(uchar_t *b){/*{{{*/
     i64_t n =  (((i64_t) (*b)) << 56)

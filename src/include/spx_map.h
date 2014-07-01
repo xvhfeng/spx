@@ -81,6 +81,8 @@ extern "C" {
 
     err_t spx_map_get(struct spx_map *map,\
             void *k,size_t kl,void **v,size_t *vl);
+    bool_t spx_map_exist_key(struct spx_map *map,\
+            void *k,size_t kl);
 
     err_t spx_map_out(struct spx_map *map,\
             void *k,size_t kl,void **v,size_t *vl);
@@ -88,11 +90,12 @@ extern "C" {
     err_t spx_map_delete(struct spx_map *map,\
             void *k,size_t kl);
 
-    err_t spx_map_destory(struct spx_map **map);
+    err_t spx_map_free(struct spx_map **map);
 
     struct spx_map_iter *spx_map_iter_new(struct spx_map *map,err_t *err);
     struct spx_map_node *spx_map_iter_next(struct spx_map_iter *iter,err_t *err);
-    err_t spx_map_iter_destory(struct spx_map_iter ** iter);
+    err_t spx_map_iter_free(struct spx_map_iter ** iter);
+    struct spx_map_node *spx_map_iter_reset(struct spx_map_iter *iter);
 
     spx_private spx_inline size_t spx_map_numbs(struct spx_map *map){
         return map->numbs;

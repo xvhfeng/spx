@@ -35,3 +35,14 @@ void spx_get_curr_datetime(struct spx_datetime *dt){
     dt->t.min = p->tm_min;
     dt->t.sec = p->tm_sec;
 }
+time_t spx_now() {/*{{{*/
+	time_t timep;
+	struct tm *p;
+	time(&timep);
+	p = localtime(&timep);
+	timep = mktime(p);
+	return timep;
+} /*}}}*/
+
+
+

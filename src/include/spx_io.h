@@ -26,11 +26,15 @@ extern "C" {
 
 err_t spx_read(int fd,byte_t *buf,const size_t size,size_t *len);
 err_t spx_write(int fd,byte_t *buf,const size_t size,size_t *len);
+err_t spx_read_nb(int fd,byte_t *buf,const size_t size,size_t *len);
+err_t spx_write_nb(int fd,byte_t *buf,const size_t size,size_t *len);
 err_t spx_read_to_msg(int fd,struct spx_msg *ctx,const size_t size,size_t *len);
 err_t spx_read_to_msg_nb(int fd,struct spx_msg *ctx,const size_t size,size_t *len);
 err_t spx_write_from_msg(int fd,struct spx_msg *ctx,const size_t size,size_t *len);
 err_t spx_write_from_msg_nb(int fd,struct spx_msg *ctx,const size_t size,size_t *len);
+err_t spx_fwrite_string(FILE *fp,string_t s,size_t size,size_t *len);
 
+err_t spx_set_nb(int fd);
 #ifdef __cplusplus
 }
 #endif

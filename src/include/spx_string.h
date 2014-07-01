@@ -99,7 +99,11 @@ void spx_string_trim(string_t s, const char *cset);
  * sdsrange(s,1,-1); => "ello World"
  */
 void spx_string_range(string_t s, int start, int end);
-
+/*
+ * not change the old string,and alloc the new string for range string.
+ * then,if the old string is nouseful,please free it by yourself.
+ */
+string_t spx_string_range_new(string_t s, int start, int end,err_t *err);
 /* Set the sds string length to the length as obtained with strlen(), so
  * considering as content only up to the first null term character.
  *
@@ -119,6 +123,8 @@ void spx_string_updatelen(string_t s);
 void spx_string_clear(string_t s);
 
 int spx_string_cmp(const string_t s1, const string_t s2);
+int spx_string_casecmp_string(const string_t s1, const string_t s2);
+int spx_string_casecmp(const string_t s1, const char *s2);
 
 string_t *spx_string_splitlen(const char *s,\
         int len, const char *sep, int seplen, \
@@ -249,59 +255,6 @@ size_t spxStringAllocSize(string_t s);
 #define SpxZeroLen(v,len) memset(v,0,len)
 
 #define SpxMemcpy(d,s,l) (((uchar_t *) memcpy(d,s,l)) + l)
-
-
-/*
-
-//#define SpxMemcpy(d,s,l) (((uchar_t *) memcpy(d,s,l)) + l)
-
-
-//#define SpxBinary2String(s) ((string_t) (s + sizeof(size_t)))
-//#define SpxChar2String1(s) ((string_t) s)
-//#define SpxChar2String2(s) ((const string_t) s)
-
-#define SpxStringLength(s) (strlen(SpxString2Char2(s)))
-
-
-
-#define SpxStringCpy1(d,s,l) memcpy(SpxString2Char1(d),SpxString2Char1(s),l)
-#define SpxStringCpy2(d,s, offset,l) \
-    memcpy(SpxString2Char1(d) + offset,SpxString2Char1(s),l)
-
-#define SpxStringAllCpy1(d,s) memcpy(SpxString2Char1(d),SpxString2Char1(s),SpxStringLength(s))
-#define SpxStringAllCpy2(d,offset,s) memcpy(SpxString2Char2(d) + offset,SpxString2Char1(s),SpxStringLength(s))
-#define SpxStringAllCpy3(d,s) ((string_t) memcpy(SpxString2Char1(d),SpxString2Char1(s),SpxStringLength(s)) + SpxStringLength(s))
-
-#define SpxSnprintf(dest,size,fmt,...) snprintf(SpxString2Char1(dest),size,fmt,__VA_ARGS__)
-#define SpxVSnprintf(dest,size,fmt,ap) vsnprintf(SpxString2Char1(dest),size,fmt,ap)
-#define SpxVSnprintf2(dest,size,offset,fmt,ap) \
-    vsnprintf((SpxString2Char1(dest) + offset),\
-            (size - offset),SpxString2Char2(fmt),ap)
-
-#define SpxString(buf,len)\
-    char _spx_string_##buf[len] = {0}; \
-    string_t buf = SpxChar2String1(_spx_string_##buf)
-
-#define SpxStringCmp(s1,s2,l) memcmp(SpxString2Char2(s1),\
-                                    SpxString2Char2(s2),l)
-
-
-
-    err_t spx_string_split(SpxLogDelegate *log,const string_t s,\
-            const string_t d,const bool_t isrs,struct spx_vector **dest);
-
-    spx_inline err_t spx_strcpy(string_t dest,string_t src,size_t len);
-
-    string_t  spx_snprintf(string_t buf,\
-            size_t max, const string_t fmt, ...);
-
-    string_t spx_vsnprintf(string_t buf,\
-            const size_t max,const string_t fmt,\
-            va_list args);
-string_t spx_numb_tostring(string_t buf,\
-        size_t size,u64_t n);
-
-*/
 
 #ifdef __cplusplus
 }

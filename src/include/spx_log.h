@@ -31,7 +31,7 @@ extern "C" {
             const string_t name,const u64_t max_size,\
             const u8_t level);
     void spx_log(int level,string_t fmt,...);
-    void spx_log_destory();
+    void spx_log_free();
 
 #ifdef __cplusplus
 }

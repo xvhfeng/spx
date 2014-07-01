@@ -30,7 +30,7 @@ extern "C" {
 
     struct spx_vector *spx_vector_init(SpxLogDelegate *log,\
             SpxVectorValueFreeDelegate *handle,err_t *err);
-    err_t spx_vector_destory(struct spx_vector **vector);
+    err_t spx_vector_free(struct spx_vector **vector);
     err_t spx_vector_add(struct spx_vector *vector,void *v);
     void *spx_vector_get(struct spx_vector *vector,size_t idx,err_t *err);
     err_t spx_vector_push(struct spx_vector *vector,void *v);
@@ -41,7 +41,7 @@ extern "C" {
 
     struct spx_vector_iter *spx_vector_iter_init(struct spx_vector *vector,\
             err_t *err);
-    err_t spx_vector_iter_destroy(struct spx_vector_iter **iter);
+    err_t spx_vector_iter_free(struct spx_vector_iter **iter);
     void *spx_vector_iter_next(struct spx_vector_iter *iter) ;
 
 

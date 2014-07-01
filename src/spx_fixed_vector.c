@@ -75,7 +75,7 @@ r1:
     return NULL;
 }
 
-err_t spx_fixed_vector_destory(struct spx_fixed_vector **vector){
+err_t spx_fixed_vector_free(struct spx_fixed_vector **vector){
     if(NULL == *vector){
         return 0;
     }
@@ -177,7 +177,7 @@ struct spx_fixed_vector_iter *spx_fixed_vector_iter_new(struct spx_fixed_vector 
     return iter;
 }
 
-err_t spx_fixed_vector_iter_destroy(struct spx_vector_iter **iter){
+err_t spx_fixed_vector_iter_free(struct spx_vector_iter **iter){
     if(NULL == *iter){
         return 0;
     }

@@ -126,7 +126,7 @@ void spx_log(int level,string_t fmt,...){/*{{{*/
     return;
 }/*}}}*/
 
-void spx_log_destory(){
+void spx_log_free(){
     logf_close();
     if(NULL != g_log->path)
         spx_string_free(g_log->path);

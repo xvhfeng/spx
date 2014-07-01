@@ -18,25 +18,6 @@ extern "C" {
 #define SpxLogError 3
 #define SpxLogMark 4
 
-
-#define SpxStackFmt "File:%s,line:%d,func:%s."
-#define SpxStackInfo __FILE__,__LINE__,__FUNCTION__
-#define SpxErrFmt "errno:%d,err info:%s."
-#define SpxErrInfo(err) err,spx_strerror(err)
-
-    /*
-#define SpxLogInfo1(info) ((string_t) "File:%s,Line:%s,Func:%s.%s"),\
-    __FILE__,__LINE__,__FUNCTION__,info
-#define SpxLogInfo2(info,err) \
-    ((string_t) "File:%s,Line:%d,Func:%s.errno:%d,info:%s.%s"),\
-    __FILE__,__LINE__,__FUNCTION__,err,spx_strerror(err),info
-#define SpxLogInfo3(fmt,info,err)((string_t) \
-        "File:%s,Line:%d,Func:%s.errno:%d,info:%s.%s"),\
-    __FILE__,__LINE__,__FUNCTION__,err,spx_strerror(err),info
-#define SpxLogInfo4(fmt,info)\
-    ((string_t) "File:%s,Line:%d,Func:%s."fmt),\
-    __FILE__,__LINE__,__FUNCTION__,info
- */
 #define SpxLog1(log,level,info) \
     if(NULL != (log)) {\
         (log)(level,((string_t) "File:%s,Line:%d,Func:%s.%s."), \
@@ -79,8 +60,11 @@ extern "C" {
 #define SpxMB (1024 * 1024)
 #define SpxKB (1024)
 
+#define SpxIpv4Size 15
+
 #define SpxMin(a,b) ((a) < (b) ? (a) : (b))
 #define SpxMax(a,b) ((a) > (b) ? (a) : (b))
+#define SpxAbs(a) ((a) < 0 ? -(a) : a)
 
 #ifdef Spx64
 #define SpxPtrSize 8
@@ -117,7 +101,13 @@ extern "C" {
 #define SpxI32Max  (u32_t) 0xffffffff
 #endif
 
-#define SpxClose(fd) close(fd);fd = 0
+#define SpxClose(fd)  \
+    do { \
+        if(0 != fd) { \
+            close(fd);\
+            fd = 0;\
+        } \
+    }while(false)
 
 #ifdef __cplusplus
 }

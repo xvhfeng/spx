@@ -45,7 +45,7 @@ extern "C" {
             void *arg,\
             SpxVectorValueFreeDelegate *node_free_handle,\
             err_t *err);
-    err_t spx_fixed_vector_destory(struct spx_fixed_vector **vector);
+    err_t spx_fixed_vector_free(struct spx_fixed_vector **vector);
     err_t spx_fixed_vector_push(struct spx_fixed_vector *vector,void *v);
     void *spx_fixed_vector_pop(struct spx_fixed_vector *vector, err_t *err);
 

@@ -12,6 +12,7 @@ extern "C" {
 
 #define SpxSuccess 512
 #define ENODLMT 513
+#define EBADHEADER 514
 
 const char *spx_strerror(err_t err);
 

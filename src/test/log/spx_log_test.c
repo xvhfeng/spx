@@ -50,6 +50,6 @@ int main(int argc,char **argv){
     SpxLogFmt1(log,SpxLogMark,"printf log info by SpxLogFmt1.%s","success") \
     SpxLogFmt2(log,SpxLogError,\
             EACCES,"printf log info by SpxLogFmt2.%s","success") \
-    spx_log_destory();
+    spx_log_free();
     return 0;
 }

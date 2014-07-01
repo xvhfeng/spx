@@ -25,7 +25,7 @@ struct spx_vector *spx_vector_init(SpxLogDelegate *log,\
     return vector;
 }/*}}}*/
 
-err_t spx_vector_destory(struct spx_vector **vector) {/*{{{*/
+err_t spx_vector_free(struct spx_vector **vector) {/*{{{*/
     if(NULL == *vector){
         return 0;
     }
@@ -154,7 +154,7 @@ struct spx_vector_iter  *spx_vector_iter_create(struct spx_vector *vector,err_t 
     return iter;
 }/*}}}*/
 
-err_t spx_vector_iter_destroy(struct spx_vector_iter **iter){/*{{{*/
+err_t spx_vector_iter_free(struct spx_vector_iter **iter){/*{{{*/
     if(NULL == *iter){
         return 0;
     }

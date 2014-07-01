@@ -5,7 +5,7 @@ CFLAG = -pipe -o1  -W -Wall -Werror -g \
  		-Wpointer-arith -Wno-unused-parameter -Wunused-function -Wunused-variable -Wunused-value 
 INC_PATH = -I/usr/local/include \
 			-I../../include
-LIB_PATH = 
+LIB_PATH = -L/usr/local/lib -lev
 DEFS := 
 TARGET_PATH = ./
 TARGET = log_test

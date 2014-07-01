@@ -16,6 +16,9 @@
  * =====================================================================================
  */
 #include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+
 
 #include "include/spx_types.h"
 #include "include/spx_defs.h"
@@ -125,3 +128,39 @@ err_t spx_write_from_msg(int fd,struct spx_msg *ctx,const size_t size,size_t *le
 err_t spx_write_from_msg_nb(int fd,struct spx_msg *ctx,const size_t size,size_t *len){
     return  spx_write_nb(fd,(byte_t *) ctx->buf,size,len);
 }
+
+
+err_t spx_set_nb(int fd) {
+	int flags;
+	err_t err = 0;
+	if (-1 == (flags = fcntl(fd, F_GETFL))) {
+		err = errno;
+		return -1;
+	}
+	flags |= O_NONBLOCK;
+	if (-1 == fcntl(fd, F_SETFL, flags)) {
+		err = errno;
+		return -1;
+	}
+	return err;
+}
+
+err_t spx_fwrite_string(FILE *fp,string_t s,size_t size,size_t *len){
+    SpxErrReset;
+    *len = 0;
+    err_t err = 0;
+    i64_t rc = 0;
+    while(*len < size){
+        rc = fwrite(s + *len,size,sizeof(char),fp);
+        if(0 > rc){
+            err = errno;
+            break;
+        }else if(0 == rc){
+            break;
+        }else {
+            *len += rc;
+        }
+    }
+    return err;
+}
+
