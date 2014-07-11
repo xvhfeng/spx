@@ -25,26 +25,13 @@
 #include "include/spx_string.h"
 #include "include/spx_message.h"
 
-struct spx_nio_context_pool_node_arg{
-    u32_t timeout;
-    SpxNioDelegate *nio_reader;
-    SpxNioDelegate *nio_writer;
-    SpxNioHeaderValidatorDelegate *request_header_validator;
-    SpxNioHeaderValidatorFailDelegate *request_header_validator_fail;
-    SpxNioBodyProcessDelegate *request_body_process;
-    SpxNioBodyProcessDelegate *response_body_process;
-    struct spx_properties *config;
-    SpxLogDelegate *log;
-};
 
 struct spx_nio_context_pool *g_spx_nio_context_pool = NULL;
 
-spx_private void *spx_nio_context_pool_node_new(void *arg,err_t *err);
-spx_private err_t spx_nio_context_pool_node_free(void **arg);
 
-spx_private void *spx_nio_context_pool_node_new(void *arg,err_t *err){
+ void *spx_nio_context_new(void *arg,err_t *err){
 
-    struct spx_nio_context_pool_node_arg *n = (struct spx_nio_context_pool_node_arg *) arg;
+    struct spx_nio_context_arg *n = (struct spx_nio_context_arg *) arg;
     struct spx_nio_context *nio_context = NULL;
     nio_context = spx_alloc_alone(sizeof(*nio_context),err);
     if(NULL == nio_context){
@@ -56,10 +43,10 @@ spx_private void *spx_nio_context_pool_node_new(void *arg,err_t *err){
     nio_context->timeout = n->timeout;
     nio_context->nio_reader = n->nio_reader;
     nio_context->nio_writer = n->nio_writer;
-    nio_context->request_body_process = n->request_body_process;
-    nio_context->request_header_validator = n->request_header_validator;
-    nio_context->response_body_process = n->response_body_process;
-    nio_context->request_header_validator_fail = n->request_header_validator_fail;
+    nio_context->reader_body_process = n->reader_body_process;
+    nio_context->reader_header_validator = n->reader_header_validator;
+    nio_context->writer_body_process = n->writer_body_process;
+    nio_context->reader_header_validator_fail = n->reader_header_validator_fail;
     if(0 < nio_context->timeout){
         ev_set_io_collect_interval (nio_context->loop,(ev_tstamp) nio_context->timeout);
         ev_set_timeout_collect_interval (nio_context->loop,(ev_tstamp) nio_context->timeout);
@@ -69,34 +56,52 @@ spx_private void *spx_nio_context_pool_node_new(void *arg,err_t *err){
 
 }
 
-spx_private err_t spx_nio_context_pool_node_free(void **arg){
+err_t spx_nio_context_free(void **arg){
     struct spx_nio_context **nio_context = (struct spx_nio_context **) arg;
     ev_break((*nio_context)->loop,EVBREAK_ALL);
     ev_loop_destroy((*nio_context)->loop);
-
-    if(NULL != (*nio_context)->request_header){
-        SpxFree((*nio_context)->request_header);
-    }
-    if(NULL != (*nio_context)->request_header_ctx){
-        spx_msg_free(&((*nio_context)->request_header_ctx));
-    }
-    if(NULL != (*nio_context)->request_body_ctx){
-        spx_msg_free(&((*nio_context)->request_body_ctx));
-    }
-
-    if(NULL != (*nio_context)->response_header){
-        SpxFree((*nio_context)->response_header);
-    }
-    if(NULL != (*nio_context)->response_header_ctx){
-        spx_msg_free(&((*nio_context)->response_header_ctx));
-    }
-    if(NULL != (*nio_context)->response_body_ctx){
-        spx_msg_free(&((*nio_context)->response_body_ctx));
-    }
-
-    SpxClose((*nio_context)->fd);
+    spx_nio_context_clear(*nio_context);
     SpxFree(*nio_context);
     return 0;
+}
+
+void spx_nio_context_clear(struct spx_nio_context *nio_context){
+
+    if(NULL != nio_context->client_ip){
+        spx_string_clear(nio_context->client_ip);
+    }
+
+    if(NULL != nio_context->reader_header){
+        SpxFree(nio_context->reader_header);
+    }
+    if(NULL != nio_context->reader_header_ctx){
+        spx_msg_free(&((nio_context)->reader_header_ctx));
+    }
+    if(NULL != nio_context->reader_body_ctx){
+        spx_msg_free(&((nio_context)->reader_body_ctx));
+    }
+
+    if(NULL != (nio_context)->writer_header){
+        SpxFree((nio_context)->writer_header);
+    }
+    if(NULL != (nio_context)->writer_header_ctx){
+        spx_msg_free(&((nio_context)->writer_header_ctx));
+    }
+    if(NULL != (nio_context)->writer_body_ctx){
+        spx_msg_free(&((nio_context)->writer_body_ctx));
+    }
+
+    if(nio_context->is_sendfile){
+        if(0 != nio_context->sendfile_fd){
+            SpxClose(nio_context->sendfile_fd);
+        }
+        nio_context->sendfile_begin = 0;
+        nio_context->sendfile_size = 0;
+    }
+    SpxClose(nio_context->fd);
+    nio_context->lazy_recv_offet = 0;
+    nio_context->lazy_recv_size = 0;
+    nio_context->err = 0;
 }
 
 struct spx_nio_context_pool *spx_nio_context_pool_new(SpxLogDelegate *log,\
@@ -104,10 +109,10 @@ struct spx_nio_context_pool *spx_nio_context_pool_new(SpxLogDelegate *log,\
         size_t size,u32_t timeout,\
         SpxNioDelegate *nio_reader,\
         SpxNioDelegate *nio_writer,\
-        SpxNioHeaderValidatorDelegate *request_header_validator,\
-        SpxNioHeaderValidatorFailDelegate *request_header_validator_fail,\
-        SpxNioBodyProcessDelegate *request_body_process,\
-        SpxNioBodyProcessDelegate *response_body_process,\
+        SpxNioHeaderValidatorDelegate *reader_header_validator,\
+        SpxNioHeaderValidatorFailDelegate *reader_header_validator_fail,\
+        SpxNioBodyProcessDelegate *reader_body_process,\
+        SpxNioBodyProcessDelegate *writer_body_process,\
         err_t *err){
     if(0 == size){
         *err = EINVAL;
@@ -118,22 +123,22 @@ struct spx_nio_context_pool *spx_nio_context_pool_new(SpxLogDelegate *log,\
         return NULL;
     }
 
-    struct spx_nio_context_pool_node_arg arg;
+    struct spx_nio_context_arg arg;
     SpxZero(arg);
     arg.timeout = timeout;
     arg.nio_reader = nio_reader;
     arg.nio_writer = nio_writer;
     arg.log = log;
-    arg.request_header_validator = request_header_validator;
-    arg.request_body_process = request_body_process;
-    arg.response_body_process = response_body_process;
-    arg.request_header_validator_fail = request_header_validator_fail;
+    arg.reader_header_validator = reader_header_validator;
+    arg.reader_body_process = reader_body_process;
+    arg.writer_body_process = writer_body_process;
+    arg.reader_header_validator_fail = reader_header_validator_fail;
     arg.config = config;
 
     pool->pool = spx_fixed_vector_new(log,size,\
-            spx_nio_context_pool_node_new,\
+            spx_nio_context_new,\
             &arg,\
-            spx_nio_context_pool_node_free,\
+            spx_nio_context_free,\
             err);
 
     if(NULL == pool->pool){
@@ -149,42 +154,7 @@ struct spx_nio_context *spx_nio_context_pool_pop(struct spx_nio_context_pool *po
 }
 
 err_t spx_nio_context_pool_push(struct spx_nio_context_pool *pool,struct spx_nio_context *nio_context){
-    if(NULL != nio_context->client_ip){
-        spx_string_clear(nio_context->client_ip);
-    }
-
-    if(NULL != nio_context->request_header){
-        SpxFree(nio_context->request_header);
-    }
-    if(NULL != nio_context->request_header_ctx){
-        spx_msg_free(&(nio_context->request_header_ctx));
-    }
-    if(NULL != nio_context->request_body_ctx){
-        spx_msg_free(&(nio_context->request_body_ctx));
-    }
-
-    if(NULL != nio_context->response_header){
-        SpxFree(nio_context->response_header);
-    }
-    if(NULL != nio_context->response_header_ctx){
-        spx_msg_free(&(nio_context->response_header_ctx));
-    }
-    if(NULL != nio_context->response_body_ctx){
-        spx_msg_free(&(nio_context->response_body_ctx));
-    }
-
-    if(nio_context->is_sendfile){
-        if(0 != nio_context->sendfile_fd){
-            SpxClose(nio_context->sendfile_fd);
-        }
-        nio_context->sendfile_begin = 0;
-        nio_context->sendfile_size = 0;
-    }
-    SpxClose(nio_context->fd);
-    nio_context->lazy_recv_offet = 0;
-    nio_context->lazy_recv_size = 0;
-    nio_context->err = 0;
-
+    spx_nio_context_clear(nio_context);
     return spx_fixed_vector_push(pool->pool,nio_context);
 }
 

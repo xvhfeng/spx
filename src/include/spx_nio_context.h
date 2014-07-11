@@ -50,6 +50,20 @@ extern "C" {
         u64_t offset;
         u32_t err;
     };
+
+
+    struct spx_nio_context_arg{
+        u32_t timeout;
+        SpxNioDelegate *nio_reader;
+        SpxNioDelegate *nio_writer;
+        SpxNioHeaderValidatorDelegate *reader_header_validator;
+        SpxNioHeaderValidatorFailDelegate *reader_header_validator_fail;
+        SpxNioBodyProcessDelegate *reader_body_process;
+        SpxNioBodyProcessDelegate *writer_body_process;
+        struct spx_properties *config;
+        SpxLogDelegate *log;
+    };
+
     struct spx_nio_context{
         ev_io watcher;
         ev_async notify;
@@ -64,17 +78,17 @@ extern "C" {
         SpxLogDelegate *log;
         u32_t lifecycle;
 
-        struct spx_msg_header *request_header;
-        struct spx_msg *request_header_ctx;
-        struct spx_msg *request_body_ctx;
-        struct spx_msg_header *response_header;
-        struct spx_msg *response_header_ctx;
-        struct spx_msg *response_body_ctx;
+        struct spx_msg_header *reader_header;
+        struct spx_msg *reader_header_ctx;
+        struct spx_msg *reader_body_ctx;
+        struct spx_msg_header *writer_header;
+        struct spx_msg *writer_header_ctx;
+        struct spx_msg *writer_body_ctx;
 
-        SpxNioHeaderValidatorDelegate *request_header_validator;
-        SpxNioHeaderValidatorFailDelegate *request_header_validator_fail;
-        SpxNioBodyProcessDelegate *request_body_process;
-        SpxNioBodyProcessDelegate *response_body_process;
+        SpxNioHeaderValidatorDelegate *reader_header_validator;
+        SpxNioHeaderValidatorFailDelegate *reader_header_validator_fail;
+        SpxNioBodyProcessDelegate *reader_body_process;
+        SpxNioBodyProcessDelegate *writer_body_process;
 
         string_t client_ip;
 
@@ -99,15 +113,19 @@ extern "C" {
         struct spx_fixed_vector *pool;
     };
 
+    void *spx_nio_context_new(void *arg,err_t *err);
+    err_t spx_nio_context_free(void **arg);
+    void spx_nio_context_clear(struct spx_nio_context *nio_context);
+
     struct spx_nio_context_pool *spx_nio_context_pool_new(SpxLogDelegate *log,\
             struct spx_properties *config,\
             size_t size,u32_t timeout,\
             SpxNioDelegate *nio_reader,\
             SpxNioDelegate *nio_writer,\
-            SpxNioHeaderValidatorDelegate *request_header_validator,\
-            SpxNioHeaderValidatorFailDelegate *request_header_validator_fail,\
-            SpxNioBodyProcessDelegate *request_body_process,\
-            SpxNioBodyProcessDelegate *response_body_process,\
+            SpxNioHeaderValidatorDelegate *reader_header_validator,\
+            SpxNioHeaderValidatorFailDelegate *reader_header_validator_fail,\
+            SpxNioBodyProcessDelegate *reader_body_process,\
+            SpxNioBodyProcessDelegate *write_body_process,\
             err_t *err);
 
     struct spx_nio_context *spx_nio_context_pool_pop(struct spx_nio_context_pool *pool,err_t *err);

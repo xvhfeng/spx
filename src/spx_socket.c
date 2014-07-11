@@ -260,4 +260,48 @@ string_t spx_host_tostring(struct spx_host *host,err_t *err){
 
 r1:
     spx_string_free(shost);
+    return NULL;
 }
+
+err_t spx_connect(int fd,string_t ip,int port){
+    struct sockaddr_in addr;
+    bzero(&addr,sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port=htons(port);
+    addr.sin_addr.s_addr = inet_addr(ip);
+    if(0 > connect(fd,(struct sockaddr *) &addr,sizeof(addr))){
+        return errno;
+    }
+    return 0;
+}
+
+err_t spx_socket_set(const int fd,\
+        bool_t is_keepalive,size_t alive_timeout,\
+        size_t detect_times,size_t detect_timeout,\
+        bool_t is_linger,size_t linger_timeout,\
+        bool_t is_nodelay,\
+        bool_t is_timeout,size_t timeout){
+    err_t err = 0;
+    if(0 != (err = spx_socket_reuseaddr(fd))){
+        return err;
+    }
+
+    if(0 != (err = spx_socket_keepalive(fd,is_keepalive,
+                    alive_timeout,detect_times,detect_timeout))){
+        return err;
+    }
+    if(0 != (err = spx_socket_linger(fd,is_linger,linger_timeout))){
+        return err;
+    }
+    if(0 != (err = spx_tcp_nodelay(fd,is_nodelay))){
+        return err;
+    }
+    if(is_timeout && (0 != (err = spx_socket_timout(fd,timeout)))){
+        return err;
+    }
+
+    return 0;
+}
+
+
+

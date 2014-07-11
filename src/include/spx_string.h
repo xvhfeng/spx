@@ -126,6 +126,11 @@ int spx_string_cmp(const string_t s1, const string_t s2);
 int spx_string_casecmp_string(const string_t s1, const string_t s2);
 int spx_string_casecmp(const string_t s1, const char *s2);
 
+bool_t spx_string_begin_with_string(const string_t s1,const string_t s2);
+bool_t spx_string_end_with_string(const string_t s1,const string_t s2);
+bool_t spx_string_begin_casewith_string(const string_t s1,const string_t s2);
+bool_t spx_string_end_casewith_string(const string_t s1,const string_t s2);
+
 string_t *spx_string_splitlen(const char *s,\
         int len, const char *sep, int seplen, \
         int *count,err_t *err);

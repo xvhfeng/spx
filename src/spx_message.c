@@ -150,6 +150,7 @@ err_t spx_msg_pack_fixed_string( struct spx_msg *ctx,string_t s,size_t len){/*{{
     ctx->last = SpxMemcpy(ctx->last,s,spx_string_len(s));
     ctx->last += len - spx_string_len(s);
     return 0;
+}
 err_t spx_msg_pack_ubytes( struct spx_msg *ctx,const ubyte_t *b,const size_t len){/*{{{*/
     if (NULL == ctx) return EINVAL;
     ctx->last = SpxMemcpy(ctx->last,b,len);

@@ -29,8 +29,8 @@ extern "C" {
 
     typedef void SpxPropertyLineDeserializeDelegate(string_t line,struct spx_properties *p,err_t *err);
     typedef string_t SpxPropertyLineSerializeDelegate(struct spx_map_node *node,err_t *err);
-    typedef err_t SpxPropertyParserBeforeDelegate();
-    typedef err_t SpxPropertyParserAfterDelegate();
+    typedef err_t SpxPropertyParserBeforeDelegate(struct spx_properties *p);
+    typedef err_t SpxPropertyParserAfterDelegate(struct spx_properties *p);
 
     struct spx_properties{
         SpxLogDelegate *log;

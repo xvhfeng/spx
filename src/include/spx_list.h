@@ -9,6 +9,7 @@ extern "C" {
 #include "spx_types.h"
 
     typedef err_t (SpxListNodeFreeDelegate)(void **arg);
+    typedef void *(SpxListNodeNewDelegate)(size_t i,void *arg,err_t *err);
     struct spx_list_node{
         void *v;
     };
@@ -26,6 +27,15 @@ extern "C" {
             size_t init_size,\
             SpxListNodeFreeDelegate *node_free,\
             err_t *err);
+
+    struct spx_list *spx_list_init(SpxLogDelegate *log,\
+            size_t init_size,\
+            SpxListNodeNewDelegate *new,\
+            void *arg,\
+            SpxListNodeFreeDelegate *free,\
+            err_t *err
+            );
+
     void *spx_list_get(struct spx_list *list,int idx);
     void *spx_list_get_and_out(struct spx_list *list,int idx);
     err_t spx_list_delete(struct spx_list *list,int idx);

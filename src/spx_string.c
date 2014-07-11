@@ -265,6 +265,80 @@ int spx_string_casecmp(const string_t s1, const char *s2){
     return cmp;
 }
 
+bool_t spx_string_begin_with_string(const string_t s1,const string_t s2){
+    size_t l1, l2;
+
+    l1 = spx_string_len(s1);
+    l2 = spx_string_len(s2);
+    if(l1 < l2) return false;
+    char a,b;
+    size_t i = 0;
+    for(; i < l2; i++){
+        a = *(s1 + i);
+        b = *(s2 + i);
+        if(a != b) return false;
+    }
+    return true;
+}
+
+
+bool_t spx_string_end_with_string(const string_t s1,const string_t s2){
+    size_t l1, l2;
+
+    l1 = spx_string_len(s1);
+    l2 = spx_string_len(s2);
+    if(l1 < l2) return false;
+    char *p1 = s1 + l1;
+    char *p2 = s2 + l2;
+    char a,b;
+    size_t i = 0;
+    for(; i < l2; i++){
+        a = *(p1 - i);
+        b = *(p2 - i);
+        if(a != b) return false;
+    }
+    return true;
+}
+
+
+bool_t spx_string_begin_casewith_string(const string_t s1,const string_t s2){
+    size_t l1, l2;
+
+    l1 = spx_string_len(s1);
+    l2 = spx_string_len(s2);
+    if(l1 < l2) return false;
+    char a,b;
+    size_t i = 0;
+    for(; i < l2; i++){
+        a = *(s1 + i);
+        b = *(s2 + i);
+        a = (65 <= a && 90 >= a) ? a + 32 : a;
+        b = (65 <= b && 90 >= b) ? b + 32 : b;
+        if(a != b) return false;
+    }
+    return true;
+}
+
+
+bool_t spx_string_end_casewith_string(const string_t s1,const string_t s2){
+    size_t l1, l2;
+
+    l1 = spx_string_len(s1);
+    l2 = spx_string_len(s2);
+    if(l1 < l2) return false;
+    char *p1 = s1 + l1;
+    char *p2 = s2 + l2;
+    char a,b;
+    size_t i = 0;
+    for(; i < l2; i++){
+        a = *(p1 - i);
+        b = *(p2 - i);
+        a = (65 <= a && 90 >= a) ? a + 32 : a;
+        b = (65 <= b && 90 >= b) ? b + 32 : b;
+        if(a != b) return false;
+    }
+    return true;
+}
 
 int spx_string_casecmp_string(const string_t s1, const string_t s2){
     size_t l1, l2, minlen;

@@ -14,6 +14,9 @@ string_t spx_fullname(const string_t path,const string_t filename,\
         err_t *err);
 string_t spx_basepath(const string_t path,err_t *err);
 
+u64_t spx_mountpoint_freesize(string_t path,err_t *err);
+u64_t spx_mountpoint_size(string_t path,err_t *err);
+
 #ifdef __splusplus
 }
 #endif

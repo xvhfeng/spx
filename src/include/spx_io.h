@@ -21,8 +21,22 @@
 extern "C" {
 #endif
 
+#include <stdlib.h>
+#include <stdio.h>
+
 #include "spx_types.h"
 #include "spx_message.h"
+
+#define SpxWriteOpen(filename,is_clear) open(filename,is_clear ? O_RDWR|O_CREAT|O_TRUNC : O_RDWR|O_CREAT|O_APPEND,0744)
+#define SpxReadOpen(filename) open(filename,O_RDONLY)
+#define SpxFWriteOpen(filename,is_clear) fopen(filename,is_clear ? "w" : "a")
+#define SpxFReadOpen(filename) fopen(filename,"r")
+
+#define SpxFileExist(filename) ( 0 == access(filename,F_OK))
+#define SpxFileReadable(filename) (0 == access(filename,R_OK))
+#define SpxFileWritable(filename) (0 == access(filename,W_OK))
+#define SpxFileExecutable(filename) (0 == access(filename,X_OK))
+
 
 err_t spx_read(int fd,byte_t *buf,const size_t size,size_t *len);
 err_t spx_write(int fd,byte_t *buf,const size_t size,size_t *len);

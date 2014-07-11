@@ -7,7 +7,15 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stdarg.h>
-//#include <sys/vfs.h>
+
+#ifdef SpxLinux
+#include <sys/vfs.h>
+#else
+    #ifdef SpxMac
+    #include <sys/param.h>
+    #include <sys/mount.h>
+    #endif
+#endif
 //#include <sys/sendfile.h>
 
 
@@ -89,9 +97,9 @@ string_t spx_fullname(const string_t path,const string_t filename,\
     string_t newfn = NULL;
     if(NULL == fn) return NULL;
     if(SpxStringEndWith(path,SpxPathDlmt)){
-       newfn = spx_string_cat_printf(err,fn,"%s%s",path,filename);
+        newfn = spx_string_cat_printf(err,fn,"%s%s",path,filename);
     } else {
-       newfn = spx_string_cat_printf(err,fn,"%s%c%s",path,SpxPathDlmt,filename);
+        newfn = spx_string_cat_printf(err,fn,"%s%c%s",path,SpxPathDlmt,filename);
     }
     if(NULL == newfn){
         spx_string_free(fn);
@@ -113,3 +121,36 @@ string_t spx_basepath(const string_t path,err_t *err){/*{{{*/
     }
     return newbp;
 }/*}}}*/
+
+u64_t spx_mountpoint_freesize(string_t path,err_t *err){
+    struct statfs buf;
+    SpxZero(buf);
+    #ifdef Spx64
+    if(0 > statfs64(path,&buf)) {
+    #else
+    if(0 > statfs(path,&buf)) {
+    #endif
+        *err = errno;
+        return 0;
+    }
+    return (u64_t) buf.f_bavail * buf.f_frsize;
+}
+
+u64_t spx_mountpoint_size(string_t path,err_t *err){
+    struct statfs buf;
+    SpxZero(buf);
+    #ifdef Spx64
+    if(0 > statfs64(path,&buf)) {
+    #else
+    if(0 > statfs(path,&buf)) {
+    #endif
+        *err = errno;
+        return 0;
+    }
+    return (u64_t) fs.f_blocks * fs.f_frsize;
+}
+
+
+
+
+

@@ -62,7 +62,7 @@ r1:
 struct spx_properties *spx_properties_parser(struct spx_properties *p,string_t filename,err_t *err){
     SpxErrReset;
     if(NULL != p->before){
-        *err = p->before();
+        *err = p->before(p);
         if(0 != *err){
             return NULL;
         }
@@ -87,7 +87,7 @@ struct spx_properties *spx_properties_parser(struct spx_properties *p,string_t f
         spx_string_clear(line);
     }
     if(NULL != p->after){
-        *err = p->after();
+        *err = p->after(p);
     }
 
 r1:

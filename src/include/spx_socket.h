@@ -30,6 +30,14 @@ extern "C" {
         int port;
     };
 
+#define SpxKeepAlive true
+#define SpxAliveTimeout 30
+#define SpxDetectTimes 3
+#define SpxDetectTimeout 30
+#define SpxLinger false
+#define SpxLingerTimeout 0
+#define SpxNodelay true
+
 int spx_socket_new(err_t *err);
 void spx_socket_accept_nb(int fd);
 err_t spx_socket_start(const int fd,\
@@ -43,6 +51,14 @@ err_t spx_socket_start(const int fd,\
 string_t spx_ip_get(int sock,err_t *err);
 
 string_t spx_host_tostring(struct spx_host *host,err_t *err);
+
+err_t spx_socket_set(const int fd,\
+        bool_t is_keepalive,size_t alive_timeout,\
+        size_t detect_times,size_t detect_timeout,\
+        bool_t is_linger,size_t linger_timeout,\
+        bool_t is_nodelay,\
+        bool_t is_timeout,size_t timeout);
+err_t spx_socket_connect(int fd,string_t ip,int port);
 
 #ifdef __cplusplus
 }

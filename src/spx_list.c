@@ -44,6 +44,45 @@ struct spx_list *spx_list_new(SpxLogDelegate *log,\
     return list;
 }
 
+
+struct spx_list *spx_list_init(SpxLogDelegate *log,\
+        size_t init_size,\
+        SpxListNodeNewDelegate *new,\
+        void *arg,\
+        SpxListNodeFreeDelegate *free,\
+        err_t *err){
+    struct spx_list *list = spx_alloc_alone(sizeof(*list),err);
+    if(NULL == list){
+        return NULL;
+    }
+    list->log = log;
+    list->curr_size = 0;
+    list->free_size = init_size;
+    list->size = init_size;
+    list->node_free = free;
+    list->nodes = spx_alloc(init_size,sizeof(struct spx_list_node),err);
+    if(NULL == list->nodes){
+        SpxFree(list);
+        return NULL;
+    }
+    if(NULL != new) {}
+    size_t i = 0;
+    for(;i < init_size; i++){
+        void *v = new(i,arg,err);
+        if(NULL == v){
+            spx_list_free(&list);
+            return NULL;
+        }
+        *err =  spx_list_add(list,v);
+        if(0 != *err){
+            spx_list_free(&list);
+            return NULL;
+        }
+    }
+    return list;
+
+}
+
 void *spx_list_get(struct spx_list *list,int idx){
     if(SpxAbs(idx) >=(int) list->curr_size){
         return NULL;
