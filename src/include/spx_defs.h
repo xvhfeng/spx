@@ -18,6 +18,22 @@ extern "C" {
 #define SpxLogError 3
 #define SpxLogMark 4
 
+
+const char *SpxLogDesc[] = {
+    "Debug.",
+    "Info.",
+    "Warn.",
+    "Error.",
+    "Mark."
+};
+const int SpxLogDescSize[] = {
+    6,
+    5,
+    5,
+    6,
+    5
+};
+
 #define SpxLog1(log,level,info) \
     if(NULL != (log)) {\
         (log)(level,((string_t) "File:%s,Line:%d,Func:%s.%s."), \
@@ -55,10 +71,27 @@ extern "C" {
 #define SpxLineSize 2047
 #define SpxLineEndDlmtString "\n"
 #define SpxKeyStringSize 255
+#define SpxHostNameSize 255
 
 #define SpxGB (1024 * 1024 * 1024)
 #define SpxMB (1024 * 1024)
 #define SpxKB (1024)
+
+#define SpxDiskUnitPB 0
+#define SpxDiskUnitTB 1
+#define SpxDiskUnitGB 2
+#define SpxDiskUnitMB 3
+#define SpxDiskUnitKB 4
+#define SpxDiskUnitB 5
+
+const char *spx_diskunit_desc[]={
+    "PB",
+    "TB",
+    "GB",
+    "MB",
+    "KB",
+    "B"
+};
 
 #define SpxIpv4Size 15
 

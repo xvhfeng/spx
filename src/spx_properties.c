@@ -59,7 +59,8 @@ r1:
     return NULL;
 
 }
-struct spx_properties *spx_properties_parser(struct spx_properties *p,string_t filename,err_t *err){
+struct spx_properties *spx_properties_parser(struct spx_properties *p,\
+        string_t filename,err_t *err){
     SpxErrReset;
     if(NULL != p->before){
         *err = p->before(p);

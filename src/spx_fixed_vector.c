@@ -44,7 +44,7 @@ struct spx_fixed_vector *spx_fixed_vector_new(SpxLogDelegate *log,\
         if(NULL == n){
             goto r1;
         }
-        void *v = node_new_handle(arg,err);
+        void *v = node_new_handle(i,arg,err);
         if(NULL == v){
             SpxFree(n);
             goto r1;

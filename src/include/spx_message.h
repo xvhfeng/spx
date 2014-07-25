@@ -24,6 +24,7 @@ struct spx_msg{
 struct spx_msg *spx_msg_new(const size_t len,err_t *err);
 err_t spx_msg_free(struct spx_msg **ctx);
 err_t spx_msg_seek(struct spx_msg *ctx,off_t offset,int whence);
+void spx_msg_clear(struct spx_msg *ctx);
 
 err_t spx_msg_pack_int( struct spx_msg *ctx,const int v);
 err_t spx_msg_pack_i8(struct spx_msg *ctx,const i8_t v);

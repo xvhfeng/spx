@@ -29,7 +29,7 @@
 struct spx_nio_context_pool *g_spx_nio_context_pool = NULL;
 
 
- void *spx_nio_context_new(void *arg,err_t *err){
+ void *spx_nio_context_new(size_t idx,void *arg,err_t *err){
 
     struct spx_nio_context_arg *n = (struct spx_nio_context_arg *) arg;
     struct spx_nio_context *nio_context = NULL;
@@ -39,7 +39,7 @@ struct spx_nio_context_pool *g_spx_nio_context_pool = NULL;
     }
 
     nio_context->log = n->log;
-    nio_context->loop = ev_loop_new(EVFLAG_AUTO);
+    nio_context->idx = idx;
     nio_context->timeout = n->timeout;
     nio_context->nio_reader = n->nio_reader;
     nio_context->nio_writer = n->nio_writer;
@@ -47,10 +47,6 @@ struct spx_nio_context_pool *g_spx_nio_context_pool = NULL;
     nio_context->reader_header_validator = n->reader_header_validator;
     nio_context->writer_body_process = n->writer_body_process;
     nio_context->reader_header_validator_fail = n->reader_header_validator_fail;
-    if(0 < nio_context->timeout){
-        ev_set_io_collect_interval (nio_context->loop,(ev_tstamp) nio_context->timeout);
-        ev_set_timeout_collect_interval (nio_context->loop,(ev_tstamp) nio_context->timeout);
-    }
     nio_context->config = n->config;
     return nio_context;
 
@@ -58,8 +54,6 @@ struct spx_nio_context_pool *g_spx_nio_context_pool = NULL;
 
 err_t spx_nio_context_free(void **arg){
     struct spx_nio_context **nio_context = (struct spx_nio_context **) arg;
-    ev_break((*nio_context)->loop,EVBREAK_ALL);
-    ev_loop_destroy((*nio_context)->loop);
     spx_nio_context_clear(*nio_context);
     SpxFree(*nio_context);
     return 0;
@@ -102,10 +96,11 @@ void spx_nio_context_clear(struct spx_nio_context *nio_context){
     nio_context->lazy_recv_offet = 0;
     nio_context->lazy_recv_size = 0;
     nio_context->err = 0;
+    nio_context->moore = SpxNioMooreNormal;
 }
 
 struct spx_nio_context_pool *spx_nio_context_pool_new(SpxLogDelegate *log,\
-        struct spx_properties *config,\
+        void *config,\
         size_t size,u32_t timeout,\
         SpxNioDelegate *nio_reader,\
         SpxNioDelegate *nio_writer,\

@@ -16,6 +16,11 @@ typedef enum {
 }bool_t;
 #endif
 
+const char *spx_bool_desc[] = {
+    "false",
+    "true"
+};
+
 #ifndef byte_t
     typedef signed char byte_t;
 #endif

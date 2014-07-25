@@ -59,6 +59,8 @@ err_t spx_socket_set(const int fd,\
         bool_t is_nodelay,\
         bool_t is_timeout,size_t timeout);
 err_t spx_socket_connect(int fd,string_t ip,int port);
+string_t spx_socket_getipbyname(string_t name,err_t *err);
+bool_t spx_socket_is_ip(string_t ip);
 
 #ifdef __cplusplus
 }

@@ -26,38 +26,38 @@
 #include "include/spx_errno.h"
 
 
-err_t  spx_nio_regedit_reader(struct spx_nio_context *nio_context){
+err_t  spx_nio_regedit_reader(struct ev_loop *loop,int fd,struct spx_nio_context *nio_context){
     if (NULL == nio_context) {
         return EINVAL;
     }
 
-    if (0 >= nio_context->fd) {
+    if (0 >= fd) {
         return EINVAL;
     }
 
 
     nio_context->lifecycle = SpxNioLifeCycleHeader;
-    ev_io_init(&(nio_context->watcher),nio_context->nio_reader,nio_context->fd,EV_READ);
+    ev_io_init(&(nio_context->watcher),nio_context->nio_reader,fd,EV_READ);
     nio_context->watcher.data = nio_context;//libev not the set function
-    ev_io_start(nio_context->loop,&(nio_context->watcher));
-    ev_run(nio_context->loop,0);
+    ev_io_start(loop,&(nio_context->watcher));
+    ev_run(loop,0);
     return 0;
 }
 
-err_t  spx_nio_regedit_writer(struct spx_nio_context *nio_context){
+err_t  spx_nio_regedit_writer(struct ev_loop *loop,int fd,struct spx_nio_context *nio_context){
     if (NULL == nio_context) {
         return EINVAL;
     }
 
-    if (0 >= nio_context->fd) {
+    if (0 >= fd) {
         return EINVAL;
     }
 
     nio_context->lifecycle = SpxNioLifeCycleHeader;
-    ev_io_init(&(nio_context->watcher),nio_context->nio_writer,nio_context->fd,EV_WRITE);
+    ev_io_init(&(nio_context->watcher),nio_context->nio_writer,fd,EV_WRITE);
     nio_context->watcher.data = nio_context;
-    ev_io_start(nio_context->loop,&(nio_context->watcher));
-    ev_run(nio_context->loop,0);
+    ev_io_start(loop,&(nio_context->watcher));
+    ev_run(loop,0);
     return 0;
 }
 
@@ -69,7 +69,7 @@ void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents){
     size_t len = 0;
     err_t err = 0;
     struct spx_nio_context *nio_context =(struct spx_nio_context *) watcher->data;
-    ev_io_stop(nio_context->loop,watcher);
+//    ev_io_stop(nio_context->loop,watcher);
     if(SpxNioLifeCycleHeader == nio_context->lifecycle){
         struct spx_msg *ctx = spx_msg_new(SpxMsgHeaderSize,&err);
         if(NULL == ctx){
@@ -132,7 +132,7 @@ void spx_nio_writer(struct ev_loop *loop,ev_io *watcher,int revents){
     size_t len = 0;
     err_t err = 0;
     struct spx_nio_context *nio_context =(struct spx_nio_context *) watcher->data;
-    ev_io_stop(nio_context->loop,watcher);
+//    ev_io_stop(nio_context->loop,watcher);
     if(SpxNioLifeCycleHeader == nio_context->lifecycle){
         struct spx_msg *ctx = spx_header_to_msg(nio_context->writer_header,SpxMsgHeaderSize,&err);
         if(NULL == ctx){

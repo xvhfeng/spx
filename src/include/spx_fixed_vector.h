@@ -25,7 +25,7 @@ extern "C" {
 #include "spx_vector.h"
 
 
-    typedef void *SpxFixedVectorValueNewDeledate(void *arg,err_t *err);
+    typedef void *SpxFixedVectorValueNewDeledate(size_t idx,void *arg,err_t *err);
 
     struct spx_fixed_vector{
         struct spx_vector_node *header;

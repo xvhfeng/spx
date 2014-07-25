@@ -1,4 +1,4 @@
-#include <stdlib.h>
+ #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
 
@@ -647,6 +647,21 @@ string_t spx_string_join_string(string_t *argv,\
     }
     return join;
 }/*}}}*/
+
+bool_t spx_string_exist(string_t s,char c){
+    struct sds *sh = NULL;
+    sh = (void*) (s-sizeof *sh);;
+    int i = 0;
+    for( ; i < sh->len; i++){
+        if(c == sh->buf[i]){
+            return true;
+        }
+    }
+    return false;
+}
+
+
+
 
 /* Low level functions exposed to the user API */
 string_t spxStringMakeRoomFor(string_t s, size_t addlen,err_t *err) {/*{{{*/

@@ -113,11 +113,12 @@ void spx_sio_reader(struct ev_loop *loop,ev_io *watcher,int revents){
             goto r1;
         }
         if (0!= (sio_context->err = spx_set_nb(nio_context->fd))) {
+            SpxClose(client_sock);
             goto r1;
         }
         nio_context->fd = client_sock;
         nio_context->client_ip = spx_ip_get(client_sock,&(sio_context->err));
-        sio_context->err = spx_nio_regedit_reader(nio_context);
+        sio_context->err = spx_nio_regedit_reader(client_sock,nio_context);
 r1:
         spx_nio_context_pool_push(g_spx_nio_context_pool,nio_context);
     }

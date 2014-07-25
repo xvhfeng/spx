@@ -43,6 +43,10 @@ extern "C" {
 #define SpxNioLifeCycleHeader 1
 #define SpxNioLifeCycleBody 2
 
+#define SpxNioMooreNormal 0
+#define SpxNioMooreRequest 1
+#define SpxNioMooreResponse 2
+
     struct spx_msg_header{
         u32_t version;
         u32_t protocol;
@@ -60,7 +64,7 @@ extern "C" {
         SpxNioHeaderValidatorFailDelegate *reader_header_validator_fail;
         SpxNioBodyProcessDelegate *reader_body_process;
         SpxNioBodyProcessDelegate *writer_body_process;
-        struct spx_properties *config;
+        void *config;
         SpxLogDelegate *log;
     };
 
@@ -69,14 +73,15 @@ extern "C" {
         ev_async notify;
         int fd;
         int use;
+        size_t idx;
         err_t err;
         u32_t timeout;
-        struct ev_loop *loop;
         ev_timer timer;
         SpxNioDelegate *nio_writer;
         SpxNioDelegate *nio_reader;
         SpxLogDelegate *log;
         u32_t lifecycle;
+        u32_t moore;
 
         struct spx_msg_header *reader_header;
         struct spx_msg *reader_header_ctx;
@@ -92,7 +97,7 @@ extern "C" {
 
         string_t client_ip;
 
-        struct spx_properties *config;
+        void *config;
 
         /*
          * if lazy recv,must set the offset in the header by client
@@ -113,12 +118,12 @@ extern "C" {
         struct spx_fixed_vector *pool;
     };
 
-    void *spx_nio_context_new(void *arg,err_t *err);
+    void *spx_nio_context_new(size_t idx,void *arg,err_t *err);
     err_t spx_nio_context_free(void **arg);
     void spx_nio_context_clear(struct spx_nio_context *nio_context);
 
     struct spx_nio_context_pool *spx_nio_context_pool_new(SpxLogDelegate *log,\
-            struct spx_properties *config,\
+            void *config,\
             size_t size,u32_t timeout,\
             SpxNioDelegate *nio_reader,\
             SpxNioDelegate *nio_writer,\

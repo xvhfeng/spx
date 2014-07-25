@@ -35,6 +35,7 @@ extern "C" {
         pthread_t tid;
         int pipes[2];
         err_t err;
+        size_t idx;
         SpxSioDelegate *sio_reader;
         SpxLogDelegate *log;
     };

@@ -30,10 +30,10 @@ struct spx_sio_context_pool_node_arg{
     SpxLogDelegate *log;
 };
 
-spx_private void *spx_sio_context_pool_node_new(void *arg,err_t *err);
+spx_private void *spx_sio_context_pool_node_new(size_t idx,void *arg,err_t *err);
 spx_private err_t spx_sio_context_pool_node_free(void **arg);
 
-spx_private void *spx_sio_context_pool_node_new(void *arg,err_t *err){
+spx_private void *spx_sio_context_pool_node_new(size_t idx,void *arg,err_t *err){
 
     struct spx_sio_context_pool_node_arg *n = (struct spx_sio_context_pool_node_arg *) arg;
     struct spx_sio_context *sio_context = NULL;
@@ -44,6 +44,7 @@ spx_private void *spx_sio_context_pool_node_new(void *arg,err_t *err){
     sio_context->loop = ev_loop_new(EVFLAG_AUTO);
     sio_context->log = n->log;
     sio_context->sio_reader = n->sio_reader;
+    sio_context->idx = idx;
     if(-1 == pipe(sio_context->pipes)){
         *err = errno;
         ev_loop_destroy(sio_context->loop);

@@ -16,20 +16,6 @@
 #include "include/spx_defs.h"
 #include "include/spx_time.h"
 
-const char *SpxLogDesc[] = {
-    "Debug.",
-    "Info.",
-    "Warn.",
-    "Error.",
-    "Mark."
-};
-const int SpxLogDescSize[] = {
-    6,
-    5,
-    5,
-    6,
-    5
-};
 
 
 spx_private struct spx_log *g_log = NULL;

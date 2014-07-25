@@ -29,6 +29,7 @@
 #include <sys/time.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 
 #include "include/spx_types.h"
 #include "include/spx_string.h"
@@ -303,5 +304,46 @@ err_t spx_socket_set(const int fd,\
     return 0;
 }
 
+string_t spx_socket_getipbyname(string_t name,err_t *err){
+    string_t hostname = NULL;
+    string_t ip = NULL;
+    if(NULL == name){
+        hostname = spx_string_newlen(NULL,SpxHostNameSize,err);
+        if(NULL == hostname){
+            return NULL;
+        }
+        *err = gethostname(hostname,SpxHostNameSize);
+        if(0 != *err){
+            goto r1;
+        }
+    }else {
+        hostname = name;
+    }
+    struct hostent *hosts = gethostbyname(hostname);
+    if(NULL == hosts){
+        *err = h_errno;
+        goto r1;
+    }
+    struct in_addr addr;
+    SpxMemcpy(&addr, hosts->h_addr_list[0], sizeof(struct in_addr));
+    ip = spx_string_newlen(NULL,SpxIpv4Size,err);
+    if(NULL == ip){
+        goto r1;
+    }
+    string_t newip = spx_string_cat(ip,inet_ntoa(addr),err);
+    if(NULL == newip){
+        spx_string_free(ip);
+        goto r1;
+    }
+r1:
+    if(NULL == name){
+        spx_string_free(hostname);
+    }
+    return ip;
+}
 
-
+bool_t spx_socket_is_ip(string_t ip){
+    struct in_addr s;
+    int rc = inet_pton(AF_INET, ip, (void *)&s);
+    return 1 == rc ? true : false;
+}

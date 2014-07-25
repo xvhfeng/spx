@@ -202,6 +202,7 @@ string_t spx_string_join(char **argv, int argc, char *sep, size_t seplen,err_t *
 string_t spx_string_join_string(string_t *argv,\
         int argc, const char *sep, size_t seplen,err_t *err);
 
+bool_t spx_string_exist(string_t s,char c);
 /* Low level functions exposed to the user API */
 /* Enlarge the free space at the end of the sds string so that the caller
  * is sure that after calling this function can overwrite up to addlen

@@ -23,8 +23,8 @@ extern "C" {
 
 #include "spx_nio_context.h"
 
-err_t  spx_nio_regedit_reader(struct spx_nio_context *nio_context);
-err_t  spx_nio_regedit_writer(struct spx_nio_context *nio_context);
+err_t  spx_nio_regedit_reader(struct ev_loop *loop,int fd,struct spx_nio_context *nio_context);
+err_t  spx_nio_regedit_writer(struct ev_loop *loop,int fd,struct spx_nio_context *nio_context);
 
 void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents);
 void spx_nio_writer(struct ev_loop *loop,ev_io *watcher,int revents);
