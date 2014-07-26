@@ -69,7 +69,7 @@ struct spx_datetime *spx_datetime_dup(struct spx_datetime *dt,err_t *err){
     if(NULL == new){
         return NULL;
     }
-    SpxMemcpy(new,dt,sizeof(*new));
+    memcpy(new,dt,sizeof(*new));
     return new;
 }
 

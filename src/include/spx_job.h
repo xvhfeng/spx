@@ -1,7 +1,7 @@
 /*
  * =====================================================================================
  *
- *       Filename:  spx_nio_context.h
+ *       Filename:  spx_job.h
  *
  *    Description:
  *
@@ -15,8 +15,8 @@
  *
  * =====================================================================================
  */
-#ifndef _SPX_NIO_CONTEXT_H_
-#define _SPX_NIO_CONTEXT_H_
+#ifndef _SPX_JOB_H_
+#define _SPX_JOB_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -29,14 +29,14 @@ extern "C" {
 #include "spx_properties.h"
 
 
-    struct spx_nio_context;
+    struct spx_job_context;
     typedef void (SpxNioDelegate)(struct ev_loop *loop,ev_io *watcher,int revents);
-    typedef void (SpxNioBodyProcessDelegate)(int fd,struct spx_nio_context *nio_context);
-    typedef bool_t (SpxNioHeaderValidatorDelegate)(struct spx_nio_context *nio_context);
-    typedef void (SpxNioHeaderValidatorFailDelegate)(struct spx_nio_context *nio_context);
+    typedef void (SpxNioBodyProcessDelegate)(int fd,struct spx_job_context *nio_context);
+    typedef bool_t (SpxNioHeaderValidatorDelegate)(struct spx_job_context *nio_context);
+    typedef void (SpxNioHeaderValidatorFailDelegate)(struct spx_job_context *nio_context);
     typedef void (SpxNotifyDelegate)(ev_io *watcher,int revents);
 
-    extern struct spx_nio_context_pool *g_spx_nio_context_pool;
+    extern struct spx_job_pool *g_spx_job_pool;
 
 #define SpxMsgHeaderSize (3 * sizeof(u32_t) + 2 * sizeof(u64_t))
 #define SpxNioLifeCycleNormal 0
@@ -56,7 +56,7 @@ extern "C" {
     };
 
 
-    struct spx_nio_context_arg{
+    struct spx_job_context_transport{
         u32_t timeout;
         SpxNioDelegate *nio_reader;
         SpxNioDelegate *nio_writer;
@@ -68,9 +68,8 @@ extern "C" {
         SpxLogDelegate *log;
     };
 
-    struct spx_nio_context{
+    struct spx_job_context{
         ev_io watcher;
-        ev_async notify;
         int fd;
         int use;
         size_t idx;
@@ -113,16 +112,16 @@ extern "C" {
         size_t sendfile_size;
     };
 
-    struct spx_nio_context_pool {
+    struct spx_job_pool {
         SpxLogDelegate *log;
         struct spx_fixed_vector *pool;
     };
 
-    void *spx_nio_context_new(size_t idx,void *arg,err_t *err);
-    err_t spx_nio_context_free(void **arg);
-    void spx_nio_context_clear(struct spx_nio_context *nio_context);
+    void *spx_job_context_new(size_t idx,void *arg,err_t *err);
+    err_t spx_job_context_free(void **arg);
+    void spx_job_context_clear(struct spx_job_context *jcontext);
 
-    struct spx_nio_context_pool *spx_nio_context_pool_new(SpxLogDelegate *log,\
+    struct spx_job_pool *spx_job_pool_new(SpxLogDelegate *log,\
             void *config,\
             size_t size,u32_t timeout,\
             SpxNioDelegate *nio_reader,\
@@ -133,9 +132,9 @@ extern "C" {
             SpxNioBodyProcessDelegate *write_body_process,\
             err_t *err);
 
-    struct spx_nio_context *spx_nio_context_pool_pop(struct spx_nio_context_pool *pool,err_t *err);
-    err_t spx_nio_context_pool_push(struct spx_nio_context_pool *pool,struct spx_nio_context *nio_context);
-    err_t spx_nio_context_pool_free(struct spx_nio_context_pool **pool);
+    struct spx_job_context *spx_job_pool_pop(struct spx_job_pool *pool,err_t *err);
+    err_t spx_job_pool_push(struct spx_job_pool *pool,struct spx_job_context *jcontext);
+    err_t spx_job_pool_free(struct spx_job_pool **pool);
 
     struct spx_msg_header *spx_msg_to_header(struct spx_msg *ctx,err_t *err);
     struct spx_msg *spx_header_to_msg(struct spx_msg_header *header,size_t len,err_t *err);

@@ -32,7 +32,7 @@ extern "C" {
      * wrapper function,just as string_t and struct sds
      */
 
-#include "include/spx_types.h"
+#include "spx_types.h"
 
     struct spx_ref{
         u32_t ref;

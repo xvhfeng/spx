@@ -21,16 +21,20 @@
 extern "C" {
 #endif
 
-#include "spx_nio_context.h"
+#include <stdlib.h>
+#include <ev.h>
 
-err_t  spx_nio_regedit_reader(struct ev_loop *loop,int fd,struct spx_nio_context *nio_context);
-err_t  spx_nio_regedit_writer(struct ev_loop *loop,int fd,struct spx_nio_context *nio_context);
+#include "spx_types.h"
+#include "spx_job.h"
+
+err_t  spx_nio_regedit_reader(struct ev_loop *loop,int fd,struct spx_job_context *jcontext);
+err_t  spx_nio_regedit_writer(struct ev_loop *loop,int fd,struct spx_job_context *jcontext);
 
 void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents);
 void spx_nio_writer(struct ev_loop *loop,ev_io *watcher,int revents);
 
-void spx_nio_reader_body_handler(int fd,struct spx_nio_context *nio_context);
-void spx_nio_writer_body_handler(int fd,struct spx_nio_context *nio_context);
+void spx_nio_reader_body_handler(int fd,struct spx_job_context *jcontext);
+void spx_nio_writer_body_handler(int fd,struct spx_job_context *jcontext);
 
 
 

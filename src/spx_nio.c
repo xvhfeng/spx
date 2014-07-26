@@ -19,15 +19,15 @@
 #include <ev.h>
 
 #include "include/spx_types.h"
-#include "include/spx_nio_context.h"
+#include "include/spx_job.h"
 #include "include/spx_io.h"
 #include "include/spx_defs.h"
 #include "include/spx_nio.h"
 #include "include/spx_errno.h"
 
 
-err_t  spx_nio_regedit_reader(struct ev_loop *loop,int fd,struct spx_nio_context *nio_context){
-    if (NULL == nio_context) {
+err_t  spx_nio_regedit_reader(struct ev_loop *loop,int fd,struct spx_job_context *jcontext){
+    if (NULL == jcontext) {
         return EINVAL;
     }
 
@@ -36,16 +36,16 @@ err_t  spx_nio_regedit_reader(struct ev_loop *loop,int fd,struct spx_nio_context
     }
 
 
-    nio_context->lifecycle = SpxNioLifeCycleHeader;
-    ev_io_init(&(nio_context->watcher),nio_context->nio_reader,fd,EV_READ);
-    nio_context->watcher.data = nio_context;//libev not the set function
-    ev_io_start(loop,&(nio_context->watcher));
+    jcontext->lifecycle = SpxNioLifeCycleHeader;
+    ev_io_init(&(jcontext->watcher),jcontext->nio_reader,fd,EV_READ);
+    jcontext->watcher.data = jcontext;//libev not the set function
+    ev_io_start(loop,&(jcontext->watcher));
     ev_run(loop,0);
     return 0;
 }
 
-err_t  spx_nio_regedit_writer(struct ev_loop *loop,int fd,struct spx_nio_context *nio_context){
-    if (NULL == nio_context) {
+err_t  spx_nio_regedit_writer(struct ev_loop *loop,int fd,struct spx_job_context *jcontext){
+    if (NULL == jcontext) {
         return EINVAL;
     }
 
@@ -53,10 +53,10 @@ err_t  spx_nio_regedit_writer(struct ev_loop *loop,int fd,struct spx_nio_context
         return EINVAL;
     }
 
-    nio_context->lifecycle = SpxNioLifeCycleHeader;
-    ev_io_init(&(nio_context->watcher),nio_context->nio_writer,fd,EV_WRITE);
-    nio_context->watcher.data = nio_context;
-    ev_io_start(loop,&(nio_context->watcher));
+    jcontext->lifecycle = SpxNioLifeCycleHeader;
+    ev_io_init(&(jcontext->watcher),jcontext->nio_writer,fd,EV_WRITE);
+    jcontext->watcher.data = jcontext;
+    ev_io_start(loop,&(jcontext->watcher));
     ev_run(loop,0);
     return 0;
 }
@@ -68,59 +68,59 @@ void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents){
     }
     size_t len = 0;
     err_t err = 0;
-    struct spx_nio_context *nio_context =(struct spx_nio_context *) watcher->data;
-//    ev_io_stop(nio_context->loop,watcher);
-    if(SpxNioLifeCycleHeader == nio_context->lifecycle){
+    struct spx_job_context *jcontext =(struct spx_job_context *) watcher->data;
+//    ev_io_stop(jcontext->loop,watcher);
+    if(SpxNioLifeCycleHeader == jcontext->lifecycle){
         struct spx_msg *ctx = spx_msg_new(SpxMsgHeaderSize,&err);
         if(NULL == ctx){
-            SpxLog2(nio_context->log,SpxLogError,err,\
+            SpxLog2(jcontext->log,SpxLogError,err,\
                     "alloc reader header msg is fail.");
-            nio_context->err = err;
+            jcontext->err = err;
             return;
         }
-        nio_context->reader_header_ctx = ctx;
+        jcontext->reader_header_ctx = ctx;
         err = spx_read_to_msg_nb(watcher->fd,ctx,SpxMsgHeaderSize,&len);
         if(0 != err){
-            SpxLogFmt2(nio_context->log,SpxLogError,err,\
+            SpxLogFmt2(jcontext->log,SpxLogError,err,\
                     "read reader header msg is fail.client:%s.",\
-                    nio_context->client_ip);
-            nio_context->err = err;
+                    jcontext->client_ip);
+            jcontext->err = err;
             return;
         }
         if(SpxMsgHeaderSize != len){
-            SpxLogFmt1(nio_context->log,SpxLogError,\
+            SpxLogFmt1(jcontext->log,SpxLogError,\
                     "read reader header msg is fail,read len is %d.",\
                     len);
-            nio_context->err = err;
+            jcontext->err = err;
             return;
         }
         struct spx_msg_header *header = spx_msg_to_header(ctx,&err);
         if(NULL == header){
-            SpxLog2(nio_context->log,SpxLogError,err,\
+            SpxLog2(jcontext->log,SpxLogError,err,\
                     "parser msg to header is fail.");
-            nio_context->err = err;
+            jcontext->err = err;
             return;
         }
-        nio_context->reader_header = header;
-        nio_context->lifecycle = SpxNioLifeCycleBody;
+        jcontext->reader_header = header;
+        jcontext->lifecycle = SpxNioLifeCycleBody;
     }
 
-    if(NULL != nio_context->reader_header_validator \
-            && !nio_context->reader_header_validator(nio_context)){
-        SpxLogFmt1(nio_context->log,SpxLogError,\
+    if(NULL != jcontext->reader_header_validator \
+            && !jcontext->reader_header_validator(jcontext)){
+        SpxLogFmt1(jcontext->log,SpxLogError,\
                 "validate header is fail.client:%s.",\
-                nio_context->client_ip);
+                jcontext->client_ip);
         // must send msg to client
-        nio_context->err = EBADHEADER;
-        if(NULL != nio_context->reader_header_validator_fail){
-            nio_context->reader_header_validator_fail(nio_context);
+        jcontext->err = EBADHEADER;
+        if(NULL != jcontext->reader_header_validator_fail){
+            jcontext->reader_header_validator_fail(jcontext);
         }
         return;
     }
 
     len = 0;
-    if(SpxNioLifeCycleBody == nio_context->lifecycle){
-        nio_context->reader_body_process(watcher->fd, nio_context);
+    if(SpxNioLifeCycleBody == jcontext->lifecycle){
+        jcontext->reader_body_process(watcher->fd, jcontext);
     }
     return;
 }
@@ -131,90 +131,90 @@ void spx_nio_writer(struct ev_loop *loop,ev_io *watcher,int revents){
     }
     size_t len = 0;
     err_t err = 0;
-    struct spx_nio_context *nio_context =(struct spx_nio_context *) watcher->data;
-//    ev_io_stop(nio_context->loop,watcher);
-    if(SpxNioLifeCycleHeader == nio_context->lifecycle){
-        struct spx_msg *ctx = spx_header_to_msg(nio_context->writer_header,SpxMsgHeaderSize,&err);
+    struct spx_job_context *jcontext =(struct spx_job_context *) watcher->data;
+//    ev_io_stop(jcontext->loop,watcher);
+    if(SpxNioLifeCycleHeader == jcontext->lifecycle){
+        struct spx_msg *ctx = spx_header_to_msg(jcontext->writer_header,SpxMsgHeaderSize,&err);
         if(NULL == ctx){
-            SpxLog2(nio_context->log,SpxLogError,err,\
+            SpxLog2(jcontext->log,SpxLogError,err,\
                     "writer serial to ctx is fail.");
-            nio_context->err = err;
+            jcontext->err = err;
             return;
         }
-        nio_context->writer_header_ctx = ctx;
+        jcontext->writer_header_ctx = ctx;
         err =  spx_write_from_msg_nb(watcher->fd,ctx,SpxMsgHeaderSize,&len);
         if(0 != err){
-            SpxLogFmt2(nio_context->log,SpxLogError,err,\
+            SpxLogFmt2(jcontext->log,SpxLogError,err,\
                     "write writer header is fail.client:&s.",\
-                    nio_context->client_ip);
-            nio_context->err = err;
+                    jcontext->client_ip);
+            jcontext->err = err;
             return;
         }
 
         if(SpxMsgHeaderSize != len){
-            SpxLogFmt1(nio_context->log,SpxLogError,\
+            SpxLogFmt1(jcontext->log,SpxLogError,\
                     "write writer header is fail.len:%d.",\
                     len);
-            nio_context->err = err;
+            jcontext->err = err;
             return;
         }
-        nio_context->lifecycle = SpxNioLifeCycleBody;
+        jcontext->lifecycle = SpxNioLifeCycleBody;
     }
 
     len = 0;
-    if(SpxNioLifeCycleBody == nio_context->lifecycle){
-        nio_context->writer_body_process(watcher->fd,nio_context);
+    if(SpxNioLifeCycleBody == jcontext->lifecycle){
+        jcontext->writer_body_process(watcher->fd,jcontext);
     }
     return;
 }
 
 
-void spx_nio_writer_body_handler(int fd,struct spx_nio_context *nio_context){
+void spx_nio_writer_body_handler(int fd,struct spx_job_context *jcontext){
 
-    if(SpxNioLifeCycleBody != nio_context->lifecycle){
+    if(SpxNioLifeCycleBody != jcontext->lifecycle){
         return;
     }
     size_t len = 0;
-    nio_context->err =  spx_write_from_msg_nb(fd,nio_context->writer_body_ctx,nio_context->writer_header->bodylen,&len);
-    if(0 != nio_context->err){
-        SpxLogFmt2(nio_context->log,SpxLogError,nio_context->err,\
+    jcontext->err =  spx_write_from_msg_nb(fd,jcontext->writer_body_ctx,jcontext->writer_header->bodylen,&len);
+    if(0 != jcontext->err){
+        SpxLogFmt2(jcontext->log,SpxLogError,jcontext->err,\
                 "write  header is fail.client:&s.",\
-                nio_context->client_ip);
+                jcontext->client_ip);
         return;
     }
 
     if(SpxMsgHeaderSize != len){
-        SpxLogFmt1(nio_context->log,SpxLogError,\
+        SpxLogFmt1(jcontext->log,SpxLogError,\
                 "write  header is fail.len:%d.",\
                 len);
         return;
     }
-    nio_context->lifecycle = SpxNioLifeCycleNormal;
+    jcontext->lifecycle = SpxNioLifeCycleNormal;
     return;
 }
 
 
-void spx_nio_reader_body_handler(int fd,struct spx_nio_context *nio_context){
-    struct spx_msg_header *header = nio_context->reader_header;
-    struct spx_msg *ctx = spx_msg_new(header->bodylen,&(nio_context->err));
+void spx_nio_reader_body_handler(int fd,struct spx_job_context *jcontext){
+    struct spx_msg_header *header = jcontext->reader_header;
+    struct spx_msg *ctx = spx_msg_new(header->bodylen,&(jcontext->err));
     if(NULL == ctx){
-        SpxLogFmt2(nio_context->log,SpxLogError,nio_context->err,\
+        SpxLogFmt2(jcontext->log,SpxLogError,jcontext->err,\
                 "reader body is fail.client:%s.",\
-                nio_context->client_ip);
+                jcontext->client_ip);
         return;
     }
-    nio_context->reader_body_ctx = ctx;
+    jcontext->reader_body_ctx = ctx;
     size_t len = 0;
-    nio_context->err = spx_read_to_msg_nb(fd,ctx,header->bodylen,&len);
-    if(0 != nio_context->err){
-        SpxLogFmt2(nio_context->log,SpxLogError,nio_context->err,\
+    jcontext->err = spx_read_to_msg_nb(fd,ctx,header->bodylen,&len);
+    if(0 != jcontext->err){
+        SpxLogFmt2(jcontext->log,SpxLogError,jcontext->err,\
                 "reader body is fail.client:%s.",\
-                nio_context->client_ip);
+                jcontext->client_ip);
         return;
     }
     if(header->bodylen != len){
-        nio_context->err = ENOENT;
-        SpxLogFmt2(nio_context->log,SpxLogError,nio_context->err,\
+        jcontext->err = ENOENT;
+        SpxLogFmt2(jcontext->log,SpxLogError,jcontext->err,\
                 "reader body is fail.bodylen:%lld,real body len:%lld.",
                 header->bodylen,len);
         return;

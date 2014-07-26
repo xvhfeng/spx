@@ -26,7 +26,7 @@ u32_t spx_random(u32_t idx){
     pthread_t tid = pthread_self();
     pid_t pid = getpid();
     time_t  time = spx_now();
-    u32_t seed = (u32_t) tid & pid & idx & time & PHI;
+    u64_t seed = (u64_t) (((u64_t) tid) & ((u32_t) pid) & idx & time & PHI);
      srand(seed);
     u32_t r = rand();
     return r;

@@ -325,7 +325,7 @@ string_t spx_socket_getipbyname(string_t name,err_t *err){
         goto r1;
     }
     struct in_addr addr;
-    SpxMemcpy(&addr, hosts->h_addr_list[0], sizeof(struct in_addr));
+    memcpy(&addr, hosts->h_addr_list[0], sizeof(struct in_addr));
     ip = spx_string_newlen(NULL,SpxIpv4Size,err);
     if(NULL == ip){
         goto r1;

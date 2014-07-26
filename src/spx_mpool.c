@@ -197,7 +197,7 @@ err_t spx_mpool_reset(struct spx_mpool * const p){/*{{{*/
 
 err_t spx_mpool_free(struct spx_mpool *const p,void **e){/*{{{*/
     err_t rc = 0;
-    struct spx_mpool_node *n =(struct spx_mpool_node *) ((*e) - sizeof(struct spx_mpool_node));
+    struct spx_mpool_node *n =(struct spx_mpool_node *) (((char *)(*e)) - sizeof(struct spx_mpool_node));
     if(n->size > p->limit){
         struct spx_mpool_alone *ptr =(struct spx_mpool_alone *)\
                                    *e - sizeof(struct spx_mpool_alone);

@@ -26,7 +26,8 @@ const char *SpxLogDesc[] = {
     "Error.",
     "Mark."
 };
-const int SpxLogDescSize[] = {
+
+ const int SpxLogDescSize[] = {
     6,
     5,
     5,
@@ -84,7 +85,7 @@ const int SpxLogDescSize[] = {
 #define SpxDiskUnitKB 4
 #define SpxDiskUnitB 5
 
-const char *spx_diskunit_desc[]={
+ char *spx_diskunit_desc[]={
     "PB",
     "TB",
     "GB",

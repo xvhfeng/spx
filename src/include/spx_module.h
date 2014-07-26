@@ -12,8 +12,8 @@
  *
  * =====================================================================================
  */
-#ifndef _SPX_THREAD_CONTEXT_H_
-#define _SPX_THREAD_CONTEXT_H_
+#ifndef _SPX_MODULE_H_
+#define _SPX_MODULE_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -29,50 +29,50 @@ extern "C" {
 #include "spx_fixed_vector.h"
 
 
-typedef void (SpxNoticeDelegate)(struct ev_loop *loop,ev_io *watcher,int revents);
+typedef void (SpxTriggerDelegate)(struct ev_loop *loop,ev_io *watcher,int revents);
 
 struct spx_thread_context{
-    size_t idx;
-    pthread_t tid;
     struct ev_loop *loop;
     SpxLogDelegate *log;
+    size_t idx;
+    pthread_t tid;
     int pipe[2];
 };
 
-struct spx_notice{
+struct spx_trigger_context{
     ev_io watcher;
-    SpxNoticeDelegate *notify_handler;
-    size_t idx;
+    SpxTriggerDelegate *trigger_handler;
     SpxLogDelegate *log;
+    size_t idx;
 };
 
-struct spx_notice_context{
-    SpxLogDelegate *log;
-    struct spx_list *thread_contexts;
+struct spx_module_context{
+    struct spx_list *threadpool;
     //usually,receive notification watcher size is equal to thread size
     //but dispatch notice watcher size maybe hanving to more than thread size,
     //because,receive watcher follow loop and banding with loop by 1:1
     //dispatch watcher is maybe n:1 banding with loop when loop is busy
     //so we set the n equal 2,donot ask me why,this is a magic
-    struct spx_list *receive_notification_watchers;
-    struct spx_fixed_vector *dispatch_notice_watchers;
+    struct spx_list *receive_triggers;
+    struct spx_fixed_vector *dispatch_triggers;
+    SpxLogDelegate *log;
 };
 
 //today is 2014-07-22,I say to xj about the ydb work over this month,
 //but now,I make a mistaken and redo thread-notify,so I can not over the work.
 //if he kown this,he want to kill me.is not it??
 
-struct spx_notice_context *spx_notice_context_new(\
+struct spx_module_context *spx_module_new(\
         SpxLogDelegate *log,\
         u32_t threadsize,\
         size_t stack_size,\
-        SpxNoticeDelegate *dispatch_notice_handler,\
-        SpxNoticeDelegate *receive_notification_handler,\
+        SpxTriggerDelegate *dispatch_trigger_handler,\
+        SpxTriggerDelegate *receive_trigger_handler,\
         err_t *err);
 
-err_t spx_notice_context_free(struct spx_notice_context **nc);
+err_t spx_module_free(struct spx_module_context **mc);
 
-err_t spx_dispatch_notice(struct spx_notice_context *nc,size_t idx,void *msg);
+err_t spx_module_dispatch(struct spx_module_context *mc,size_t idx,void *msg);
 
 #ifdef __cplusplus
 }

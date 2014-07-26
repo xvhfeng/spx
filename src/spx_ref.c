@@ -49,7 +49,7 @@ string_t spx_ref_string_new(string_t s,err_t *err){
     struct sds *sh = (void*)(s-sizeof *sh);
     ref->p = sh;
     ref->ref ++;
-    return ref->p + sizeof(*sh);
+    return ((char *) ref->p) + sizeof(*sh);
 }
 
 void *spx_ref(void *v){
@@ -66,7 +66,7 @@ string_t spx_ref_string(string_t s){
         struct sds *sh = (void*)(s-sizeof *sh);
         struct spx_ref *ref =(struct spx_ref *) ((char *) sh) - sizeof(u32_t);
         ref->ref ++;
-        return ref->p + sizeof(*sh);
+        return ((char *) ref->p) + sizeof(*sh);
     }
     return NULL;
 }

@@ -12,8 +12,8 @@
  *
  * =====================================================================================
  */
-#ifndef _SPX_DIO_CONTEXT_H_
-#define _SPX_DIO_CONTEXT_H_
+#ifndef _SPX_TASK_H_
+#define _SPX_TASK_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -43,7 +43,7 @@ extern "C" {
     typedef void (SpxDioDelegate)(struct ev_loop *loop,ev_io *watcher,int revents);
     typedef void (SpxDioProcessDelegate)(int fd,void *arg);
 
-    struct spx_dio_context{
+    struct spx_task_context{
         ev_io watcher;
         size_t idx;
         err_t err;
@@ -51,12 +51,12 @@ extern "C" {
         SpxDioDelegate *dio_handler;
         SpxDioProcessDelegate *dio_process_handler;
         SpxLogDelegate *log;
-        struct spx_nio_context *nio_context;
+        struct spx_job_context *jcontext;
         int events;
         void *arg;//this member must be sub-class of spx_dio_file
     };
 
-    struct spx_dio_context_node{
+    struct spx_task_context_transport{
         bool_t noblacking;
         SpxDioDelegate *dio_handler;
         SpxDioProcessDelegate *dio_process_handler;
@@ -65,18 +65,18 @@ extern "C" {
         void *arg;//this member must be sub-class of spx_dio_file
     };
 
-    struct spx_dio_context_pool {
+    struct spx_task_pool {
         SpxLogDelegate *log;
         struct spx_fixed_vector *pool;
     };
 
-    extern struct spx_dio_context_pool *g_spx_dio_context_pool;
+    extern struct spx_task_pool *g_spx_task_pool;
 
-    void *spx_dio_context_new(size_t idx,void *arg,err_t *err);
-    err_t spx_dio_context_free(void **arg);
-    void spx_dio_context_clear(struct spx_dio_context *dio_context);
+    void *spx_task_context_new(size_t idx,void *arg,err_t *err);
+    err_t spx_task_context_free(void **arg);
+    void spx_task_context_clear(struct spx_task_context *tcontext);
 
-struct spx_dio_context_pool *spx_dio_context_pool_new(\
+struct spx_task_pool *spx_task_pool_new(\
         SpxLogDelegate *log,\
         size_t size,\
         bool_t noblacking,\
@@ -86,16 +86,16 @@ struct spx_dio_context_pool *spx_dio_context_pool_new(\
         void *arg,\
         err_t *err);
 
-    struct spx_dio_context *spx_dio_context_pool_pop(\
-            struct spx_dio_context_pool *pool,\
+    struct spx_task_context *spx_task_pool_pop(\
+            struct spx_task_pool *pool,\
             err_t *err);
 
-    err_t spx_dio_context_pool_push(\
-            struct spx_dio_context_pool *pool,\
-            struct spx_dio_context *dio_context);
+    err_t spx_task_pool_push(\
+            struct spx_task_pool *pool,\
+            struct spx_task_context *tcontext);
 
-    err_t spx_dio_context_pool_free(\
-            struct spx_dio_context_pool **pool);
+    err_t spx_task_pool_free(\
+            struct spx_task_pool **pool);
 
 
 
