@@ -32,11 +32,8 @@ void *spx_task_context_new(size_t idx,void *arg,err_t *err){
         return NULL;
     }
     tcontext->log = tct->log;
-    tcontext->events = tct->events;
-    tcontext->noblacking = tct->noblacking;
     tcontext->idx = idx;
     tcontext->dio_process_handler = tct->dio_process_handler;
-    tcontext->dio_handler = tct->dio_handler;
     tcontext->arg = tct->arg;
     return tcontext;
 }
@@ -50,17 +47,15 @@ err_t spx_task_context_free(void **arg){
 }
 
 void spx_task_context_clear(struct spx_task_context *tcontext){
-    tcontext->events = 0;
+    tcontext->jcontext = NULL;
+    tcontext->arg = NULL;
     return;
 }
 
 struct spx_task_pool *spx_task_pool_new(\
         SpxLogDelegate *log,\
         size_t size,\
-        bool_t noblacking,\
-        SpxDioDelegate *dio_handler,\
         SpxDioProcessDelegate *dio_process_handler,\
-        int events,\
         void *arg,\
         err_t *err){
     struct spx_task_pool *pool = NULL;
@@ -72,10 +67,7 @@ struct spx_task_pool *spx_task_pool_new(\
     SpxZero(tct);
     tct.arg = arg;
     tct.log = log;
-    tct.dio_handler =dio_handler;
     tct.dio_process_handler = dio_process_handler;
-    tct.events = events;
-    tct.noblacking = noblacking;
 
     pool->pool = spx_fixed_vector_new(log,size,\
             spx_task_context_new,\

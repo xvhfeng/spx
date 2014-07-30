@@ -26,12 +26,11 @@
 #include "include/spx_socket.h"
 #include "include/spx_job.h"
 
-    void spx_notifier_module_receive_handler(struct ev_loop *loop,ev_io *w,int revents){
+void spx_notifier_module_receive_handler(struct ev_loop *loop,ev_io *w,int revents){
     int client_sock;
     size_t len = 0;
     struct spx_trigger_context *tc = (struct spx_trigger_context *) w;//magic,yeah
     err_t err= 0;
-    while(true){
         err = spx_read_nb(w->fd,(byte_t *) &client_sock,sizeof(client_sock),&len);
         if(0 != err || len != sizeof(client_sock)){
             SpxLog2(tc->log,SpxLogError,err,\
@@ -53,7 +52,7 @@
             SpxClose(client_sock);
             SpxLog1(tc->log,SpxLogError,\
                     "pop nio context is fail.");
-            goto r1;
+            return;
         }
         jcontext->fd = client_sock;
         jcontext->client_ip = spx_ip_get(client_sock,&err);
@@ -64,15 +63,17 @@
                 "and send to thread:%d to deal.",
                 jcontext->client_ip,idx);
         err = spx_module_dispatch(g_spx_network_module,idx,jcontext);
-        return;
-r1:
-        spx_job_pool_push(g_spx_job_pool,jcontext);
-    }
+        if(0 != err){
+            SpxLog2(jcontext->log,SpxLogError,err,\
+                    "dispatch to network module is fail."\
+                    "and forced push jcontext to pool.");
+            spx_job_pool_push(g_spx_job_pool,jcontext);
+        }
     return ;
 
 }
 
-    void spx_notifier_module_wakeup_handler(struct ev_loop *loop,ev_io *w,int revents){
+void spx_notifier_module_wakeup_handler(struct ev_loop *loop,ev_io *w,int revents){
     err_t err = 0;
     int *fd = (int *) w->data;
     size_t len = 0;
@@ -81,6 +82,6 @@ r1:
     if (0 != err || sizeof(fd) != len) {
         SpxLog1(tc->log,SpxLogError,\
                 "wake up network module is fail.");
-        SpxClose(*fd);
     }
- }
+    spx_module_dispatch_trigger_push(g_spx_notifier_module,tc);
+}

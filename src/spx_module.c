@@ -223,9 +223,18 @@ err_t spx_module_free(struct spx_module_context **mc){
     return 0;
 }
 
+
+struct spx_trigger_context *spx_module_dispatch_trigger_pop(struct spx_module_context *mc,err_t *err){
+    return (struct spx_trigger_context *) spx_fixed_vector_pop(mc->dispatch_triggers,err);
+}
+
+err_t spx_module_dispatch_trigger_push(struct spx_module_context *mc,struct spx_trigger_context *tc){
+    return spx_fixed_vector_push(mc->dispatch_triggers,tc);
+}
+
 err_t spx_module_dispatch(struct spx_module_context *mc,size_t idx,void *msg){
     err_t err = 0;
-    struct spx_trigger_context *tc = spx_fixed_vector_pop(mc->dispatch_triggers,&err);
+    struct spx_trigger_context *tc = spx_module_dispatch_trigger_pop(mc,&err);
     if(NULL == tc){
         SpxLog2(mc->log,SpxLogWarn,err,\
                 "pop a dispatch trigger is fail.");

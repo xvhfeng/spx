@@ -36,32 +36,34 @@ extern "C" {
 #define SpxDioMembers \
     int fd
 
-    struct spx_dio_file{
-        SpxDioMembers;
-    };
+//    struct spx_dio_file{
+//        SpxDioMembers;
+//    };
 
+    struct spx_task_context;
     typedef void (SpxDioDelegate)(struct ev_loop *loop,ev_io *watcher,int revents);
-    typedef void (SpxDioProcessDelegate)(int fd,void *arg);
+    typedef err_t (SpxDioProcessDelegate)(struct ev_loop *loop,struct spx_task_context *tcontext);
 
     struct spx_task_context{
         ev_io watcher;
         size_t idx;
         err_t err;
-        bool_t noblacking;
-        SpxDioDelegate *dio_handler;
+        //the memory means balcking is true
+        //and the callback(dio_handler) must keep
+        //monopolizing the sharing resource
+        //and the noblacking io(Inc.disk io) means false
+//        bool_t blacking;
+//        SpxDioDelegate *dio_handler;
         SpxDioProcessDelegate *dio_process_handler;
         SpxLogDelegate *log;
         struct spx_job_context *jcontext;
-        int events;
+//        int events;
         void *arg;//this member must be sub-class of spx_dio_file
     };
 
     struct spx_task_context_transport{
-        bool_t noblacking;
-        SpxDioDelegate *dio_handler;
-        SpxDioProcessDelegate *dio_process_handler;
         SpxLogDelegate *log;
-        int events;
+        SpxDioProcessDelegate *dio_process_handler;
         void *arg;//this member must be sub-class of spx_dio_file
     };
 
@@ -79,10 +81,7 @@ extern "C" {
 struct spx_task_pool *spx_task_pool_new(\
         SpxLogDelegate *log,\
         size_t size,\
-        bool_t noblacking,\
-        SpxDioDelegate *dio_handler,\
         SpxDioProcessDelegate *dio_process_handler,\
-        int events,\
         void *arg,\
         err_t *err);
 

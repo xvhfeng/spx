@@ -21,8 +21,11 @@ extern "C" {
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <ev.h>
 
-    extern struct spx_module *g_spx_task_module;
+    extern struct spx_module_context *g_spx_task_module;
+    void spx_task_module_receive_handler(struct ev_loop *loop,ev_io *w,int revents);
+    void spx_task_module_wakeup_handler(struct ev_loop *loop,ev_io *w,int revents);
 
 #ifdef __cplusplus
 }

@@ -74,6 +74,10 @@ err_t spx_module_free(struct spx_module_context **mc);
 
 err_t spx_module_dispatch(struct spx_module_context *mc,size_t idx,void *msg);
 
+struct spx_trigger_context *spx_module_dispatch_trigger_pop(struct spx_module_context *mc,err_t *err);
+
+err_t spx_module_dispatch_trigger_push(struct spx_module_context *mc,struct spx_trigger_context *tc);
+
 #ifdef __cplusplus
 }
 #endif

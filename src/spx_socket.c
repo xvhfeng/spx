@@ -34,8 +34,9 @@
 #include "include/spx_types.h"
 #include "include/spx_string.h"
 #include "include/spx_defs.h"
-#include "include/spx_sio_context.h"
 #include "include/spx_socket.h"
+#include "include/spx_notifier_module.h"
+#include "include/spx_module.h"
 
 spx_private err_t spx_socket_reuseaddr(int sock) ;
 spx_private err_t spx_socket_keepalive(int fd,bool_t enable,\
@@ -196,7 +197,7 @@ void spx_socket_accept_nb(int fd){
     err_t err = 0;
     while(true){
         struct sockaddr_in client_addr;
-        unsigned int socket_len;
+        unsigned int socket_len = 0;
         int client_sock = 0;
         socket_len = sizeof(struct sockaddr_in);
         client_sock = accept(fd, (struct sockaddr *) &client_addr,
@@ -212,13 +213,13 @@ void spx_socket_accept_nb(int fd){
             continue;
         }
 
-        struct spx_sio_context *sio_context = spx_sio_context_pool_pop(g_spx_sio_context_pool,&err);
-
-        if (sizeof(client_sock)
-                != write(sio_context->pipes[1], &client_sock,
-                    sizeof(client_sock))) {
-            close(client_sock);
-         }
+        size_t idx = client_sock % g_spx_notifier_module->threadpool->curr_size;
+        if(0 != (err = spx_module_dispatch(g_spx_notifier_module,idx,&client_sock))){
+            SpxClose(client_sock);
+            SpxLogFmt2(g_spx_notifier_module->log,SpxLogError,err,\
+                    "dispatch notifier module with thread idx:%d is fail.",\
+                    idx);
+        }
     }
 }
 

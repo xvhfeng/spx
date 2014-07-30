@@ -27,7 +27,8 @@
 #include "include/spx_nio.h"
 #include "include/spx_task.h"
 
- struct spx_module *g_spx_task_module = NULL;
+ struct spx_module_context *g_spx_task_module = NULL;
+
 void spx_task_module_receive_handler(struct ev_loop *loop,ev_io *w,int revents){
     struct spx_task_context *tcontext = NULL;
     size_t len = 0;
@@ -47,18 +48,21 @@ void spx_task_module_receive_handler(struct ev_loop *loop,ev_io *w,int revents){
         return;
     }
 
-    //deal io
-    if(tcontext->noblacking){
-        if(NULL != tcontext->dio_process_handler){
-            tcontext->dio_process_handler(0,tcontext->arg);
-        }
-    }else{
-        struct spx_dio_file *dio_file = (struct spx_dio_file *) tcontext->arg;
-        ev_io_init(&(tcontext->watcher),tcontext->dio_handler,dio_file->fd,tcontext->events);
-        tcontext->watcher.data = tcontext;//libev not the set function
-        ev_io_start(loop,&(tcontext->watcher));
-        ev_run(loop,0);
+    tcontext->dio_process_handler(loop,tcontext);
+    /*  here no deal the error from dio_process_handler
+     *  as we donot know deal flow whether use noblacking or blacking
+     *  so, we must deal the error in the handler by yourself
+    if(0 != err){
+        struct spx_job_context *jcontext = tcontext->jcontext;
+        SpxLog2(tc->log,SpxLogError,err,\
+                "deal dio process handler is fail.");
+        jcontext->err = err;
+        spx_task_pool_push(g_spx_task_pool,tcontext);
+        jcontext->moore = SpxNioMooreResponse;
+        size_t idx = jcontext->idx % g_spx_network_module->threadpool->curr_size;
+        err = spx_module_dispatch(g_spx_network_module,idx,jcontext);
     }
+    */
 
     return ;
 }
@@ -69,16 +73,17 @@ void spx_task_module_wakeup_handler(struct ev_loop *loop,ev_io *w,int revents){
     struct spx_task_context *tcontext = (struct spx_task_context *)w->data;
     size_t len = 0;
     struct spx_trigger_context *tc = (struct spx_trigger_context *) w;//magic,yeah
+    struct spx_job_context *jcontext = tcontext->jcontext;
     err = spx_write_nb(w->fd,(byte_t *) tcontext,sizeof(tcontext),&len);
     if (0 != err || sizeof(tcontext) != len) {
         SpxLog1(tc->log,SpxLogError,\
                 "send tcontext to dio thread is fail."\
                 "then dispatch notice to nio thread deal.");
         spx_task_pool_push(g_spx_task_pool,tcontext);
-        struct spx_job_context *jcontext = tcontext->jcontext;
         jcontext->err = err;
         jcontext->moore = SpxNioMooreResponse;
         size_t idx = jcontext->idx % g_spx_network_module->threadpool->curr_size;
         err = spx_module_dispatch(g_spx_network_module,idx,jcontext);
     }
+    spx_module_dispatch_trigger_push(g_spx_task_module,tc);
 }
