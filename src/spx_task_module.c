@@ -31,8 +31,8 @@
 
 void spx_task_module_receive_handler(struct ev_loop *loop,ev_io *w,int revents){
     struct spx_task_context *tcontext = NULL;
-    size_t len = 0;
     struct spx_trigger_context *tc = (struct spx_trigger_context *) w;//magic,yeah
+    size_t len = 0;
     err_t err= 0;
     err = spx_read_nb(w->fd,(byte_t *) &tcontext,sizeof(tcontext),&len);
     if(0 != err || len != sizeof(tcontext)){
@@ -48,7 +48,7 @@ void spx_task_module_receive_handler(struct ev_loop *loop,ev_io *w,int revents){
         return;
     }
 
-    tcontext->dio_process_handler(loop,tcontext);
+    tcontext->dio_process_handler(loop,tc->idx,tcontext);
     /*  here no deal the error from dio_process_handler
      *  as we donot know deal flow whether use noblacking or blacking
      *  so, we must deal the error in the handler by yourself
@@ -82,7 +82,7 @@ void spx_task_module_wakeup_handler(struct ev_loop *loop,ev_io *w,int revents){
         spx_task_pool_push(g_spx_task_pool,tcontext);
         jcontext->err = err;
         jcontext->moore = SpxNioMooreResponse;
-        size_t idx = jcontext->idx % g_spx_network_module->threadpool->curr_size;
+        size_t idx = spx_network_module_wakeup_idx(jcontext);
         err = spx_module_dispatch(g_spx_network_module,idx,jcontext);
     }
     spx_module_dispatch_trigger_push(g_spx_task_module,tc);

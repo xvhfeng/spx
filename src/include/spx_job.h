@@ -31,9 +31,10 @@ extern "C" {
 
     struct spx_job_context;
     typedef void (SpxNioDelegate)(struct ev_loop *loop,ev_io *watcher,int revents);
-    typedef void (SpxNioBodyProcessDelegate)(int fd,struct spx_job_context *nio_context);
-    typedef bool_t (SpxNioHeaderValidatorDelegate)(struct spx_job_context *nio_context);
-    typedef void (SpxNioHeaderValidatorFailDelegate)(struct spx_job_context *nio_context);
+    typedef void (SpxNioBodyProcessDelegate)(int fd,struct spx_job_context *jcontext);
+    typedef bool_t (SpxNioHeaderValidatorDelegate)(struct spx_job_context *jcontext);
+    typedef void (SpxNioBodyProcessBeforeDelegate)(struct spx_job_context *jcontext);
+    typedef void (SpxNioHeaderValidatorFailDelegate)(struct spx_job_context *jcontext);
     typedef void (SpxNotifyDelegate)(ev_io *watcher,int revents);
 
     extern struct spx_job_pool *g_spx_job_pool;
@@ -64,6 +65,7 @@ extern "C" {
         SpxNioHeaderValidatorFailDelegate *reader_header_validator_fail;
         SpxNioBodyProcessDelegate *reader_body_process;
         SpxNioBodyProcessDelegate *writer_body_process;
+        SpxNioBodyProcessBeforeDelegate *reader_body_process_before;
         void *config;
         SpxLogDelegate *log;
     };
@@ -91,6 +93,7 @@ extern "C" {
 
         SpxNioHeaderValidatorDelegate *reader_header_validator;
         SpxNioHeaderValidatorFailDelegate *reader_header_validator_fail;
+        SpxNioBodyProcessBeforeDelegate *reader_body_process_before;
         SpxNioBodyProcessDelegate *reader_body_process;
         SpxNioBodyProcessDelegate *writer_body_process;
 
@@ -103,8 +106,8 @@ extern "C" {
          * and the part of recved must in the end of the body
          */
         bool_t is_lazy_recv;
-        off_t lazy_recv_offet;
-        size_t lazy_recv_size;
+//        off_t lazy_recv_offet;
+//        size_t lazy_recv_size;
 
         bool_t is_sendfile;
         int sendfile_fd;
@@ -128,6 +131,7 @@ extern "C" {
             SpxNioDelegate *nio_writer,\
             SpxNioHeaderValidatorDelegate *reader_header_validator,\
             SpxNioHeaderValidatorFailDelegate *reader_header_validator_fail,\
+        SpxNioBodyProcessBeforeDelegate *reader_body_process_before,\
             SpxNioBodyProcessDelegate *reader_body_process,\
             SpxNioBodyProcessDelegate *write_body_process,\
             err_t *err);

@@ -23,6 +23,7 @@ extern "C" {
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "spx_types.h"
 #include "spx_message.h"
@@ -48,7 +49,21 @@ err_t spx_write_from_msg(int fd,struct spx_msg *ctx,const size_t size,size_t *le
 err_t spx_write_from_msg_nb(int fd,struct spx_msg *ctx,const size_t size,size_t *len);
 err_t spx_fwrite_string(FILE *fp,string_t s,size_t size,size_t *len);
 
+err_t spx_sendfile(int sock,int fd,off_t offset,size_t size,size_t *len);
 err_t spx_set_nb(int fd);
+
+spx_private spx_inline size_t spx_mmap_form_msg(char *p,off_t offset,struct spx_msg *ctx){
+    size_t s = (size_t) ( ctx->last - ctx->buf);
+    memcpy( p + offset,ctx->buf,s);
+    return s;
+}
+
+spx_private spx_inline size_t spx_mmap_form_msg_with_offset(char *p,off_t offset,struct spx_msg *ctx,off_t off){
+    size_t s = (size_t) (ctx->last  - (ctx->buf + off));
+    memcpy( p + offset,ctx->buf,s);
+    return s;
+}
+
 #ifdef __cplusplus
 }
 #endif

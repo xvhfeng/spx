@@ -42,7 +42,7 @@ extern "C" {
 
     struct spx_task_context;
     typedef void (SpxDioDelegate)(struct ev_loop *loop,ev_io *watcher,int revents);
-    typedef err_t (SpxDioProcessDelegate)(struct ev_loop *loop,struct spx_task_context *tcontext);
+    typedef err_t (SpxDioProcessDelegate)(struct ev_loop *loop,int idx,struct spx_task_context *tcontext);
 
     struct spx_task_context{
         ev_io watcher;
@@ -58,13 +58,11 @@ extern "C" {
         SpxLogDelegate *log;
         struct spx_job_context *jcontext;
 //        int events;
-        void *arg;//this member must be sub-class of spx_dio_file
     };
 
     struct spx_task_context_transport{
         SpxLogDelegate *log;
         SpxDioProcessDelegate *dio_process_handler;
-        void *arg;//this member must be sub-class of spx_dio_file
     };
 
     struct spx_task_pool {
@@ -82,7 +80,6 @@ struct spx_task_pool *spx_task_pool_new(\
         SpxLogDelegate *log,\
         size_t size,\
         SpxDioProcessDelegate *dio_process_handler,\
-        void *arg,\
         err_t *err);
 
     struct spx_task_context *spx_task_pool_pop(\

@@ -8,6 +8,8 @@ extern "C" {
 
 #include "spx_types.h"
 
+#define SpxFileExist(filename) ( 0 == access(filename,F_OK))
+
 bool_t spx_is_dir(const string_t path,err_t *err);
 err_t spx_mkdir(SpxLogDelegate *log,const string_t path,const mode_t mode);
 string_t spx_fullname(const string_t path,const string_t filename,\

@@ -75,6 +75,10 @@ err_t spx_msg_seek(struct spx_msg *ctx,off_t offset,int whence){
     return 0;
 }
 
+err_t spx_msg_align(struct spx_msg *ctx,off_t offset){
+    return spx_msg_seek(ctx,offset,SpxMsgSeekCurrent);
+}
+
 void spx_msg_clear(struct spx_msg *ctx){
     SpxZeroLen(ctx->buf,ctx->s);
     ctx->last = ctx->buf;

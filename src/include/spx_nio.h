@@ -26,9 +26,18 @@ extern "C" {
 
 #include "spx_types.h"
 #include "spx_job.h"
+#include "spx_task.h"
+
+    typedef void (SpxAsyncDelegate)(struct ev_loop *loop, ev_async *w, int revents);
 
 err_t  spx_nio_regedit_reader(struct ev_loop *loop,int fd,struct spx_job_context *jcontext);
 err_t  spx_nio_regedit_writer(struct ev_loop *loop,int fd,struct spx_job_context *jcontext);
+err_t  spx_dio_regedit_reader(struct ev_loop *loop,int fd,ev_io *watcher,\
+        SpxNioDelegate *dio_reader,void *data);
+err_t  spx_dio_regedit_writer(struct ev_loop *loop,int fd,ev_io *watcher,\
+        SpxNioDelegate *dio_writer,void *data);
+err_t  spx_dio_regedit_async(ev_async *w,
+        SpxAsyncDelegate *reader,void *data);
 
 void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents);
 void spx_nio_writer(struct ev_loop *loop,ev_io *watcher,int revents);

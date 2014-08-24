@@ -18,6 +18,18 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include  <string.h>
+
+#ifdef SpxMac
+    #include <sys/types.h>
+     #include <sys/socket.h>
+     #include <sys/uio.h>
+#endif
+
+#ifdef SpxLinux
+#include <sys/sendfile.h>
+#endif
+
 
 
 #include "include/spx_types.h"
@@ -33,6 +45,9 @@ err_t spx_read(int fd,byte_t *buf,const size_t size,size_t *len){
     while(*len < size){
         rc = read(fd,((char *) buf) + *len,size - *len);
         if(0 > rc){
+            if(EAGAIN == errno || EWOULDBLOCK == errno || EINTR == errno){
+                continue;
+            }
             err = errno;
             break;
         }else if(0 == rc){
@@ -52,6 +67,9 @@ err_t spx_write(int fd,byte_t *buf,const size_t size,size_t *len){
     while(*len < size){
         rc = write(fd,((char *) buf) + *len,size - *len);
         if(0 > rc){
+            if(EAGAIN == errno || EWOULDBLOCK == errno || EINTR == errno){
+                continue;
+            }
             err = errno;
             break;
         }else if(0 == rc){
@@ -72,7 +90,7 @@ err_t spx_read_nb(int fd,byte_t *buf,const size_t size,size_t *len){
     while(*len < size){
         rc = read(fd,((char *) buf) + *len,size - *len);
         if(0 > rc){
-            if(EAGAIN == errno || EWOULDBLOCK == errno){
+            if(EAGAIN == errno || EWOULDBLOCK == errno || EINTR == errno){
                 continue;
             }
             err = errno;
@@ -94,7 +112,7 @@ err_t spx_write_nb(int fd,byte_t *buf,const size_t size,size_t *len){
     while(*len < size){
         rc = write(fd,((char *) buf) + *len,size - *len);
         if(0 > rc){
-            if(EAGAIN == errno || EWOULDBLOCK == errno){
+            if(EAGAIN == errno || EWOULDBLOCK == errno || EINTR == errno){
                 continue;
             }
             err = errno;
@@ -153,6 +171,9 @@ err_t spx_fwrite_string(FILE *fp,string_t s,size_t size,size_t *len){
     while(*len < size){
         rc = fwrite(s + *len,size,sizeof(char),fp);
         if(0 > rc){
+            if(EAGAIN == errno || EWOULDBLOCK == errno || EINTR == errno){
+                continue;
+            }
             err = errno;
             break;
         }else if(0 == rc){
@@ -161,6 +182,62 @@ err_t spx_fwrite_string(FILE *fp,string_t s,size_t size,size_t *len){
             *len += rc;
         }
     }
+    return err;
+}
+
+err_t spx_sendfile(int sock,int fd,off_t offset,size_t size,size_t *len){
+    off_t offset_new = offset;
+    size_t want = size;
+    err_t err = 0;
+    *len = 0;
+#ifdef SpxMac
+    while(true){
+        if(0 != sendfile(fd,sock,offset_new,&want,NULL, 0)){
+            if(EAGAIN == errno || EWOULDBLOCK == errno || EINTR == errno){
+                *len += want;
+                if(*len == size){
+                    err = 0;
+                    break;
+                }
+                offset_new = offset + want;
+                want = size - offset_new;
+                continue;
+            }else {
+                err = errno;
+                return err;
+            }
+        }
+        *len += want;
+        if(*len == size){
+            err = 0;
+            break;
+        }
+        offset_new = offset + want;
+        want = size - offset_new;
+    }
+
+#endif
+
+#ifdef SpxLinux
+    while(true){
+        size_t sendbytes = 0;
+        sendbytes = sendfile(sock,fd,&offset_new,want);
+        if(-1 == sendbytes){
+            if(EAGAIN == errno || EWOULDBLOCK == errno || EINTR == errno){
+                continue;
+            }else {
+                err = errno;
+                return err;
+            }
+        }
+        *len += sendbytes;
+        if(*len == size){
+            break;
+        }
+        offset_new += sendbytes;
+        want = size - offset_new;
+    }
+#endif
     return err;
 }
 

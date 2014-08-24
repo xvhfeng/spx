@@ -45,6 +45,7 @@ void *spx_job_context_new(size_t idx,void *arg,err_t *err){
     jcontext->nio_writer = jct->nio_writer;
     jcontext->reader_body_process = jct->reader_body_process;
     jcontext->reader_header_validator = jct->reader_header_validator;
+    jcontext->reader_body_process_before = jct->reader_body_process_before;
     jcontext->writer_body_process = jct->writer_body_process;
     jcontext->reader_header_validator_fail = jct->reader_header_validator_fail;
     jcontext->config = jct->config;
@@ -93,8 +94,8 @@ void spx_job_context__clear(struct spx_job_context *jcontext){
         jcontext->sendfile_size = 0;
     }
     SpxClose(jcontext->fd);
-    jcontext->lazy_recv_offet = 0;
-    jcontext->lazy_recv_size = 0;
+//    jcontext->lazy_recv_offet = 0;
+//    jcontext->lazy_recv_size = 0;
     jcontext->err = 0;
     jcontext->moore = SpxNioMooreNormal;
 }
@@ -106,6 +107,7 @@ struct spx_job_pool *spx_job_pool_new(SpxLogDelegate *log,\
         SpxNioDelegate *nio_writer,\
         SpxNioHeaderValidatorDelegate *reader_header_validator,\
         SpxNioHeaderValidatorFailDelegate *reader_header_validator_fail,\
+        SpxNioBodyProcessBeforeDelegate *reader_body_process_before,\
         SpxNioBodyProcessDelegate *reader_body_process,\
         SpxNioBodyProcessDelegate *writer_body_process,\
         err_t *err){
@@ -128,6 +130,7 @@ struct spx_job_pool *spx_job_pool_new(SpxLogDelegate *log,\
     arg.reader_body_process = reader_body_process;
     arg.writer_body_process = writer_body_process;
     arg.reader_header_validator_fail = reader_header_validator_fail;
+    arg.reader_body_process_before = reader_body_process_before;
     arg.config = config;
 
     pool->pool = spx_fixed_vector_new(log,size,\

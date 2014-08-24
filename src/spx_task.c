@@ -34,7 +34,6 @@ void *spx_task_context_new(size_t idx,void *arg,err_t *err){
     tcontext->log = tct->log;
     tcontext->idx = idx;
     tcontext->dio_process_handler = tct->dio_process_handler;
-    tcontext->arg = tct->arg;
     return tcontext;
 }
 
@@ -48,7 +47,6 @@ err_t spx_task_context_free(void **arg){
 
 void spx_task_context_clear(struct spx_task_context *tcontext){
     tcontext->jcontext = NULL;
-    tcontext->arg = NULL;
     return;
 }
 
@@ -56,7 +54,6 @@ struct spx_task_pool *spx_task_pool_new(\
         SpxLogDelegate *log,\
         size_t size,\
         SpxDioProcessDelegate *dio_process_handler,\
-        void *arg,\
         err_t *err){
     struct spx_task_pool *pool = NULL;
     pool = spx_alloc_alone(sizeof(*pool),err);
@@ -65,7 +62,6 @@ struct spx_task_pool *spx_task_pool_new(\
     }
     struct spx_task_context_transport tct;
     SpxZero(tct);
-    tct.arg = arg;
     tct.log = log;
     tct.dio_process_handler = dio_process_handler;
 
