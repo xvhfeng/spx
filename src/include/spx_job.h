@@ -28,18 +28,6 @@ extern "C" {
 #include "spx_message.h"
 #include "spx_properties.h"
 
-
-    struct spx_job_context;
-    typedef void (SpxNioDelegate)(struct ev_loop *loop,ev_io *watcher,int revents);
-    typedef void (SpxNioBodyProcessDelegate)(int fd,struct spx_job_context *jcontext);
-    typedef bool_t (SpxNioHeaderValidatorDelegate)(struct spx_job_context *jcontext);
-    typedef void (SpxNioBodyProcessBeforeDelegate)(struct spx_job_context *jcontext);
-    typedef void (SpxNioHeaderValidatorFailDelegate)(struct spx_job_context *jcontext);
-    typedef void (SpxNotifyDelegate)(ev_io *watcher,int revents);
-
-    extern struct spx_job_pool *g_spx_job_pool;
-
-#define SpxMsgHeaderSize (3 * sizeof(u32_t) + 2 * sizeof(u64_t))
 #define SpxNioLifeCycleNormal 0
 #define SpxNioLifeCycleHeader 1
 #define SpxNioLifeCycleBody 2
@@ -48,14 +36,16 @@ extern "C" {
 #define SpxNioMooreRequest 1
 #define SpxNioMooreResponse 2
 
-    struct spx_msg_header{
-        u32_t version;
-        u32_t protocol;
-        u64_t bodylen;
-        u64_t offset;
-        u32_t err;
-    };
+    extern struct spx_job_pool *g_spx_job_pool;
 
+    struct spx_job_context;
+    typedef void (SpxNioDelegate)(struct ev_loop *loop,ev_io *watcher,int revents);
+    typedef void (SpxNioBodyProcessDelegate)(int fd,struct spx_job_context *jcontext);
+    typedef bool_t (SpxNioHeaderValidatorDelegate)(struct spx_job_context *jcontext);
+    typedef void (SpxNioHeaderValidatorFailDelegate)(struct spx_job_context *jcontext);
+    typedef void (SpxNotifyDelegate)(ev_io *watcher,int revents);
+    typedef void (SpxNioBodyProcessBeforeDelegate)(struct spx_job_context *jcontext);
+    typedef void (SpxNioBodyProcessAfterDelegate)(struct spx_job_context *jcontext);
 
     struct spx_job_context_transport{
         u32_t timeout;
@@ -65,6 +55,7 @@ extern "C" {
         SpxNioHeaderValidatorFailDelegate *reader_header_validator_fail;
         SpxNioBodyProcessDelegate *reader_body_process;
         SpxNioBodyProcessDelegate *writer_body_process;
+        //use for judge enable lazy-recv
         SpxNioBodyProcessBeforeDelegate *reader_body_process_before;
         void *config;
         SpxLogDelegate *log;
@@ -106,8 +97,8 @@ extern "C" {
          * and the part of recved must in the end of the body
          */
         bool_t is_lazy_recv;
-//        off_t lazy_recv_offet;
-//        size_t lazy_recv_size;
+        //        off_t lazy_recv_offet;
+        //        size_t lazy_recv_size;
 
         bool_t is_sendfile;
         int sendfile_fd;
@@ -131,7 +122,7 @@ extern "C" {
             SpxNioDelegate *nio_writer,\
             SpxNioHeaderValidatorDelegate *reader_header_validator,\
             SpxNioHeaderValidatorFailDelegate *reader_header_validator_fail,\
-        SpxNioBodyProcessBeforeDelegate *reader_body_process_before,\
+            SpxNioBodyProcessBeforeDelegate *reader_body_process_before,\
             SpxNioBodyProcessDelegate *reader_body_process,\
             SpxNioBodyProcessDelegate *write_body_process,\
             err_t *err);
@@ -140,8 +131,6 @@ extern "C" {
     err_t spx_job_pool_push(struct spx_job_pool *pool,struct spx_job_context *jcontext);
     err_t spx_job_pool_free(struct spx_job_pool **pool);
 
-    struct spx_msg_header *spx_msg_to_header(struct spx_msg *ctx,err_t *err);
-    struct spx_msg *spx_header_to_msg(struct spx_msg_header *header,size_t len,err_t *err);
 
 #ifdef __cplusplus
 }

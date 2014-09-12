@@ -17,16 +17,15 @@
  */
 #include <stdlib.h>
 
-#include "include/spx_types.h"
-#include "include/spx_defs.h"
-#include "include/spx_list.h"
-#include "include/spx_alloc.h"
+#include "spx_types.h"
+#include "spx_defs.h"
+#include "spx_list.h"
+#include "spx_alloc.h"
 
 struct spx_list *spx_list_new(SpxLogDelegate *log,\
         size_t init_size,\
         SpxListNodeFreeDelegate *node_free,\
         err_t *err){
-
     struct spx_list *list = spx_alloc_alone(sizeof(*list),err);
     if(NULL == list){
         return NULL;
@@ -36,10 +35,12 @@ struct spx_list *spx_list_new(SpxLogDelegate *log,\
     list->free_size = init_size;
     list->size = init_size;
     list->node_free = node_free;
-    list->nodes = spx_alloc(init_size,sizeof(struct spx_list_node),err);
-    if(NULL == list->nodes){
-        SpxFree(list);
-        return NULL;
+    if(0 != init_size){
+        list->nodes = spx_alloc(init_size,sizeof(struct spx_list_node),err);
+        if(NULL == list->nodes){
+            SpxFree(list);
+            return NULL;
+        }
     }
     return list;
 }

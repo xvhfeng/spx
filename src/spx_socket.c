@@ -31,12 +31,12 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-#include "include/spx_types.h"
-#include "include/spx_string.h"
-#include "include/spx_defs.h"
-#include "include/spx_socket.h"
-#include "include/spx_notifier_module.h"
-#include "include/spx_module.h"
+#include "spx_types.h"
+#include "spx_string.h"
+#include "spx_defs.h"
+#include "spx_socket.h"
+#include "spx_notifier_module.h"
+#include "spx_module.h"
 
 spx_private err_t spx_socket_reuseaddr(int sock) ;
 spx_private err_t spx_socket_keepalive(int fd,bool_t enable,\
@@ -265,7 +265,7 @@ r1:
     return NULL;
 }
 
-err_t spx_connect(int fd,string_t ip,int port){
+err_t spx_socket_connect(int fd,string_t ip,int port){
     struct sockaddr_in addr;
     bzero(&addr,sizeof(addr));
     addr.sin_family = AF_INET;

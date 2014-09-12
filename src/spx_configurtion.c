@@ -16,10 +16,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "include/spx_types.h"
-#include "include/spx_defs.h"
-#include "include/spx_string.h"
-#include "include/spx_configurtion.h"
+#include "spx_types.h"
+#include "spx_defs.h"
+#include "spx_string.h"
+#include "spx_configurtion.h"
 
 void *spx_configurtion_parser(SpxLogDelegate *log,\
         SpxConfigurtionParserBeforeDelegate *before,\

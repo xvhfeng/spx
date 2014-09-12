@@ -18,10 +18,10 @@
 #include <stdlib.h>
 
 
-#include "include/spx_types.h"
-#include "include/spx_alloc.h"
-#include "include/spx_ref.h"
-#include "include/spx_string.h"
+#include "spx_types.h"
+#include "spx_alloc.h"
+#include "spx_ref.h"
+#include "spx_string.h"
 
 void *spx_ref_new(void *v,err_t *err){
     if (NULL == v) {

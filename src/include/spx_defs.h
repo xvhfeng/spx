@@ -19,7 +19,7 @@ extern "C" {
 #define SpxLogMark 4
 
 
-const char *SpxLogDesc[] = {
+spx_private char *SpxLogDesc[] = {
     "Debug.",
     "Info.",
     "Warn.",
@@ -27,7 +27,7 @@ const char *SpxLogDesc[] = {
     "Mark."
 };
 
- const int SpxLogDescSize[] = {
+ spx_private int SpxLogDescSize[] = {
     6,
     5,
     5,
@@ -84,8 +84,10 @@ const char *SpxLogDesc[] = {
 #define SpxDiskUnitMB 3
 #define SpxDiskUnitKB 4
 #define SpxDiskUnitB 5
+#define SpxSecondsOfDay (24 * 60 * 60)
+#define SpxBoolTransportSize (sizeof(char))
 
- char *spx_diskunit_desc[]={
+ spx_private char *spx_diskunit_desc[]={
     "PB",
     "TB",
     "GB",

@@ -17,10 +17,10 @@
  */
 #include <stdlib.h>
 
-#include "include/spx_errno.h"
-#include "include/spx_map.h"
-#include "include/spx_alloc.h"
-#include "include/spx_defs.h"
+#include "spx_errno.h"
+#include "spx_map.h"
+#include "spx_alloc.h"
+#include "spx_defs.h"
 
 #define SpxMapSlotSize 64
 #define SpxMapFactor 1.25

@@ -17,10 +17,10 @@
 #include <stdio.h>
 
 
-#include "include/spx_types.h"
-#include "include/spx_task.h"
-#include "include/spx_alloc.h"
-#include "include/spx_fixed_vector.h"
+#include "spx_types.h"
+#include "spx_task.h"
+#include "spx_alloc.h"
+#include "spx_fixed_vector.h"
 
 struct spx_task_pool *g_spx_task_pool = NULL;
 

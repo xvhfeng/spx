@@ -39,6 +39,12 @@ err_t  spx_dio_regedit_writer(struct ev_loop *loop,int fd,ev_io *watcher,\
 err_t  spx_dio_regedit_async(ev_async *w,
         SpxAsyncDelegate *reader,void *data);
 
+/*
+ * the 4 functions just support read and write network stream
+ * and it is the base for you DIY-function.
+ * so if you want to use these,please add the error-dealing with the fucntions
+ * and you must deal the job context by yourself.
+ */
 void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents);
 void spx_nio_writer(struct ev_loop *loop,ev_io *watcher,int revents);
 

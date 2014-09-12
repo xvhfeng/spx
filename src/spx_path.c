@@ -19,11 +19,11 @@
 //#include <sys/sendfile.h>
 
 
-#include "include/spx_types.h"
-#include "include/spx_path.h"
-#include "include/spx_defs.h"
-#include "include/spx_string.h"
-#include "include/spx_errno.h"
+#include "spx_types.h"
+#include "spx_path.h"
+#include "spx_defs.h"
+#include "spx_string.h"
+#include "spx_errno.h"
 
 bool_t spx_is_dir(const string_t path,err_t *err) {/*{{{*/
     SpxErrReset;

@@ -58,6 +58,8 @@ string_t spx_string_cat(string_t s, const char *t,err_t *err);
 string_t spx_string_cat_string(string_t s, const string_t t,err_t *err);
 
 string_t spx_string_cpylen(string_t s, const char *t, size_t len,err_t *err);
+string_t spx_string_catalign(string_t s, const void *t,size_t len,
+        size_t align,err_t *err);
 
 string_t spx_string_cpy(string_t s, const char *t,err_t *err);
 
@@ -126,10 +128,19 @@ int spx_string_cmp(const string_t s1, const string_t s2);
 int spx_string_casecmp_string(const string_t s1, const string_t s2);
 int spx_string_casecmp(const string_t s1, const char *s2);
 
+bool_t spx_string_begin_with(const string_t s1,const char *s2);
+bool_t spx_string_begin_casewith(const string_t s1,const char *s2);
 bool_t spx_string_begin_with_string(const string_t s1,const string_t s2);
 bool_t spx_string_end_with_string(const string_t s1,const string_t s2);
 bool_t spx_string_begin_casewith_string(const string_t s1,const string_t s2);
 bool_t spx_string_end_casewith_string(const string_t s1,const string_t s2);
+
+string_t *spx_string_split(string_t s,
+        const char *sep,int seplen,\
+        int *count,err_t *err);
+
+string_t *spx_string_split_string(string_t s,string_t sep,\
+        int *count,err_t *err);
 
 string_t *spx_string_splitlen(const char *s,\
         int len, const char *sep, int seplen, \
@@ -203,6 +214,11 @@ string_t spx_string_join_string(string_t *argv,\
         int argc, const char *sep, size_t seplen,err_t *err);
 
 bool_t spx_string_exist(string_t s,char c);
+
+string_t spx_string_pack_i32(string_t s,const i32_t v,err_t *err);
+string_t spx_string_pack_int(string_t s,const int v,err_t *err);
+
+
 /* Low level functions exposed to the user API */
 /* Enlarge the free space at the end of the sds string so that the caller
  * is sure that after calling this function can overwrite up to addlen

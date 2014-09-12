@@ -31,27 +31,22 @@ extern "C" {
 #define SpxMinute(dt) ((dt)->t.min)
 #define SpxSecond(dt) ((dt)->t.sec)
 
-    struct spx_datetime{
-        struct spx_date{
-            int year;
-            int month;
-            int day;
-        }d;
-        struct spx_time{
-            int hour;
-            int min;
-            int sec;
-        }t;
-    };
 
 
     void spx_get_curr_datetime(struct spx_datetime *dt);
+    struct spx_date *spx_get_today(struct spx_date *d);
     time_t spx_now();
     time_t spx_mktime(struct spx_datetime *dt);
     struct spx_datetime *spx_datetime_dup(struct spx_datetime *dt,err_t *err);
-    struct spx_datetime *spx_detetime_add_days(struct spx_datetime *dt,int days);
-    struct spx_datetime *spx_get_datetime(time_t *t,struct spx_datetime *dt);
     struct spx_datetime *spx_datetime_add_days(struct spx_datetime *dt,int days);
+    struct spx_datetime *spx_get_datetime(time_t *t,struct spx_datetime *dt);
+    struct spx_date *spx_get_date(time_t *t,struct spx_date *d);
+    struct spx_date *spx_get_today(struct spx_date *d);
+    time_t spx_zero(struct spx_date *d);
+    struct spx_date *spx_date_add(struct spx_date *d,int days);
+    bool_t spx_date_is_before(struct spx_date *d);
+    bool_t spx_date_is_after(struct spx_date *d);
+    bool_t spx_date_is_today(struct spx_date *d);
 
 #if __cplusplus
 }

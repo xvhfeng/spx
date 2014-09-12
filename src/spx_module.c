@@ -18,13 +18,13 @@
 #include <pthread.h>
 #include <ev.h>
 
-#include "include/spx_types.h"
-#include "include/spx_list.h"
-#include "include/spx_fixed_vector.h"
-#include "include/spx_module.h"
-#include "include/spx_alloc.h"
-#include "include/spx_defs.h"
-#include "include/spx_string.h"
+#include "spx_types.h"
+#include "spx_list.h"
+#include "spx_fixed_vector.h"
+#include "spx_module.h"
+#include "spx_alloc.h"
+#include "spx_defs.h"
+#include "spx_string.h"
 
 struct spx_trigger_context_transport{
     SpxTriggerDelegate *trigger_handler;

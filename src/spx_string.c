@@ -1,12 +1,25 @@
- #include <stdlib.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <ctype.h>
 
-#include "include/spx_types.h"
-#include "include/spx_alloc.h"
-#include "include/spx_string.h"
-#include "include/spx_errno.h"
-#include "include/spx_defs.h"
+#include "spx_types.h"
+#include "spx_alloc.h"
+#include "spx_string.h"
+#include "spx_errno.h"
+#include "spx_defs.h"
+
+union d2i{
+    double v;
+    uint64_t i;
+};
+
+union f2i{
+    float v;
+    uint32_t i;
+};
+
+spx_private void spx_i2b(uchar_t *b,const i32_t n);
 
 #define MaxReallocSize (1024*1024)
 /******************
@@ -77,6 +90,22 @@ string_t spx_string_catlen(string_t s, const void *t, size_t len,err_t *err){/*{
     sh->len = curlen+len;
     sh->free = sh->free-len;
     s[curlen+len] = '\0';
+    return s;
+}/*}}}*/
+
+
+string_t spx_string_catalign(string_t s, const void *t,size_t len,
+        size_t align,err_t *err){/*{{{*/
+    struct sds *sh;
+    size_t curlen = spx_string_len(s);
+
+    s = spxStringMakeRoomFor(s,align,err);
+    if (s == NULL) return NULL;
+    sh = (void*) (s-sizeof *sh);;
+    memcpy(s+curlen, t, SpxMin(len,align));
+    sh->len = curlen+align;
+    sh->free = sh->free-align;
+    s[sh->len] = '\0';
     return s;
 }/*}}}*/
 
@@ -244,7 +273,7 @@ int spx_string_cmp(const string_t s1, const string_t s2){/*{{{*/
     return cmp;
 }/*}}}*/
 
-int spx_string_casecmp(const string_t s1, const char *s2){
+int spx_string_casecmp(const string_t s1, const char *s2){/*{{{*/
     size_t l1, l2, minlen;
     int cmp;
 
@@ -263,9 +292,9 @@ int spx_string_casecmp(const string_t s1, const char *s2){
     }
     if (cmp == 0) return l1-l2;
     return cmp;
-}
+}/*}}}*/
 
-bool_t spx_string_begin_with_string(const string_t s1,const string_t s2){
+bool_t spx_string_begin_with_string(const string_t s1,const string_t s2){/*{{{*/
     size_t l1, l2;
 
     l1 = spx_string_len(s1);
@@ -279,10 +308,27 @@ bool_t spx_string_begin_with_string(const string_t s1,const string_t s2){
         if(a != b) return false;
     }
     return true;
-}
+}/*}}}*/
 
 
-bool_t spx_string_end_with_string(const string_t s1,const string_t s2){
+bool_t spx_string_begin_with(const string_t s1,const char *s2){/*{{{*/
+    size_t l1, l2;
+
+    l1 = spx_string_len(s1);
+    l2 = strlen(s2);
+    if(l1 < l2) return false;
+    char a,b;
+    size_t i = 0;
+    for(; i < l2; i++){
+        a = *(s1 + i);
+        b = *(s2 + i);
+        if(a != b) return false;
+    }
+    return true;
+}/*}}}*/
+
+
+bool_t spx_string_end_with_string(const string_t s1,const string_t s2){/*{{{*/
     size_t l1, l2;
 
     l1 = spx_string_len(s1);
@@ -298,10 +344,10 @@ bool_t spx_string_end_with_string(const string_t s1,const string_t s2){
         if(a != b) return false;
     }
     return true;
-}
+}/*}}}*/
 
 
-bool_t spx_string_begin_casewith_string(const string_t s1,const string_t s2){
+bool_t spx_string_begin_casewith_string(const string_t s1,const string_t s2){/*{{{*/
     size_t l1, l2;
 
     l1 = spx_string_len(s1);
@@ -317,10 +363,29 @@ bool_t spx_string_begin_casewith_string(const string_t s1,const string_t s2){
         if(a != b) return false;
     }
     return true;
-}
+}/*}}}*/
 
 
-bool_t spx_string_end_casewith_string(const string_t s1,const string_t s2){
+bool_t spx_string_begin_casewith(const string_t s1,const char *s2){/*{{{*/
+    size_t l1, l2;
+
+    l1 = spx_string_len(s1);
+    l2 = strlen(s2);
+    if(l1 < l2) return false;
+    char a,b;
+    size_t i = 0;
+    for(; i < l2; i++){
+        a = *(s1 + i);
+        b = *(s2 + i);
+        a = (65 <= a && 90 >= a) ? a + 32 : a;
+        b = (65 <= b && 90 >= b) ? b + 32 : b;
+        if(a != b) return false;
+    }
+    return true;
+}/*}}}*/
+
+
+bool_t spx_string_end_casewith_string(const string_t s1,const string_t s2){/*{{{*/
     size_t l1, l2;
 
     l1 = spx_string_len(s1);
@@ -338,9 +403,9 @@ bool_t spx_string_end_casewith_string(const string_t s1,const string_t s2){
         if(a != b) return false;
     }
     return true;
-}
+}/*}}}*/
 
-int spx_string_casecmp_string(const string_t s1, const string_t s2){
+int spx_string_casecmp_string(const string_t s1, const string_t s2){/*{{{*/
     size_t l1, l2, minlen;
     int cmp;
 
@@ -359,6 +424,16 @@ int spx_string_casecmp_string(const string_t s1, const string_t s2){
     }
     if (cmp == 0) return l1-l2;
     return cmp;
+}/*}}}*/
+
+string_t *spx_string_split(string_t s,
+        const char *sep,int seplen,\
+        int *count,err_t *err){
+    return spx_string_splitlen(s,spx_string_len(s),sep,seplen,count,err);
+}
+
+string_t *spx_string_split_string(string_t s,string_t sep,int *count,err_t *err){
+    return spx_string_splitlen(s,spx_string_len(s),sep,spx_string_len(sep),count,err);
 }
 
 string_t *spx_string_splitlen(const char *s,\
@@ -648,7 +723,7 @@ string_t spx_string_join_string(string_t *argv,\
     return join;
 }/*}}}*/
 
-bool_t spx_string_exist(string_t s,char c){
+bool_t spx_string_exist(string_t s,char c){/*{{{*/
     struct sds *sh = NULL;
     sh = (void*) (s-sizeof *sh);;
     int i = 0;
@@ -658,9 +733,33 @@ bool_t spx_string_exist(string_t s,char c){
         }
     }
     return false;
-}
+}/*}}}*/
 
 
+
+string_t spx_string_pack_int(string_t s,const int v,err_t *err){/*{{{*/
+    return spx_string_pack_i32(s,(i32_t) v,err);
+}/*}}}*/
+
+string_t spx_string_pack_i32(string_t s,const i32_t v,err_t *err){/*{{{*/
+    if(NULL == s){
+        *err =  EINVAL;
+        return NULL;
+    }
+
+    struct sds *sh;
+    size_t curlen = spx_string_len(s);
+
+    s = spxStringMakeRoomFor(s,SpxI32Size,err);
+    if (s == NULL) return NULL;
+    sh = (void*) (s-sizeof *sh);;
+    spx_i2b((uchar_t *) s + curlen,v);
+
+    sh->len = curlen + SpxI32Size;
+    sh->free = sh->free - SpxI32Size;
+    s[sh->len] = '\0';
+    return s;
+}/*}}}*/
 
 
 /* Low level functions exposed to the user API */
@@ -707,3 +806,39 @@ size_t spxStringAllocSize(string_t s){/*{{{*/
 }/*}}}*/
 
 
+spx_private void spx_i2b(uchar_t *b,const i32_t n){/*{{{*/
+    *b++ = (n >> 24) & 0xFF;
+    *b++ = (n >> 16) & 0xFF;
+    *b++ = (n >> 8) & 0xFF;
+    *b++ = n & 0xFF;
+}/*}}}*/
+spx_private i32_t spx_b2i(uchar_t *b){/*{{{*/
+    i32_t n =  (i32_t ) ((((i32_t) (*b)) << 24)
+            | (((i32_t) (*(b + 1))) << 16)
+            | (((i32_t) (*(b+2))) << 8)
+            | ((i32_t) (*(b+3))));
+    b += sizeof(i32_t);
+    return n;
+}/*}}}*/
+spx_private void spx_l2b(uchar_t *b,const i64_t n){/*{{{*/
+    *b++ = (n >> 56) & 0xFF;
+    *b++ = (n >> 48) & 0xFF;
+    *b++ = (n >> 40) & 0xFF;
+    *b++ = (n >> 32) & 0xFF;
+    *b++ = (n >> 24) & 0xFF;
+    *b++ = (n >> 16) & 0xFF;
+    *b++ = (n >> 8) & 0xFF;
+    *b++ = n & 0xFF;
+}/*}}}*/
+spx_private i64_t spx_b2l(uchar_t *b){/*{{{*/
+    i64_t n =  (((i64_t) (*b)) << 56)
+        | (((i64_t) (*(b+1))) << 48)
+        | (((i64_t) (*(b + 2))) << 40)
+        | (((i64_t) (*(b + 3))) << 32)
+        | (((i64_t) (*(b + 4))) << 24)
+        | (((i64_t) (*(b + 5))) << 16)
+        | (((i64_t) (*(b + 6))) << 8)
+        | ((i64_t) (*(b + 7)));
+    b += sizeof(i64_t);
+    return n;
+}/*}}}*/

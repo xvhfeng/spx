@@ -21,9 +21,9 @@
 #include <grp.h>
 #include <pwd.h>
 
-#include "include/spx_types.h"
-#include "include/spx_string.h"
-#include "include/spx_defs.h"
+#include "spx_types.h"
+#include "spx_string.h"
+#include "spx_defs.h"
 
 
 void spx_env_daemon() {

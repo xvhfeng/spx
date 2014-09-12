@@ -2,10 +2,10 @@
 #include <errno.h>
 #include <string.h>
 
-#include "include/spx_mpool.h"
-#include "include/spx_alloc.h"
-#include "include/spx_types.h"
-#include "include/spx_errno.h"
+#include "spx_mpool.h"
+#include "spx_alloc.h"
+#include "spx_types.h"
+#include "spx_errno.h"
 
 #define mem_align(d, a)     (((d) + (a - 1)) & ~(a - 1))
 #define mem_align_ptr(p, a)                                                   \

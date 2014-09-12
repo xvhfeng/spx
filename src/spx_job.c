@@ -17,13 +17,13 @@
  */
 #include <stdlib.h>
 
-#include "include/spx_defs.h"
-#include "include/spx_alloc.h"
-#include "include/spx_fixed_vector.h"
-#include "include/spx_errno.h"
-#include "include/spx_string.h"
-#include "include/spx_message.h"
-#include "include/spx_job.h"
+#include "spx_defs.h"
+#include "spx_alloc.h"
+#include "spx_fixed_vector.h"
+#include "spx_errno.h"
+#include "spx_string.h"
+#include "spx_message.h"
+#include "spx_job.h"
 
 
 struct spx_job_pool *g_spx_job_pool = NULL;
@@ -49,18 +49,20 @@ void *spx_job_context_new(size_t idx,void *arg,err_t *err){
     jcontext->writer_body_process = jct->writer_body_process;
     jcontext->reader_header_validator_fail = jct->reader_header_validator_fail;
     jcontext->config = jct->config;
+    jcontext->is_lazy_recv = false;
+    jcontext->is_sendfile = false;
     return jcontext;
 
 }
 
-err_t spx_job_context__free(void **arg){
+err_t spx_job_context_free(void **arg){
     struct spx_job_context **jcontext = (struct spx_job_context **) arg;
     spx_job_context_clear(*jcontext);
     SpxFree(*jcontext);
     return 0;
 }
 
-void spx_job_context__clear(struct spx_job_context *jcontext){
+void spx_job_context_clear(struct spx_job_context *jcontext){
 
     if(NULL != jcontext->client_ip){
         spx_string_clear(jcontext->client_ip);
@@ -152,7 +154,7 @@ struct spx_job_context *spx_job_pool_pop(struct spx_job_pool *pool,err_t *err){
 }
 
 err_t spx_job_pool_push(struct spx_job_pool *pool,struct spx_job_context *jcontext){
-    spx_job_context__clear(jcontext);
+    spx_job_context_clear(jcontext);
     return spx_fixed_vector_push(pool->pool,jcontext);
 }
 
@@ -164,39 +166,4 @@ err_t spx_job_pool_free(struct spx_job_pool **pool){
 }
 
 
-struct spx_msg_header *spx_msg_to_header(struct spx_msg *ctx,err_t *err){
-    struct spx_msg_header *header = NULL;
-    if(NULL == ctx){
-        *err = EINVAL;
-        return NULL;
-    }
-
-    header = spx_alloc_alone(sizeof(*header),err);
-    if(NULL == header){
-        return NULL;
-    }
-    header->version = spx_msg_unpack_u32(ctx);
-    header->protocol = spx_msg_unpack_u32(ctx);
-    header->bodylen = spx_msg_unpack_u64(ctx);
-    header->offset = spx_msg_unpack_u64(ctx);
-    header->err = spx_msg_unpack_u32(ctx);
-    return header;
-}
-
-struct spx_msg *spx_header_to_msg(struct spx_msg_header *header,size_t len,err_t *err){
-    if(NULL == header){
-        *err = EINVAL;
-        return NULL;
-    }
-    struct spx_msg *ctx = spx_msg_new(len,err);
-    if(NULL == ctx){
-        return NULL;
-    }
-    spx_msg_pack_u32(ctx,header->version);
-    spx_msg_pack_u32(ctx,header->protocol);
-    spx_msg_pack_u64(ctx,header->bodylen);
-    spx_msg_pack_u64(ctx,header->offset);
-    spx_msg_pack_u32(ctx,header->err);
-    return ctx;
-}
 

@@ -2,11 +2,12 @@
 #include <string.h>
 #include <errno.h>
 
-#include "include/spx_alloc.h"
-#include "include/spx_errno.h"
-#include "include/spx_message.h"
-#include "include/spx_types.h"
-#include "include/spx_string.h"
+#include "spx_alloc.h"
+#include "spx_errno.h"
+#include "spx_message.h"
+#include "spx_types.h"
+#include "spx_string.h"
+#include "spx_defs.h"
 
 union d2i{
     double v;
@@ -162,7 +163,7 @@ err_t spx_msg_pack_fixed_string( struct spx_msg *ctx,string_t s,size_t len){/*{{
     ctx->last = SpxMemcpy(ctx->last,s,spx_string_len(s));
     ctx->last += len - spx_string_len(s);
     return 0;
-}
+}/*}}}*/
 err_t spx_msg_pack_ubytes( struct spx_msg *ctx,const ubyte_t *b,const size_t len){/*{{{*/
     if (NULL == ctx) return EINVAL;
     ctx->last = SpxMemcpy(ctx->last,b,len);
@@ -234,11 +235,57 @@ string_t spx_msg_unpack_string( struct spx_msg *ctx,\
     return p;
 }/*}}}*/
 ubyte_t *spx_msg_unpack_ubytes( struct spx_msg *ctx,const size_t len,err_t *err){/*{{{*/
-    return (ubyte_t *)spx_msg_unpack_string(ctx,len, err);
+    ubyte_t *buff = spx_alloc(len,sizeof(byte_t),err);
+    if(NULL == buff){
+        return NULL;
+    }
+    size_t alive = ctx->s - (ctx->buf - ctx->last);
+    memcpy(buff,ctx->last,(int) SpxMin(alive,len));
+    ctx->last += len;
+    return buff;
 }/*}}}*/
 byte_t *spx_msg_unpack_bytes( struct spx_msg *ctx,const size_t len,err_t *err){/*{{{*/
-    return (byte_t *) spx_msg_unpack_string(ctx,len, err);
+    return (byte_t *) spx_msg_unpack_ubytes(ctx,len, err);
 }/*}}}*/
+
+
+struct spx_msg_header *spx_msg_to_header(struct spx_msg *ctx,err_t *err){
+    struct spx_msg_header *header = NULL;
+    if(NULL == ctx){
+        *err = EINVAL;
+        return NULL;
+    }
+
+    header = spx_alloc_alone(sizeof(*header),err);
+    if(NULL == header){
+        return NULL;
+    }
+    header->version = spx_msg_unpack_u32(ctx);
+    header->protocol = spx_msg_unpack_u32(ctx);
+    header->bodylen = spx_msg_unpack_u64(ctx);
+    header->offset = spx_msg_unpack_u64(ctx);
+    header->err = spx_msg_unpack_u32(ctx);
+    return header;
+}
+
+struct spx_msg *spx_header_to_msg(struct spx_msg_header *header,size_t len,err_t *err){
+    if(NULL == header){
+        *err = EINVAL;
+        return NULL;
+    }
+    struct spx_msg *ctx = spx_msg_new(len,err);
+    if(NULL == ctx){
+        return NULL;
+    }
+    spx_msg_pack_u32(ctx,header->version);
+    spx_msg_pack_u32(ctx,header->protocol);
+    spx_msg_pack_u64(ctx,header->bodylen);
+    spx_msg_pack_u64(ctx,header->offset);
+    spx_msg_pack_u32(ctx,header->err);
+    return ctx;
+}
+
+
 
 spx_private void spx_msg_i2b(uchar_t *b,const i32_t n){/*{{{*/
     *b++ = (n >> 24) & 0xFF;
@@ -276,4 +323,7 @@ spx_private i64_t spx_msg_b2l(uchar_t *b){/*{{{*/
     b += sizeof(i64_t);
     return n;
 }/*}}}*/
+
+
+
 

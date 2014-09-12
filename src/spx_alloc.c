@@ -2,9 +2,9 @@
 #include <errno.h>
 #include <string.h>
 
-#include "include/spx_types.h"
-#include "include/spx_defs.h"
-#include "include/spx_alloc.h"
+#include "spx_types.h"
+#include "spx_defs.h"
+#include "spx_alloc.h"
 
 void *spx_malloc(const size_t s,err_t *err){
     if(0 == s){

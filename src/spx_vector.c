@@ -2,11 +2,11 @@
 #include <errno.h>
 #include <string.h>
 
-#include "include/spx_vector.h"
-#include "include/spx_types.h"
-#include "include/spx_defs.h"
-#include "include/spx_errno.h"
-#include "include/spx_alloc.h"
+#include "spx_vector.h"
+#include "spx_types.h"
+#include "spx_defs.h"
+#include "spx_errno.h"
+#include "spx_alloc.h"
 
 struct spx_vector *spx_vector_init(SpxLogDelegate *log,\
         SpxVectorValueFreeDelegate *handle,err_t *err){/*{{{*/
@@ -137,7 +137,7 @@ void *spx_vector_pop(struct spx_vector *vector, err_t *err){
     return v;
 }
 
-struct spx_vector_iter  *spx_vector_iter_create(struct spx_vector *vector,err_t *err){/*{{{*/
+struct spx_vector_iter  *spx_vector_iter_new(struct spx_vector *vector,err_t *err){/*{{{*/
     if(NULL == vector){
         *err = EINVAL;
         return NULL;

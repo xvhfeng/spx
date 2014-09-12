@@ -16,10 +16,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "include/spx_types.h"
-#include "include/spx_queue.h"
-#include "include/spx_alloc.h"
-#include "include/spx_defs.h"
+#include "spx_types.h"
+#include "spx_queue.h"
+#include "spx_alloc.h"
+#include "spx_defs.h"
 
 struct spx_queue *spx_queue_new(SpxLogDelegate *log,
         SpxQueueNodeFreeDelegate *free,

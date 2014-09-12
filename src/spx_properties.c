@@ -19,13 +19,13 @@
 #include <stdio.h>
 
 
-#include "include/spx_types.h"
-#include "include/spx_properties.h"
-#include "include/spx_collection.h"
-#include "include/spx_alloc.h"
-#include "include/spx_defs.h"
-#include "include/spx_path.h"
-#include "include/spx_io.h"
+#include "spx_types.h"
+#include "spx_properties.h"
+#include "spx_collection.h"
+#include "spx_alloc.h"
+#include "spx_defs.h"
+#include "spx_path.h"
+#include "spx_io.h"
 
 struct spx_properties *spx_properties_new(SpxLogDelegate *log,\
         SpxPropertyLineDeserializeDelegate *line_deserialize,\

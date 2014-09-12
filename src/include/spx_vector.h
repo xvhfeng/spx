@@ -39,7 +39,7 @@ extern "C" {
 
 
 
-    struct spx_vector_iter *spx_vector_iter_init(struct spx_vector *vector,\
+    struct spx_vector_iter *spx_vector_iter_new(struct spx_vector *vector,\
             err_t *err);
     err_t spx_vector_iter_free(struct spx_vector_iter **iter);
     void *spx_vector_iter_next(struct spx_vector_iter *iter) ;

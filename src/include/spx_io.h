@@ -64,6 +64,20 @@ spx_private spx_inline size_t spx_mmap_form_msg_with_offset(char *p,off_t offset
     return s;
 }
 
+
+
+err_t spx_write_context(SpxLogDelegate *log,int fd,struct spx_msg_context *ctx);
+err_t spx_write_context_nb(SpxLogDelegate *log,int fd,struct spx_msg_context *ctx);
+struct spx_msg_header *spx_read_header(SpxLogDelegate *log,int fd,err_t *err);
+struct spx_msg_header *spx_read_header_nb(SpxLogDelegate *log,int fd,err_t *err);
+struct spx_msg *spx_read_body(SpxLogDelegate *log,int fd,size_t size,err_t *err);
+struct spx_msg *spx_read_body_nb(SpxLogDelegate *log,int fd,size_t size,err_t *err);
+err_t spx_lazy_recv(SpxLogDelegate *log,int fd,int sock,size_t size);
+err_t spx_lazy_recv_nb(SpxLogDelegate *log,int fd,int sock,size_t size);
+err_t spx_lazy_mmap(SpxLogDelegate *log,char *ptr,int sock,size_t size,off_t begin);
+err_t spx_lazy_mmap_nb(SpxLogDelegate *log,char *ptr,int sock,size_t size,off_t begin);
+
+
 #ifdef __cplusplus
 }
 #endif

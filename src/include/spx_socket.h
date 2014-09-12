@@ -25,10 +25,6 @@ extern "C" {
 #include "spx_types.h"
 
 
-    struct spx_host{
-        string_t ip;
-        int port;
-    };
 
 #define SpxKeepAlive true
 #define SpxAliveTimeout 30

@@ -10,16 +10,12 @@ extern "C" {
 #include <wchar.h>
 
 #ifndef bool_t
-typedef enum {
-    false = 0,
-    true = 1
-}bool_t;
+    typedef enum {
+        false = 0,
+        true = 1
+    }bool_t;
 #endif
 
-const char *spx_bool_desc[] = {
-    "false",
-    "true"
-};
 
 #ifndef byte_t
     typedef signed char byte_t;
@@ -40,9 +36,9 @@ const char *spx_bool_desc[] = {
     }bstring_t;
 #endif
 
-//i think we do not need to define the struct for string
-//and string not must need length in the struct
-//but i think we must have the sign('\0') of the string end
+    //i think we do not need to define the struct for string
+    //and string not must need length in the struct
+    //but i think we must have the sign('\0') of the string end
 #ifndef string_t
     typedef char * string_t;
 #endif
@@ -92,11 +88,11 @@ const char *spx_bool_desc[] = {
 #endif
 
 #ifndef spx_atomic_t
-typedef long spx_atomic_t;
+    typedef long spx_atomic_t;
 #endif
 
 #ifndef spx_uatomit_t
-typedef unsigned long spx_uatomic_t;
+    typedef unsigned long spx_uatomic_t;
 #endif
 
 #ifndef err_t
@@ -115,6 +111,32 @@ typedef unsigned long spx_uatomic_t;
 #define spx_public
 #endif
 
+    struct spx_host{
+        string_t ip;
+        int port;
+    };
+
+    struct spx_date{
+        int year;
+        int month;
+        int day;
+    };
+
+    struct spx_time{
+        int hour;
+        int min;
+        int sec;
+    };
+
+    struct spx_datetime{
+        struct spx_date d;
+        struct spx_time t;
+    };
+
+    spx_private char *spx_bool_desc[] = {
+        "false",
+        "true"
+    };
 #ifdef __cplusplus
 }
 #endif

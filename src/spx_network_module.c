@@ -17,14 +17,14 @@
 #include <stdio.h>
 #include <ev.h>
 
-#include "include/spx_types.h"
-#include "include/spx_io.h"
-#include "include/spx_defs.h"
-#include "include/spx_module.h"
-#include "include/spx_network_module.h"
-#include "include/spx_job.h"
-#include "include/spx_socket.h"
-#include "include/spx_nio.h"
+#include "spx_types.h"
+#include "spx_io.h"
+#include "spx_defs.h"
+#include "spx_module.h"
+#include "spx_network_module.h"
+#include "spx_job.h"
+#include "spx_socket.h"
+#include "spx_nio.h"
 
 struct spx_module_context *g_spx_network_module = NULL;
 

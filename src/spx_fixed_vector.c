@@ -17,11 +17,11 @@
  */
 #include <stdlib.h>
 
-#include "include/spx_types.h"
-#include "include/spx_errno.h"
-#include "include/spx_defs.h"
-#include "include/spx_fixed_vector.h"
-#include "include/spx_alloc.h"
+#include "spx_types.h"
+#include "spx_errno.h"
+#include "spx_defs.h"
+#include "spx_fixed_vector.h"
+#include "spx_alloc.h"
 
 struct spx_fixed_vector *spx_fixed_vector_new(SpxLogDelegate *log,\
         size_t size,\
