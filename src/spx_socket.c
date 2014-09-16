@@ -57,7 +57,7 @@ spx_private err_t spx_socket_reuseaddr(int sock) {
 spx_private err_t spx_socket_keepalive(int fd,bool_t enable,\
         size_t alive_timeout,size_t detect_times,size_t detect_timeout){
 
-    int err = 0;
+    err_t err = 0;
     if(!enable) return 0;
 #ifdef SpxLinux
     //open the keepalive
@@ -67,18 +67,18 @@ spx_private err_t spx_socket_keepalive(int fd,bool_t enable,\
         err = errno;
         return err;
     }
-    if (-1 == setsockopt(fd, SOL_TCP, TCP_KEEPIDLE, &alive_timeout
-                sizeof(keepidle))) {
+    if (-1 == setsockopt(fd, SOL_TCP, TCP_KEEPIDLE, &alive_timeout,
+                sizeof(size_t))) {
         err = errno;
         return err;
     }
     if (-1 == setsockopt(fd, SOL_TCP, TCP_KEEPCNT, &detect_times,\
-                sizeof(keepcnt))) {
+                sizeof(size_t))) {
         err = errno;
         return err;
     }
     if (-1 == setsockopt(fd, SOL_TCP, TCP_KEEPINTVL, &detect_timeout,\
-                sizeof(keepintvl))) {
+                sizeof(size_t))) {
         err = errno;
         return err;
     }

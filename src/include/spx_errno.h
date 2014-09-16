@@ -7,6 +7,7 @@ extern "C" {
 #endif
 
 #include <errno.h>
+#include <string.h>
 
 #include "spx_types.h"
 
@@ -14,7 +15,8 @@ extern "C" {
 #define ENODLMT 513
 #define EBADHEADER 514
 
-const char *spx_strerror(err_t err);
+char *spx_strerror(err_t err);
+
 
 #ifdef __cplusplus
 }

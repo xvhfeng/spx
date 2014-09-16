@@ -44,7 +44,7 @@ spx_private char *SpxLogDesc[] = {
 #define SpxLog2(log,level,err,info) \
     if(NULL != (log)) {\
         (log)(level,((string_t) "File:%s,Line:%d,Func:%s.errno:%d,info:%s.%s."),\
-                __FILE__,__LINE__,__FUNCTION__,err,spx_strerror(err),info);\
+                __FILE__,__LINE__,__FUNCTION__,err,err >= SpxSuccess ?  spx_strerror(err) : strerror(err),info);\
     }
 
 #define SpxLogFmt1(log,level,fmt,...) \
@@ -56,7 +56,7 @@ spx_private char *SpxLogDesc[] = {
 #define SpxLogFmt2(log,level,err,fmt,...) \
     if(NULL != (log)) {\
         (log)(level,((string_t) "File:%s,Line:%d,Func:%s.errno:%d,info:%s."fmt),\
-                __FILE__,__LINE__,__FUNCTION__,err,spx_strerror(err),__VA_ARGS__);\
+                __FILE__,__LINE__,__FUNCTION__,err,err >= SpxSuccess ? spx_strerror(err) : strerror(err),__VA_ARGS__);\
     }
 
 #define SpxErrReset errno = 0

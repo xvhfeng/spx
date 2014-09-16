@@ -45,7 +45,7 @@ err_t spx_mkdir(SpxLogDelegate *log,const string_t path,const mode_t mode){/*{{{
         return EINVAL;
     }
     char ptr[SpxPathSize + 1] = {0};
-    memcpy(ptr,SpxString2Char2(path),spx_string_len(path));
+    memcpy(ptr,SpxString2Char2(path),SpxMin(SpxPathSize,spx_string_len(path)));
     bool_t isdir = false;
     isdir = spx_is_dir(path,&rc);
     if(0 != rc) {
@@ -55,6 +55,9 @@ err_t spx_mkdir(SpxLogDelegate *log,const string_t path,const mode_t mode){/*{{{
     }
     if(isdir) return rc;
     char *p = ptr;
+    if( SpxPathDlmt == *p){
+        p += sizeof(SpxPathDlmt);
+    }
     while(NULL != (p = strchr(p,SpxPathDlmt))){
         *p = 0;
         isdir = spx_is_dir(ptr,&rc);

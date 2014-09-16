@@ -70,7 +70,7 @@ r1:
     return err;
 }/*}}}*/
 
-void spx_log(int level,string_t fmt,...){/*{{{*/
+void spx_log(int level,char *fmt,...){/*{{{*/
     if((level < 0 || (int)sizeof(SpxLogDesc) <= level) || NULL == fmt) return;
 
     err_t err = 0;
@@ -159,8 +159,9 @@ spx_private err_t logf_create(SpxLogDelegate log,\
     if(NULL == newfp){
         goto r1;
     }
+    fp = newfp;
     *fd = open(SpxString2Char2(fp),O_RDWR|O_APPEND|O_CREAT,SpxFileMode);
-    if(0 == *fd) {
+    if(0 >= *fd) {
         err = 0 == errno ? EACCES : errno;
         goto r1;
     }
@@ -197,7 +198,7 @@ r1:
 }/*}}}*/
 
 spx_private spx_inline string_t get_log_line(err_t *err,\
-        u8_t level,string_t fmt,va_list ap){/*{{{*/
+        u8_t level,char *fmt,va_list ap){/*{{{*/
     string_t line = spx_string_newlen(SpxLogDesc[level],SpxLogDescSize[level],err);
     if(NULL == line){
         return NULL;
