@@ -188,6 +188,37 @@ void spx_string_trim(string_t s, const char *cset){/*{{{*/
     sh->len = len;
 }/*}}}*/
 
+void spx_string_rtrim(string_t s, const char *cset){/*{{{*/
+    struct sds *sh = (void*) (s-sizeof *sh);;
+    char *start, *end, *sp, *ep;
+    size_t len;
+
+    sp = start = s;
+    ep = end = s+spx_string_len(s)-1;
+    while(ep >= start && strchr(cset, *ep)) ep--;
+    len = (sp > ep) ? 0 : ((ep-sp)+1);
+    if (sh->buf != sp) memmove(sh->buf, sp, len);
+    sh->buf[len] = '\0';
+    sh->free = sh->free+(sh->len-len);
+    sh->len = len;
+}/*}}}*/
+
+void spx_string_ltrim(string_t s, const char *cset){/*{{{*/
+    struct sds *sh = (void*) (s-sizeof *sh);;
+    char *start, *end, *sp, *ep;
+    size_t len;
+
+    sp = start = s;
+    ep = end = s+spx_string_len(s)-1;
+    while(sp <= end && strchr(cset, *sp)) sp++;
+    len = (sp > ep) ? 0 : ((ep-sp)+1);
+    if (sh->buf != sp) memmove(sh->buf, sp, len);
+    sh->buf[len] = '\0';
+    sh->free = sh->free+(sh->len-len);
+    sh->len = len;
+}/*}}}*/
+
+
 void spx_string_range(string_t s, int start, int end){/*{{{*/
     struct sds *sh = (void*) (s-sizeof *sh);;
     size_t newlen, len = spx_string_len(s);

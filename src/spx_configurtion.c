@@ -49,9 +49,13 @@ void *spx_configurtion_parser(SpxLogDelegate *log,\
     while(NULL != fgets(line,SpxLineSize,f)){
         spx_string_updatelen(line);
         spx_string_trim(line," ");
-        if(!SpxStringBeginWith(line,'#')){
+        if(SpxStringEndWith(line,SpxLineEndDlmt)){
+            spx_string_rtrim(line,SpxLineEndDlmtString);
+        }
+        if(!SpxStringBeginWith(line,'#')
+                && 0 != spx_string_len(line)){
             lineparser(line,config,err);
-            if(0 != err){
+            if(0 != *err){
                 goto r1;
             }
         }

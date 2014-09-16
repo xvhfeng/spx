@@ -332,7 +332,7 @@ string_t spx_socket_getipbyname(string_t name,err_t *err){
         goto r1;
     }
     string_t newip = spx_string_cat(ip,inet_ntoa(addr),err);
-    if(NULL == newip){
+    if(SpxStringIsNullOrEmpty(newip)){
         spx_string_free(ip);
         goto r1;
     }
@@ -344,7 +344,7 @@ r1:
 }
 
 bool_t spx_socket_is_ip(string_t ip){
-    struct in_addr s;
-    int rc = inet_pton(AF_INET, ip, (void *)&s);
+    struct sockaddr_in sa;
+    int rc = inet_pton(AF_INET, ip, &(sa.sin_addr));
     return 1 == rc ? true : false;
 }

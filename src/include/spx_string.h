@@ -83,6 +83,8 @@ string_t spx_string_cat_printf(err_t *err,string_t s, const char *fmt, ...);
  * Output will be just "Hello World".
  */
 void spx_string_trim(string_t s, const char *cset);
+void spx_string_ltrim(string_t s, const char *cset);
+void spx_string_rtrim(string_t s, const char *cset);
 
 /* Turn the string into a smaller (or equal) string containing only the
  * substring specified by the 'start' and 'end' indexes.
@@ -268,7 +270,7 @@ size_t spxStringAllocSize(string_t s);
 
 #define SpxStringEndWith(s,c) \
         (!SpxStringIsNullOrEmpty(s) \
-        && (c == *(s +  spx_string_len(s))))
+        && (c == *(s +  spx_string_len(s) - 1)))
 #define SpxStringBeginWith(s,c) ( c == *s)
 #define SpxStringRealSize(l) ((l) + 1)
 
