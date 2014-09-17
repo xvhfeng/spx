@@ -32,7 +32,7 @@ extern "C" {
     void spx_network_module_wakeup_handler(struct ev_loop *loop,ev_io *w,int revents);
 
     spx_private int spx_network_module_wakeup_idx(struct spx_job_context *jc){
-        return jc->idx % g_spx_network_module->threadpool->curr_size;
+        return jc->idx % g_spx_network_module->threadpool->size;
     }
 
 #ifdef __cplusplus

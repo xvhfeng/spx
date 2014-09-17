@@ -19,19 +19,19 @@
 
 #include "spx_types.h"
 #include "spx_defs.h"
-#include "spx_list.h"
 #include "spx_alloc.h"
+#include "spx_list.h"
 
 struct spx_list *spx_list_new(SpxLogDelegate *log,\
         size_t init_size,\
-        SpxListNodeFreeDelegate *node_free,\
+       SpxListNodeFreeDelegate *node_free,
         err_t *err){
     struct spx_list *list = spx_alloc_alone(sizeof(*list),err);
     if(NULL == list){
         return NULL;
     }
     list->log = log;
-    list->curr_size = 0;
+    list->busy_size = 0;
     list->free_size = init_size;
     list->size = init_size;
     list->node_free = node_free;
@@ -77,24 +77,24 @@ struct spx_list *spx_list_init(SpxLogDelegate *log,\
 }
 
 void *spx_list_get(struct spx_list *list,int idx){
-    if(SpxAbs(idx) >=(int) list->curr_size){
+    size_t i = idx < 0 ? list->size + idx :(size_t) idx;
+    if(i >=(int) list->size){
         return NULL;
     }
-    size_t i = idx < 0 ? list->curr_size + idx :(size_t) idx;
     struct spx_list_node *node = list->nodes + i;
     return node->v;
 }
 
 void *spx_list_get_and_out(struct spx_list *list,int idx){
-    if(SpxAbs(idx) >=(int) list->curr_size){
+    size_t i = idx < 0 ? list->busy_size + idx : (size_t) idx;
+    if(i >=(int) list->size){
         return NULL;
     }
-    size_t i = idx < 0 ? list->curr_size + idx : (size_t) idx;
     struct spx_list_node *node = list->nodes + i;
     void *v = node->v;
     size_t j = i;
-    for(j = i; j < list->curr_size; j++){
-        if(j + 1 == list->curr_size){
+    for(j = i; j < list->size; j++){
+        if(j + 1 == list->size){
             struct spx_list_node *curr = list->nodes + j;
             curr->v = NULL;
         }
@@ -104,19 +104,19 @@ void *spx_list_get_and_out(struct spx_list *list,int idx){
             curr->v = next->v;
         }
     }
-    list->curr_size --;
+    list->busy_size --;
     list->free_size ++;
     return v;
 }
 
 err_t spx_list_delete(struct spx_list *list,int idx){
-    if(SpxAbs(idx) >=(int) list->curr_size){
+    size_t i = idx < 0 ? list->busy_size + idx : (size_t) idx;
+    if(i >=(int) list->busy_size){
         return EINVAL;
     }
-    size_t i = idx < 0 ? list->curr_size + idx : (size_t) idx;
     size_t j = i;
-    for(j = i; j < list->curr_size; j++){
-        if(j + 1 == list->curr_size){
+    for(j = i; j < list->size; j++){
+        if(j + 1 == list->size){
             struct spx_list_node *curr = list->nodes + j;
             curr->v = NULL;
         }
@@ -126,42 +126,39 @@ err_t spx_list_delete(struct spx_list *list,int idx){
             curr->v = next->v;
         }
     }
-    list->curr_size --;
+    list->busy_size --;
     list->free_size ++;
     return 0;
 }
 
 err_t spx_list_insert(struct spx_list *list,int idx,void *v){
-    if(SpxAbs(idx) >=(int) list->curr_size){
-        return EINVAL;
-    }
+    size_t i = idx < 0 ? list->size + idx : (size_t) idx;
     err_t err = 0;
-    size_t i = idx < 0 ? list->curr_size + idx : (size_t) idx;
     if(i >= list->size){
-        size_t size = list->size * 2;
+        size_t size = i > 2 * list->size ? i : 2 * list->size;
         struct spx_list_node *new_nodes = spx_realloc(list->nodes,size,&err);
         if(NULL == new_nodes){
             return err;
         }
         list->nodes = new_nodes;
         list->size = size;
-        list->free_size = size - list->curr_size;
+        list->free_size = size - list->busy_size;
     }
-    size_t  j = list->curr_size;
+    size_t  j = list->size;
     for(;j > i;j--){
         struct spx_list_node *curr = list->nodes + j;
         struct spx_list_node *prev = list->nodes + (j -1);
         curr->v = prev->v;
     }
     (list->nodes + i)->v = v;
-    list->curr_size ++;
+    list->busy_size ++;
     list->free_size --;
     return 0;
 }
 
 err_t spx_list_add(struct spx_list *list,void *v){
     err_t err = 0;
-    if(list->curr_size >= list->size){
+    if(list->busy_size == list->size){
         size_t size = list->size * 2;
         struct spx_list_node *new_nodes = spx_realloc(list->nodes,size,&err);
         if(NULL == new_nodes){
@@ -169,17 +166,17 @@ err_t spx_list_add(struct spx_list *list,void *v){
         }
         list->nodes = new_nodes;
         list->size = size;
-        list->free_size = size - list->curr_size;
+        list->free_size = size - list->busy_size;
     }
-    (list->nodes + list->curr_size)->v = v;
-    list->curr_size ++;
+    (list->nodes + list->busy_size)->v = v;
+    list->busy_size ++;
     list->free_size --;
     return 0;
 }
 
 err_t spx_list_free(struct spx_list **list){
     size_t i = 0;
-    for(;i < (*list)->curr_size;i++){
+    for(;i < (*list)->size;i++){
         struct spx_list_node *node = (*list)->nodes + i;
         if(NULL != (*list)->node_free){
             (*list)->node_free(&(node->v));

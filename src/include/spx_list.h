@@ -10,14 +10,15 @@ extern "C" {
 
     typedef err_t (SpxListNodeFreeDelegate)(void **arg);
     typedef void *(SpxListNodeNewDelegate)(size_t i,void *arg,err_t *err);
+
     struct spx_list_node{
         void *v;
     };
 
     struct spx_list{
         SpxLogDelegate *log;
-        size_t curr_size;
         size_t free_size;
+        size_t busy_size;
         size_t size;
         SpxListNodeFreeDelegate *node_free;
         struct spx_list_node *nodes;
