@@ -56,7 +56,7 @@ err_t spx_mkdir(SpxLogDelegate *log,const string_t path,const mode_t mode){/*{{{
     if(isdir) return rc;
     char *p = ptr;
     if( SpxPathDlmt == *p){
-        p += sizeof(SpxPathDlmt);
+        p += SpxPathDlmtLen;
     }
     while(NULL != (p = strchr(p,SpxPathDlmt))){
         *p = 0;
@@ -72,7 +72,7 @@ err_t spx_mkdir(SpxLogDelegate *log,const string_t path,const mode_t mode){/*{{{
             break;
         }
         *p = SpxPathDlmt;
-        p += sizeof(SpxPathDlmt);
+        p += SpxPathDlmtLen;
     }
     isdir = spx_is_dir(ptr,&rc);
     if(0 != rc) {

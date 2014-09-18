@@ -78,7 +78,7 @@ struct spx_list *spx_list_init(SpxLogDelegate *log,\
 
 void *spx_list_get(struct spx_list *list,int idx){
     size_t i = idx < 0 ? list->size + idx :(size_t) idx;
-    if(i >=(int) list->size){
+    if(i >= list->size){
         return NULL;
     }
     struct spx_list_node *node = list->nodes + i;
@@ -87,7 +87,7 @@ void *spx_list_get(struct spx_list *list,int idx){
 
 void *spx_list_get_and_out(struct spx_list *list,int idx){
     size_t i = idx < 0 ? list->busy_size + idx : (size_t) idx;
-    if(i >=(int) list->size){
+    if(i >= list->size){
         return NULL;
     }
     struct spx_list_node *node = list->nodes + i;
@@ -111,7 +111,7 @@ void *spx_list_get_and_out(struct spx_list *list,int idx){
 
 err_t spx_list_delete(struct spx_list *list,int idx){
     size_t i = idx < 0 ? list->busy_size + idx : (size_t) idx;
-    if(i >=(int) list->busy_size){
+    if(i >= list->busy_size){
         return EINVAL;
     }
     size_t j = i;

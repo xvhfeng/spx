@@ -213,7 +213,7 @@ void spx_socket_accept_nb(int fd){
             continue;
         }
 
-        size_t idx = client_sock % g_spx_notifier_module->threadpool->curr_size;
+        size_t idx = client_sock % g_spx_notifier_module->threadpool->size;
         if(0 != (err = spx_module_dispatch(g_spx_notifier_module,idx,&client_sock))){
             SpxClose(client_sock);
             SpxLogFmt2(g_spx_notifier_module->log,SpxLogError,err,\

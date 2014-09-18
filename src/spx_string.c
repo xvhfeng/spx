@@ -35,13 +35,21 @@ string_t spx_string_newlen(const void *init, size_t initlen,err_t *err){/*{{{*/
         sh = spx_alloc_alone(sizeof *sh+ SpxStringRealSize(initlen),err);
     }
     if (sh == NULL) return NULL;
-    sh->len = initlen;
-    sh->free = 0;
-    if (initlen && init)
+    if (initlen && init) {
         memcpy(sh->buf, init, initlen);
-    sh->buf[initlen] = '\0';
+        sh->len = initlen;
+        sh->free = 0;
+        sh->buf[initlen] = '\0';
+    }else {
+        sh->len = 0;
+        sh->free = initlen;
+    }
     return (string_t) sh->buf;
 }/*}}}*/
+
+string_t spx_string_emptylen(size_t initlen,err_t *err){
+    return spx_string_newlen(NULL,initlen,err);
+}
 
 string_t spx_string_new(const char *init,err_t *err){/*{{{*/
     size_t initlen = (init == NULL) ? 0 : strlen(init);

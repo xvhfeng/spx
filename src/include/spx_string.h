@@ -39,6 +39,7 @@ string_t spx_string_newlen(const void *init, size_t initlen,err_t *err);
 string_t spx_string_new(const char *init,err_t *err);
 
 string_t spx_string_empty(err_t *err);
+string_t spx_string_emptylen(size_t initlen,err_t *err);
 
 string_t spx_string_dup(const string_t s,err_t *err);
 

@@ -59,7 +59,7 @@ void spx_notifier_module_receive_handler(struct ev_loop *loop,ev_io *w,int reven
         jcontext->fd = client_sock;
         jcontext->client_ip = spx_ip_get(client_sock,&err);
         jcontext->moore = SpxNioMooreRequest;
-        size_t idx = jcontext->idx % g_spx_network_module->threadpool->curr_size;
+        size_t idx = jcontext->idx % g_spx_network_module->threadpool->size;
         SpxLogFmt1(tc->log,SpxLogDebug,\
                 "recv the client:%s connection."\
                 "and send to thread:%d to deal.",
