@@ -92,12 +92,13 @@ void spx_network_module_wakeup_handler(struct ev_loop *loop,ev_io *w,int revents
     struct spx_job_context *jcontext = (struct spx_job_context *)w->data;
     size_t len = 0;
     struct spx_trigger_context *tc = (struct spx_trigger_context *) w;//magic,yeah
-    err = spx_write_nb(w->fd,(byte_t *) jcontext,sizeof(jcontext),&len);
+    err = spx_write_nb(w->fd,(byte_t *) &jcontext,sizeof(jcontext),&len);
     if (0 != err || sizeof(jcontext) != len) {
         SpxLog1(tc->log,SpxLogError,\
                 "wakeup network module is fail.");
         spx_job_pool_push(g_spx_job_pool,jcontext);
     }
     spx_module_dispatch_trigger_push(g_spx_network_module,tc);
+    ev_io_stop(loop,w);
 }
 

@@ -34,7 +34,7 @@ struct spx_msg *spx_msg_new(const size_t len,err_t *err){/*{{{*/
         return NULL;
     }
     ctx->buf = spx_alloc_alone(len,err);
-    if(NULL != ctx){
+    if(NULL == ctx->buf){
         goto r1;
     }
     ctx->last = ctx->buf;

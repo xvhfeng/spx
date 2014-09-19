@@ -193,6 +193,7 @@ err_t spx_socket_start(const int fd,\
     return 0;
 }
 
+/*
 void spx_socket_accept_nb(int fd){
     err_t err = 0;
     while(true){
@@ -223,6 +224,7 @@ void spx_socket_accept_nb(int fd){
     }
 }
 
+*/
 
 string_t spx_ip_get(int sock,err_t *err) {
 
@@ -273,6 +275,45 @@ err_t spx_socket_connect(int fd,string_t ip,int port){
     addr.sin_addr.s_addr = inet_addr(ip);
     if(0 > connect(fd,(struct sockaddr *) &addr,sizeof(addr))){
         return errno;
+    }
+    return 0;
+}
+
+err_t spx_socket_connect_nb(int fd,string_t ip,int port,u32_t timeout){
+    struct sockaddr_in addr;
+    bzero(&addr,sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port=htons(port);
+    addr.sin_addr.s_addr = inet_addr(ip);
+    err_t err = 0;
+    if(0 > connect(fd,(struct sockaddr *) &addr,sizeof(addr))){
+        //filter this errno,socket is not connect to server and return at once
+        if (EINPROGRESS == errno) {
+            struct timeval tv;
+            SpxZero(tv);
+            tv.tv_sec = timeout;
+            tv.tv_usec = 0;
+            fd_set frd;
+            FD_ZERO(&frd);
+            FD_SET(fd,&frd);
+            socklen_t len = 0;
+            if (0 < select (fd+1 , NULL,&frd,NULL,&tv)) {
+                if(0 > getsockopt(fd,SOL_SOCKET,SO_ERROR,(void*)(&err),&len)) {
+                    err = errno;
+                    return err;
+                }
+                if (0 != err) {
+                    return err;
+                }
+            } else {
+                err = EXDEV;
+                return err;
+            }
+            SpxErrReset;
+            return 0;
+        } else {
+            return errno;
+        }
     }
     return 0;
 }

@@ -41,7 +41,6 @@ err_t  spx_nio_regedit_reader(struct ev_loop *loop,int fd,struct spx_job_context
     ev_io_init(&(jcontext->watcher),jcontext->nio_reader,fd,EV_READ);
     jcontext->watcher.data = jcontext;//libev not the set function
     ev_io_start(loop,&(jcontext->watcher));
-    ev_run(loop,0);
     return 0;
 }/*}}}*/
 
@@ -58,7 +57,6 @@ err_t  spx_nio_regedit_writer(struct ev_loop *loop,int fd,struct spx_job_context
     ev_io_init(&(jcontext->watcher),jcontext->nio_writer,fd,EV_WRITE);
     jcontext->watcher.data = jcontext;
     ev_io_start(loop,&(jcontext->watcher));
-    ev_run(loop,0);
     return 0;
 }/*}}}*/
 
@@ -67,7 +65,6 @@ err_t  spx_dio_regedit_reader(struct ev_loop *loop,int fd,ev_io *watcher,
     ev_io_init(watcher,dio_reader,fd,EV_READ);
     watcher->data = data;//libev not the set function
     ev_io_start(loop,watcher);
-    ev_run(loop,0);
     return 0;
 }/*}}}*/
 
@@ -77,7 +74,6 @@ err_t  spx_dio_regedit_writer(struct ev_loop *loop,int fd,ev_io *watcher,
     ev_io_init(watcher,dio_writer,fd,EV_WRITE);
     watcher->data = data;
     ev_io_start(loop,watcher);
-    ev_run(loop,0);
     return 0;
 }/*}}}*/
 

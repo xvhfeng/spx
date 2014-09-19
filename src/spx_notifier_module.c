@@ -29,47 +29,31 @@
 struct spx_module_context *g_spx_notifier_module = NULL;
 
 void spx_notifier_module_receive_handler(struct ev_loop *loop,ev_io *w,int revents){
-    int client_sock;
+    struct spx_job_context *jc = NULL;
+
     size_t len = 0;
     struct spx_trigger_context *tc = (struct spx_trigger_context *) w;//magic,yeah
     err_t err= 0;
-        err = spx_read_nb(w->fd,(byte_t *) &client_sock,sizeof(client_sock),&len);
-        if(0 != err || len != sizeof(client_sock)){
-            SpxLog2(tc->log,SpxLogError,err,\
-                    "read the client socket fd is fail.");
+        err = spx_read_nb(w->fd,(byte_t *) &jc,sizeof(jc),&len);
+        if(NULL == jc){
+            SpxLog2(tc->log,SpxLogError,err,
+                    "recv job context is fail.");
             return;
         }
 
-        if (0 >= client_sock) {
-            SpxLogFmt1(tc->log,SpxLogError,
-                    "read the client socket fd is fail,"\
-                    "the fd is less 0 and value is :%d.",\
-                    client_sock);
-            return;
-        }
-
-
-        struct spx_job_context *jcontext =  spx_job_pool_pop(g_spx_job_pool,&err);
-        if(NULL == jcontext){
-            SpxClose(client_sock);
-            SpxLog1(tc->log,SpxLogError,\
-                    "pop nio context is fail.");
-            return;
-        }
-        jcontext->fd = client_sock;
-        jcontext->client_ip = spx_ip_get(client_sock,&err);
-        jcontext->moore = SpxNioMooreRequest;
-        size_t idx = jcontext->idx % g_spx_network_module->threadpool->size;
+        jc->client_ip = spx_ip_get(jc->fd,&err);
+        jc->moore = SpxNioMooreRequest;
+        size_t idx = jc->idx % g_spx_network_module->threadpool->size;
         SpxLogFmt1(tc->log,SpxLogDebug,\
                 "recv the client:%s connection."\
                 "and send to thread:%d to deal.",
-                jcontext->client_ip,idx);
-        err = spx_module_dispatch(g_spx_network_module,idx,jcontext);
+                jc->client_ip,idx);
+        err = spx_module_dispatch(g_spx_network_module,idx,jc);
         if(0 != err){
-            SpxLog2(jcontext->log,SpxLogError,err,\
+            SpxLog2(jc->log,SpxLogError,err,\
                     "dispatch to network module is fail."\
-                    "and forced push jcontext to pool.");
-            spx_job_pool_push(g_spx_job_pool,jcontext);
+                    "and forced push jc to pool.");
+            spx_job_pool_push(g_spx_job_pool,jc);
         }
     return ;
 
@@ -77,13 +61,15 @@ void spx_notifier_module_receive_handler(struct ev_loop *loop,ev_io *w,int reven
 
 void spx_notifier_module_wakeup_handler(struct ev_loop *loop,ev_io *w,int revents){
     err_t err = 0;
-    int *fd = (int *) w->data;
+    struct spx_job_context *jc = (struct spx_job_context *) w->data;
     size_t len = 0;
     struct spx_trigger_context *tc = (struct spx_trigger_context *) w;//magic,yeah
-    err = spx_write_nb(w->fd,(byte_t *) fd,sizeof(fd),&len);
-    if (0 != err || sizeof(fd) != len) {
+    err = spx_write_nb(w->fd,(byte_t *) &jc,sizeof(jc),&len);
+    if (0 != err || sizeof(jc) != len) {
+        spx_job_pool_push(g_spx_job_pool,jc);
         SpxLog1(tc->log,SpxLogError,\
                 "wake up network module is fail.");
     }
     spx_module_dispatch_trigger_push(g_spx_notifier_module,tc);
+    ev_io_stop(loop,w);
 }

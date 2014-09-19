@@ -54,7 +54,7 @@ spx_private void *spx_thread_context_new(size_t idx,void *arg,err_t *err){
         return NULL;
     }
     tc->idx = idx;
-    tc->loop = ev_loop_new(EVFLAG_AUTO);
+    tc->loop = ev_loop_new(0);
     tc->log = log;
     if(-1 == pipe(tc->pipe)){
         *err = errno;
@@ -244,7 +244,6 @@ err_t spx_module_dispatch(struct spx_module_context *mc,size_t idx,void *msg){
     ev_io_init(&(tc->watcher),tc->trigger_handler,stc->pipe[1],EV_WRITE);
     tc->watcher.data = msg;
     ev_io_start(stc->loop,&(tc->watcher));
-    ev_run(stc->loop,0);
     return err;
 }
 

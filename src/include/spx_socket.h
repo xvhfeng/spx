@@ -35,7 +35,7 @@ extern "C" {
 #define SpxNodelay true
 
 int spx_socket_new(err_t *err);
-void spx_socket_accept_nb(int fd);
+//void spx_socket_accept_nb(int fd);
 err_t spx_socket_start(const int fd,\
         string_t ip,const int port,\
         bool_t is_keepalive,size_t alive_timeout,\
@@ -55,6 +55,7 @@ err_t spx_socket_set(const int fd,\
         bool_t is_nodelay,\
         bool_t is_timeout,size_t timeout);
 err_t spx_socket_connect(int fd,string_t ip,int port);
+err_t spx_socket_connect_nb(int fd,string_t ip,int port,u32_t timeout);
 string_t spx_socket_getipbyname(string_t name,err_t *err);
 bool_t spx_socket_is_ip(string_t ip);
 
