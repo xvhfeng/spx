@@ -59,6 +59,7 @@ void spx_network_module_receive_handler(struct ev_loop *loop,ev_io *w,int revent
                                                 "and forced push jcontext to pool.");
                                         goto r1;
                                     }
+//                                    ev_run(loop,0);
                                     break;
                                 }
         case SpxNioMooreResponse:{

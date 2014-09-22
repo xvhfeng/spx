@@ -74,7 +74,7 @@ void spx_task_module_wakeup_handler(struct ev_loop *loop,ev_io *w,int revents){
     size_t len = 0;
     struct spx_trigger_context *tc = (struct spx_trigger_context *) w;//magic,yeah
     struct spx_job_context *jcontext = tcontext->jcontext;
-    err = spx_write_nb(w->fd,(byte_t *) tcontext,sizeof(tcontext),&len);
+    err = spx_write_nb(w->fd,(byte_t *) &tcontext,sizeof(tcontext),&len);
     if (0 != err || sizeof(tcontext) != len) {
         SpxLog1(tc->log,SpxLogError,\
                 "send tcontext to dio thread is fail."\

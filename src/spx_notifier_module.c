@@ -42,6 +42,7 @@ void spx_notifier_module_receive_handler(struct ev_loop *loop,ev_io *w,int reven
         }
 
         jc->client_ip = spx_ip_get(jc->fd,&err);
+        spx_set_nb(jc->fd);
         jc->moore = SpxNioMooreRequest;
         size_t idx = jc->idx % g_spx_network_module->threadpool->size;
         SpxLogFmt1(tc->log,SpxLogDebug,\

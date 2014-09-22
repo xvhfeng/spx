@@ -101,12 +101,14 @@ err_t spx_msg_pack_i8(struct spx_msg *ctx,const i8_t v){/*{{{*/
 err_t spx_msg_pack_i32( struct spx_msg *ctx,const i32_t v){/*{{{*/
     if(NULL == ctx) return EINVAL;
     spx_msg_i2b(ctx->last,v);
+    (ctx->last) += sizeof(i32_t);
     return 0;
 }/*}}}*/
 
 err_t spx_msg_pack_i64( struct spx_msg *ctx,const i64_t v) {/*{{{*/
     if (NULL == ctx) return EINVAL;
     spx_msg_l2b(ctx->last,v);
+    (ctx->last) += sizeof(i64_t);
     return 0;
 }/*}}}*/
 err_t spx_msg_pack_u8( struct spx_msg *ctx,const u8_t v){/*{{{*/
@@ -118,11 +120,13 @@ err_t spx_msg_pack_u8( struct spx_msg *ctx,const u8_t v){/*{{{*/
 err_t spx_msg_pack_u32( struct spx_msg *ctx,const u32_t v){/*{{{*/
     if(NULL == ctx) return EINVAL;
     spx_msg_i2b(ctx->last,(i32_t) v);
+    (ctx->last) += sizeof(u32_t);
     return 0;
 }/*}}}*/
 err_t spx_msg_pack_u64( struct spx_msg *ctx,const u64_t v){/*{{{*/
     if(NULL == ctx) return EINVAL;
     spx_msg_l2b(ctx->last,(i64_t) v);
+    (ctx->last) += sizeof(u64_t);
     return 0;
 }/*}}}*/
 err_t spx_msg_pack_double( struct spx_msg *ctx,const double v){/*{{{*/
@@ -131,6 +135,7 @@ err_t spx_msg_pack_double( struct spx_msg *ctx,const double v){/*{{{*/
     SpxZero(n);
     n.v = v;
     spx_msg_l2b(ctx->last,n.i);
+    (ctx->last) += sizeof(n.i);
     return 0;
 }/*}}}*/
 err_t spx_msg_pack_float( struct spx_msg *ctx,const float v){/*{{{*/
@@ -139,6 +144,7 @@ err_t spx_msg_pack_float( struct spx_msg *ctx,const float v){/*{{{*/
     SpxZero(n);
     n.v = v;
     spx_msg_i2b(ctx->last,n.i);
+    (ctx->last) += sizeof(n.i);
     return 0;
 }/*}}}*/
 err_t spx_msg_pack_true( struct spx_msg *ctx){/*{{{*/
@@ -187,11 +193,15 @@ i8_t spx_msg_unpack_i8( struct spx_msg *ctx){/*{{{*/
 }/*}}}*/
 i32_t spx_msg_unpack_i32( struct spx_msg *ctx){/*{{{*/
     if (NULL == ctx) return EINVAL;
-    return  (i32_t) spx_msg_b2i(ctx->last);
+    i32_t v = spx_msg_b2i(ctx->last);
+    ctx->last += sizeof(i32_t);
+    return v;
 }/*}}}*/
 i64_t spx_msg_unpack_i64( struct spx_msg *ctx){/*{{{*/
     if (NULL == ctx) return EINVAL;
-    return (i64_t) spx_msg_b2l(ctx->last);
+    i64_t v = spx_msg_b2l(ctx->last);
+    ctx->last += sizeof(i64_t);
+    return v;
 }/*}}}*/
 u8_t spx_msg_unpack_u8( struct spx_msg *ctx){/*{{{*/
     if (NULL == ctx) return EINVAL;
@@ -202,17 +212,22 @@ u8_t spx_msg_unpack_u8( struct spx_msg *ctx){/*{{{*/
 }/*}}}*/
 u32_t spx_msg_unpack_u32( struct spx_msg *ctx){/*{{{*/
     if (NULL == ctx) return EINVAL;
-    return (u32_t) spx_msg_b2i(ctx->last);
+    u32_t v = spx_msg_b2i(ctx->last);
+    ctx->last += sizeof(u32_t);
+    return v;
 }/*}}}*/
 u64_t spx_msg_unpack_u64( struct spx_msg *ctx){/*{{{*/
     if (NULL == ctx) return EINVAL;
-    return (u64_t) spx_msg_b2l(ctx->last);
+    u64_t v = spx_msg_b2l(ctx->last);
+    ctx->last += sizeof(u64_t);
+    return v;
 }/*}}}*/
 double spx_msg_unpack_double( struct spx_msg *ctx){/*{{{*/
     if (NULL == ctx) return EINVAL;
     union d2i n;
     SpxZero(n);
     n.i = (u64_t) spx_msg_b2l(ctx->last);
+    ctx->last += sizeof(n.i);
     return n.v;
 }/*}}}*/
 float spx_msg_unpack_float( struct spx_msg *ctx){/*{{{*/
@@ -220,6 +235,7 @@ float spx_msg_unpack_float( struct spx_msg *ctx){/*{{{*/
     union f2i n;
     SpxZero(n);
     n.i = (u32_t) spx_msg_b2i(ctx->last);
+    ctx->last += sizeof(n.i);
     return n.v;
 }/*}}}*/
 bool_t spx_msg_unpack_bool( struct spx_msg *ctx){/*{{{*/
@@ -249,7 +265,7 @@ byte_t *spx_msg_unpack_bytes( struct spx_msg *ctx,const size_t len,err_t *err){/
 }/*}}}*/
 
 
-struct spx_msg_header *spx_msg_to_header(struct spx_msg *ctx,err_t *err){
+struct spx_msg_header *spx_msg_to_header(struct spx_msg *ctx,err_t *err){/*{{{*/
     struct spx_msg_header *header = NULL;
     if(NULL == ctx){
         *err = EINVAL;
@@ -266,9 +282,9 @@ struct spx_msg_header *spx_msg_to_header(struct spx_msg *ctx,err_t *err){
     header->offset = spx_msg_unpack_u64(ctx);
     header->err = spx_msg_unpack_u32(ctx);
     return header;
-}
+}/*}}}*/
 
-struct spx_msg *spx_header_to_msg(struct spx_msg_header *header,size_t len,err_t *err){
+struct spx_msg *spx_header_to_msg(struct spx_msg_header *header,size_t len,err_t *err){/*{{{*/
     if(NULL == header){
         *err = EINVAL;
         return NULL;
@@ -283,7 +299,7 @@ struct spx_msg *spx_header_to_msg(struct spx_msg_header *header,size_t len,err_t
     spx_msg_pack_u64(ctx,header->offset);
     spx_msg_pack_u32(ctx,header->err);
     return ctx;
-}
+}/*}}}*/
 
 
 
@@ -298,7 +314,6 @@ spx_private i32_t spx_msg_b2i(uchar_t *b){/*{{{*/
             | (((i32_t) (*(b + 1))) << 16)
             | (((i32_t) (*(b+2))) << 8)
             | ((i32_t) (*(b+3))));
-    b += sizeof(i32_t);
     return n;
 }/*}}}*/
 spx_private void spx_msg_l2b(uchar_t *b,const i64_t n){/*{{{*/
@@ -320,7 +335,6 @@ spx_private i64_t spx_msg_b2l(uchar_t *b){/*{{{*/
         | (((i64_t) (*(b + 5))) << 16)
         | (((i64_t) (*(b + 6))) << 8)
         | ((i64_t) (*(b + 7)));
-    b += sizeof(i64_t);
     return n;
 }/*}}}*/
 

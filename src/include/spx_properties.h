@@ -22,7 +22,6 @@ extern "C" {
 #endif
 
 #include "spx_types.h"
-#include "spx_mpool.h"
 #include "spx_map.h"
 
     struct spx_properties;

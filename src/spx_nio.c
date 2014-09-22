@@ -119,6 +119,7 @@ void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents){/*{{{*/
                     len);
             return;
         }
+        spx_msg_seek(ctx,0,SpxMsgSeekSet);
         struct spx_msg_header *header = spx_msg_to_header(ctx,&err);
         if(NULL == header){
             jcontext->err = err;
