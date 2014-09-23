@@ -29,7 +29,8 @@ extern "C" {
 #include "spx_fixed_vector.h"
 
 
-typedef void (SpxTriggerDelegate)(struct ev_loop *loop,ev_io *watcher,int revents);
+typedef void (SpxReceiveTriggerDelegate)(struct ev_loop *loop,ev_io *watcher,int revents);
+typedef void (SpxDispatchTriggerDelegate)(int revents,void *arg);
 
 struct spx_thread_context{
     struct ev_loop *loop;
@@ -37,13 +38,6 @@ struct spx_thread_context{
     size_t idx;
     pthread_t tid;
     int pipe[2];
-};
-
-struct spx_trigger_context{
-    ev_io watcher;
-    SpxTriggerDelegate *trigger_handler;
-    SpxLogDelegate *log;
-    size_t idx;
 };
 
 struct spx_module_context{
@@ -58,6 +52,24 @@ struct spx_module_context{
     SpxLogDelegate *log;
 };
 
+struct spx_dispatch_context{
+    void *msg;
+    SpxDispatchTriggerDelegate *dispatch_handler;
+    SpxLogDelegate *log;
+    size_t idx;
+
+    struct spx_thread_context *threadcontext;
+};
+
+struct spx_receive_context{
+    ev_io watcher;
+    SpxReceiveTriggerDelegate *receive_handler;
+    SpxLogDelegate *log;
+    size_t idx;
+};
+
+
+
 //today is 2014-07-22,I say to xj about the ydb work over this month,
 //but now,I make a mistaken and redo thread-notify,so I can not over the work.
 //if he kown this,he want to kill me.is not it??
@@ -66,17 +78,17 @@ struct spx_module_context *spx_module_new(\
         SpxLogDelegate *log,\
         u32_t threadsize,\
         size_t stack_size,\
-        SpxTriggerDelegate *dispatch_trigger_handler,\
-        SpxTriggerDelegate *receive_trigger_handler,\
+        SpxDispatchTriggerDelegate *dispatch_handler,\
+        SpxReceiveTriggerDelegate *receive_handler,\
         err_t *err);
 
 err_t spx_module_free(struct spx_module_context **mc);
 
 err_t spx_module_dispatch(struct spx_module_context *mc,size_t idx,void *msg);
 
-struct spx_trigger_context *spx_module_dispatch_trigger_pop(struct spx_module_context *mc,err_t *err);
+struct spx_dispatch_context *spx_module_dispatcher_pop(struct spx_module_context *mc,err_t *err);
 
-err_t spx_module_dispatch_trigger_push(struct spx_module_context *mc,struct spx_trigger_context *tc);
+err_t spx_module_dispatcher__push(struct spx_module_context *mc,struct spx_dispatch_context *dc);
 
 #ifdef __cplusplus
 }

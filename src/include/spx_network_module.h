@@ -29,7 +29,8 @@ extern "C" {
     extern struct spx_module_context *g_spx_network_module;
 
     void spx_network_module_receive_handler(struct ev_loop *loop,ev_io *w,int revents);
-    void spx_network_module_wakeup_handler(struct ev_loop *loop,ev_io *w,int revents);
+//    void spx_network_module_wakeup_handler(struct ev_loop *loop,ev_io *w,int revents);
+    void spx_network_module_wakeup_handler(int revents,void *arg);
 
     spx_private int spx_network_module_wakeup_idx(struct spx_job_context *jc){
         return jc->idx % g_spx_network_module->threadpool->size;

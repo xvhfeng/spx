@@ -70,7 +70,6 @@ err_t  spx_dio_regedit_reader(struct ev_loop *loop,int fd,ev_io *watcher,
 
 err_t  spx_dio_regedit_writer(struct ev_loop *loop,int fd,ev_io *watcher,
         SpxNioDelegate *dio_writer,void *data){/*{{{*/
-
     ev_io_init(watcher,dio_writer,fd,EV_WRITE);
     watcher->data = data;
     ev_io_start(loop,watcher);
@@ -88,6 +87,7 @@ void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents){/*{{{*/
     if(NULL == loop || NULL == watcher){
         return ;
     }
+    ev_io_stop(loop,watcher);
     size_t len = 0;
     err_t err = 0;
     struct spx_job_context *jcontext =(struct spx_job_context *) watcher->data;
@@ -151,7 +151,7 @@ void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents){/*{{{*/
     len = 0;
     if((SpxNioLifeCycleBody == jcontext->lifecycle) \
             && (0 != jcontext->reader_header->bodylen)){
-        jcontext->reader_body_process(watcher->fd, jcontext);
+        jcontext->reader_body_process(loop,watcher->fd, jcontext);
         if(0 != jcontext->err){
             SpxLog2(jcontext->log,SpxLogError,jcontext->err,\
                     "recv the body buffer is fail.");
@@ -184,6 +184,7 @@ void spx_nio_writer(struct ev_loop *loop,ev_io *watcher,int revents){/*{{{*/
     if(NULL == loop || NULL == watcher){
         return ;
     }
+    ev_io_stop(loop,watcher);
     size_t len = 0;
     err_t err = 0;
     struct spx_job_context *jcontext =(struct spx_job_context *) watcher->data;
@@ -224,7 +225,7 @@ void spx_nio_writer(struct ev_loop *loop,ev_io *watcher,int revents){/*{{{*/
     len = 0;
     if((SpxNioLifeCycleBody == jcontext->lifecycle) \
             && (0 != jcontext->writer_header->bodylen)){
-        jcontext->writer_body_process(watcher->fd,jcontext);
+        jcontext->writer_body_process(loop,watcher->fd,jcontext);
         if(0 != jcontext->err){
             SpxLogFmt2(jcontext->log,SpxLogError,jcontext->err,\
                     "call write body handler to client:%s is fail."\
@@ -235,7 +236,7 @@ void spx_nio_writer(struct ev_loop *loop,ev_io *watcher,int revents){/*{{{*/
     }
 }/*}}}*/
 
-void spx_nio_reader_body_handler(int fd,struct spx_job_context *jcontext){/*{{{*/
+void spx_nio_reader_body_handler(struct ev_loop *loop,int fd,struct spx_job_context *jcontext){/*{{{*/
     struct spx_msg_header *header = jcontext->reader_header;
     size_t len = 0;
     if(jcontext->is_lazy_recv){
@@ -275,7 +276,7 @@ void spx_nio_reader_body_handler(int fd,struct spx_job_context *jcontext){/*{{{*
     }
 }/*}}}*/
 
-void spx_nio_writer_body_handler(int fd,struct spx_job_context *jcontext){/*{{{*/
+void spx_nio_writer_body_handler(struct ev_loop *loop,int fd,struct spx_job_context *jcontext){/*{{{*/
     if(0 == fd || NULL == jcontext){
         return;
     }

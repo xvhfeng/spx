@@ -119,6 +119,7 @@ err_t spx_map_insert(struct spx_map *map,\
         n->v = v;
         n->vl = vl;
         n->hash = hash;
+        kn->node = n;
 
         if(NULL == slot->header){
             slot->header = n;
@@ -128,11 +129,18 @@ err_t spx_map_insert(struct spx_map *map,\
             slot->tail->next = n;
             slot->tail = n;
         }
+
+        if(NULL == map->keys_header){
+            map->keys_header = kn;
+            map->keys_tail = kn;
+        }else{
+            kn->prev = map->keys_tail;
+            map->keys_tail->next = kn;
+            map->keys_tail = kn;
+        }
         slot->real_size ++;
-        kn->prev = map->keys_tail;
-        map->keys_tail->next = kn;
-        map->keys_tail = kn;
         map->numbs ++;
+        break;
     }
     return err;
 r1:
@@ -189,8 +197,16 @@ err_t spx_map_out(struct spx_map *map,\
             *vl = n->vl;
             }
             struct spx_map_key_node *kn = n->p;
-            kn->prev->next = kn->next;
-            kn->next->prev = kn->prev;
+            if(NULL != kn->prev){
+                kn->prev->next = kn->next;
+            }else{
+                map->keys_header = kn->next;
+            }
+            if(NULL != kn->next){
+                kn->next->prev = kn->prev;
+            }else {
+                map->keys_tail = kn->prev;
+            }
             n->prev->next = n->next;
             n->next->prev = n->prev;
             if(NULL != map->kfree){
@@ -214,8 +230,16 @@ err_t spx_map_delete(struct spx_map *map,\
     while(NULL != n){
         if(0 == map->cmper(k,kl,n->k,n->kl)){
             struct spx_map_key_node *kn = n->p;
-            kn->prev->next = kn->next;
-            kn->next->prev = kn->prev;
+            if(NULL != kn->prev){
+                kn->prev->next = kn->next;
+            }else{
+                map->keys_header = kn->next;
+            }
+            if(NULL != kn->next){
+                kn->next->prev = kn->prev;
+            }else {
+                map->keys_tail = kn->prev;
+            }
             n->prev->next = n->next;
             n->next->prev = n->prev;
             if(NULL != map->kfree){
@@ -237,8 +261,16 @@ err_t spx_map_free(struct spx_map **map){
         struct spx_map_node *n = slot->header;
         while(NULL != n){
             struct spx_map_key_node *kn = n->p;
-            kn->prev->next = kn->next;
-            kn->next->prev = kn->prev;
+            if(NULL != kn->prev){
+                kn->prev->next = kn->next;
+            }else{
+                (*map)->keys_header = kn->next;
+            }
+            if(NULL != kn->next){
+                kn->next->prev = kn->prev;
+            }else {
+                (*map)->keys_tail = kn->prev;
+            }
             n->prev->next = n->next;
             n->next->prev = n->prev;
             if(NULL != (*map)->kfree){

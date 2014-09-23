@@ -32,7 +32,7 @@ void spx_notifier_module_receive_handler(struct ev_loop *loop,ev_io *w,int reven
     struct spx_job_context *jc = NULL;
 
     size_t len = 0;
-    struct spx_trigger_context *tc = (struct spx_trigger_context *) w;//magic,yeah
+    struct spx_receive_context *tc = (struct spx_receive_context *) w;//magic,yeah
     err_t err= 0;
         err = spx_read_nb(w->fd,(byte_t *) &jc,sizeof(jc),&len);
         if(NULL == jc){
@@ -60,17 +60,27 @@ void spx_notifier_module_receive_handler(struct ev_loop *loop,ev_io *w,int reven
 
 }
 
-void spx_notifier_module_wakeup_handler(struct ev_loop *loop,ev_io *w,int revents){
+//void spx_notifier_module_wakeup_handler(struct ev_loop *loop,ev_io *w,int revents){
+void spx_notifier_module_wakeup_handler(int revents,void *arg){
+    //    ev_io_stop(loop,w);
+    //    struct spx_job_context *jc = (struct spx_job_context *) w->data;
+    //    struct spx_trigger_context *tc = (struct spx_trigger_context *) w;//magic,yeah
+
     err_t err = 0;
-    struct spx_job_context *jc = (struct spx_job_context *) w->data;
-    size_t len = 0;
-    struct spx_trigger_context *tc = (struct spx_trigger_context *) w;//magic,yeah
-    err = spx_write_nb(w->fd,(byte_t *) &jc,sizeof(jc),&len);
-    if (0 != err || sizeof(jc) != len) {
+    struct spx_dispatch_context *tc = (struct spx_dispatch_context *) arg;//magic,yeah
+    struct spx_job_context *jc = (struct spx_job_context *) tc->msg;
+    if((revents & EV_TIMEOUT) || (revents & EV_ERROR)){
         spx_job_pool_push(g_spx_job_pool,jc);
-        SpxLog1(tc->log,SpxLogError,\
-                "wake up network module is fail.");
+        spx_module_dispatcher__push(g_spx_notifier_module,tc);
     }
-    spx_module_dispatch_trigger_push(g_spx_notifier_module,tc);
-    ev_io_stop(loop,w);
+    if(revents & EV_WRITE){
+        size_t len = 0;
+        err = spx_write_nb(tc->threadcontext->pipe[1],(byte_t *) &jc,sizeof(jc),&len);
+        if (0 != err || sizeof(jc) != len) {
+            spx_job_pool_push(g_spx_job_pool,jc);
+            SpxLog1(tc->log,SpxLogError,\
+                    "wake up network module is fail.");
+        }
+        spx_module_dispatcher__push(g_spx_notifier_module,tc);
+    }
 }

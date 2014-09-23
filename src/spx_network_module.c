@@ -32,7 +32,7 @@ struct spx_module_context *g_spx_network_module = NULL;
 void spx_network_module_receive_handler(struct ev_loop *loop,ev_io *w,int revents){
     struct spx_job_context *jcontext = NULL;
     size_t len = 0;
-    struct spx_trigger_context *tc = (struct spx_trigger_context *) w;//magic,yeah
+    struct spx_receive_context *tc = (struct spx_receive_context *) w;//magic,yeah
     err_t err= 0;
     err = spx_read_nb(w->fd,(byte_t *) &jcontext,sizeof(jcontext),&len);
     if(0 != err || len != sizeof(jcontext)){
@@ -59,7 +59,6 @@ void spx_network_module_receive_handler(struct ev_loop *loop,ev_io *w,int revent
                                                 "and forced push jcontext to pool.");
                                         goto r1;
                                     }
-//                                    ev_run(loop,0);
                                     break;
                                 }
         case SpxNioMooreResponse:{
@@ -88,18 +87,36 @@ r1:
 }
 
 
-void spx_network_module_wakeup_handler(struct ev_loop *loop,ev_io *w,int revents){
+//void spx_network_module_wakeup_handler(struct ev_loop *loop,ev_io *w,int revents){
+    void spx_network_module_wakeup_handler(int revents,void *arg){
+//    ev_io_stop(loop,w);
+//    err_t err = 0;
+//    struct spx_job_context *jcontext = (struct spx_job_context *)w->data;
+//    struct spx_trigger_context *tc = (struct spx_trigger_context *) w;//magic,yeah
+//    size_t len = 0;
+//    err = spx_write_nb(w->fd,(byte_t *) &jcontext,sizeof(jcontext),&len);
+//    if (0 != err || sizeof(jcontext) != len) {
+//        SpxLog1(tc->log,SpxLogError,
+//                "wakeup network module is fail.");
+//        spx_job_pool_push(g_spx_job_pool,jcontext);
+//    }
+//    spx_module_dispatch_trigger_push(g_spx_network_module,tc);
     err_t err = 0;
-    struct spx_job_context *jcontext = (struct spx_job_context *)w->data;
-    size_t len = 0;
-    struct spx_trigger_context *tc = (struct spx_trigger_context *) w;//magic,yeah
-    err = spx_write_nb(w->fd,(byte_t *) &jcontext,sizeof(jcontext),&len);
-    if (0 != err || sizeof(jcontext) != len) {
-        SpxLog1(tc->log,SpxLogError,\
-                "wakeup network module is fail.");
-        spx_job_pool_push(g_spx_job_pool,jcontext);
+    struct spx_dispatch_context *tc = (struct spx_dispatch_context *) arg;//magic,yeah
+    struct spx_job_context *jc = (struct spx_job_context *) tc->msg;
+    if((revents & EV_TIMEOUT) || (revents & EV_ERROR)){
+        spx_job_pool_push(g_spx_job_pool,jc);
+        spx_module_dispatcher__push(g_spx_network_module,tc);
     }
-    spx_module_dispatch_trigger_push(g_spx_network_module,tc);
-    ev_io_stop(loop,w);
+    if(revents & EV_WRITE){
+        size_t len = 0;
+        err = spx_write_nb(tc->threadcontext->pipe[1],(byte_t *) &jc,sizeof(jc),&len);
+        if (0 != err || sizeof(jc) != len) {
+            spx_job_pool_push(g_spx_job_pool,jc);
+            SpxLog1(tc->log,SpxLogError,\
+                    "wake up network module is fail.");
+        }
+        spx_module_dispatcher__push(g_spx_network_module,tc);
+    }
 }
 

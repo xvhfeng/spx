@@ -40,7 +40,8 @@ extern "C" {
 
     struct spx_job_context;
     typedef void (SpxNioDelegate)(struct ev_loop *loop,ev_io *watcher,int revents);
-    typedef void (SpxNioBodyProcessDelegate)(int fd,struct spx_job_context *jcontext);
+    typedef void (SpxNioBodyProcessDelegate)(struct ev_loop *loop,
+            int fd,struct spx_job_context *jcontext);
     typedef bool_t (SpxNioHeaderValidatorDelegate)(struct spx_job_context *jcontext);
     typedef void (SpxNioHeaderValidatorFailDelegate)(struct spx_job_context *jcontext);
     typedef void (SpxNotifyDelegate)(ev_io *watcher,int revents);
