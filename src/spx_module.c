@@ -26,11 +26,11 @@
 #include "spx_defs.h"
 #include "spx_string.h"
 
-struct spx_dispatch_context_transport{
-    SpxDispatchTriggerDelegate *dispatcher;
-    int event;
-    SpxLogDelegate *log;
-};
+//struct spx_dispatch_context_transport{
+//    SpxDispatchTriggerDelegate *dispatcher;
+//    int event;
+//    SpxLogDelegate *log;
+//};
 
 struct spx_recvive_context_transport{
     SpxReceiveTriggerDelegate *recviver;
@@ -108,7 +108,8 @@ spx_private err_t spx_receiver_free(void **arg){/*{{{*/
 }/*}}}*/
 
 
-spx_private void *spx_dispatcher_new(size_t idx,void *arg,err_t *err){/*{{{*/
+/*
+spx_private void *spx_dispatcher_new(size_t idx,void *arg,err_t *err){
     struct spx_dispatch_context_transport *dct = (struct spx_dispatch_context_transport *) arg;
     if(NULL == dct){
         *err = EINVAL;
@@ -125,14 +126,14 @@ spx_private void *spx_dispatcher_new(size_t idx,void *arg,err_t *err){/*{{{*/
     t->idx = idx;
     t->dispatch_handler = dct->dispatcher;
     return t;
-}/*}}}*/
+}
 
-spx_private err_t spx_dispatcher_free(void **arg){/*{{{*/
+spx_private err_t spx_dispatcher_free(void **arg){
     struct spx_dispatch_context **t = (struct spx_dispatch_context **) arg;
     SpxFree(*t);
     return 0;
-}/*}}}*/
-
+}
+*/
 
 
 
@@ -152,9 +153,9 @@ spx_private void *spx_thread_listening(void *arg){/*{{{*/
 struct spx_module_context *spx_module_new(\
         SpxLogDelegate *log,\
         u32_t threadsize,\
-        size_t stack_size,\
-        SpxDispatchTriggerDelegate *dispatch_handler,\
-        SpxReceiveTriggerDelegate *receive_handler,\
+        size_t stack_size,
+//        SpxDispatchTriggerDelegate *dispatch_handler,
+        SpxReceiveTriggerDelegate *receive_handler,
         err_t *err){
     struct spx_module_context *mc = (struct spx_module_context *)\
                                     spx_alloc_alone(sizeof(*mc),err);
@@ -195,6 +196,7 @@ struct spx_module_context *spx_module_new(\
         goto r2;
     }
 
+    /*
     struct spx_dispatch_context_transport dct;
     SpxZero(dct);
     dct.event = EV_WRITE;
@@ -211,7 +213,7 @@ struct spx_module_context *spx_module_new(\
                 "alloc dispatch triggers are fail.");
         goto r2;
     }
-
+  */
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     size_t ostack_size = 0;
@@ -255,40 +257,27 @@ err_t spx_module_free(struct spx_module_context **mc){
     if(NULL != (*mc)->receive_triggers) {
         spx_list_free(&((*mc)->receive_triggers));
     }
-    if(NULL != (*mc)->dispatch_triggers){
-        spx_fixed_vector_free(&((*mc)->dispatch_triggers));
-    }
+//    if(NULL != (*mc)->dispatch_triggers){
+//        spx_fixed_vector_free(&((*mc)->dispatch_triggers));
+//    }
     SpxFree(*mc);
     return 0;
 }
 
 
-struct spx_dispatch_context *spx_module_dispatcher_pop(struct spx_module_context *mc,err_t *err){
-    return (struct spx_dispatch_context *) spx_fixed_vector_pop(mc->dispatch_triggers,err);
-}
+//struct spx_dispatch_context *spx_module_dispatcher_pop(struct spx_module_context *mc,err_t *err){
+//    return (struct spx_dispatch_context *) spx_fixed_vector_pop(mc->dispatch_triggers,err);
+//}
+//
+//err_t spx_module_dispatcher__push(struct spx_module_context *mc,struct spx_dispatch_context *dc){
+//    dc->msg = NULL;
+//    dc->threadcontext = NULL;
+//    return spx_fixed_vector_push(mc->dispatch_triggers,dc);
+//}
 
-err_t spx_module_dispatcher__push(struct spx_module_context *mc,struct spx_dispatch_context *dc){
-    dc->msg = NULL;
-    dc->threadcontext = NULL;
-    return spx_fixed_vector_push(mc->dispatch_triggers,dc);
-}
-
-err_t spx_module_dispatch(struct spx_module_context *mc,size_t idx,void *msg){
-    err_t err = 0;
-    struct spx_dispatch_context *tc = spx_module_dispatcher_pop(mc,&err);
-    if(NULL == tc){
-        SpxLog2(mc->log,SpxLogWarn,err,\
-                "pop a dispatch trigger is fail.");
-        return err;
-    }
-    tc->msg = msg;
-    struct spx_thread_context *stc = spx_list_get(mc->threadpool,idx);
-    tc->threadcontext = stc;
-    ev_once(stc->loop,stc->pipe[1],EV_WRITE,(double) 1,tc->dispatch_handler,tc);
-
-//    ev_io_init(&(tc->watcher),tc->trigger_handler,stc->pipe[1],EV_WRITE);
-//    tc->watcher.data = msg;
-//    ev_io_start(stc->loop,&(tc->watcher));
-    return err;
+err_t spx_module_dispatch(struct spx_thread_context *tc,
+        SpxDispatchTriggerDelegate *dispatcher, void *msg){
+    ev_once(tc->loop,tc->pipe[1],EV_WRITE,(double) 1,dispatcher,msg);
+    return 0;
 }
 

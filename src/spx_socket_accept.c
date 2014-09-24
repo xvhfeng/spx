@@ -54,13 +54,9 @@ void spx_socket_accept_nb(SpxLogDelegate *log,int fd){
 
         jcontext->fd = client_sock;
 
-        if(0 != (err = spx_module_dispatch(g_spx_notifier_module,idx,jcontext))){
-            SpxClose(client_sock);
-            spx_job_pool_push(g_spx_job_pool,jcontext);
-            SpxLogFmt2(g_spx_notifier_module->log,SpxLogError,err,\
-                    "dispatch notifier module with thread idx:%d is fail.",\
-                    idx);
-        }
+        struct spx_thread_context *tc = spx_get_thread(g_spx_notifier_module,idx);
+        jcontext->tc = tc;
+        spx_module_dispatch(tc,spx_notifier_module_wakeup_handler, jcontext);
     }
 }
 

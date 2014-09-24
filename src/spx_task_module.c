@@ -90,27 +90,28 @@ void spx_task_module_wakeup_handler(int revents,void *arg){
     //    spx_module_dispatch_trigger_push(g_spx_task_module,tc);
 
     err_t err = 0;
-    struct spx_dispatch_context *tc = (struct spx_dispatch_context *) arg;//magic,yeah
-    struct spx_task_context *tcontext = (struct spx_task_context *) tc->msg;
+    struct spx_task_context *tcontext = (struct spx_task_context *) arg;
     struct spx_job_context *jc = tcontext->jcontext;
     if((revents & EV_TIMEOUT) || (revents & EV_ERROR)){
+        SpxLog1(tcontext->log,SpxLogError,
+                "wakeup task thread is fail.");
+        spx_task_pool_push(g_spx_task_pool,tcontext);
         spx_job_pool_push(g_spx_job_pool,jc);
-        spx_module_dispatcher__push(g_spx_task_module,tc);
     }
     if(revents & EV_WRITE){
         size_t len = 0;
-        err = spx_write_nb(tc->threadcontext->pipe[1],(byte_t *) &jc,sizeof(jc),&len);
+        err = spx_write_nb(jc->tc->pipe[1],(byte_t *) &jc,sizeof(jc),&len);
         if (0 != err || sizeof(jc) != len) {
-            SpxLog1(tc->log,SpxLogError,\
+            SpxLog1(jc->log,SpxLogError,\
                     "send tcontext to dio thread is fail."\
                     "then dispatch notice to nio thread deal.");
             spx_task_pool_push(g_spx_task_pool,tcontext);
             jc->err = err;
             jc->moore = SpxNioMooreResponse;
             size_t idx = spx_network_module_wakeup_idx(jc);
-            err = spx_module_dispatch(g_spx_network_module,idx,jc);
+            struct spx_thread_context *tc = spx_get_thread(g_spx_network_module,idx);
+            jc->tc = tc;
+            err = spx_module_dispatch(tc,spx_network_module_wakeup_handler,jc);
         }
-        spx_module_dispatcher__push(g_spx_network_module,tc);
     }
-    spx_module_dispatcher__push(g_spx_task_module,tc);
 }

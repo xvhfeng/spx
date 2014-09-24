@@ -27,6 +27,7 @@ extern "C" {
 #include "spx_defs.h"
 #include "spx_message.h"
 #include "spx_properties.h"
+#include "spx_module.h"
 
 #define SpxNioLifeCycleNormal 0
 #define SpxNioLifeCycleHeader 1
@@ -75,6 +76,7 @@ extern "C" {
         SpxLogDelegate *log;
         u32_t lifecycle;
         u32_t moore;
+        struct spx_thread_context *tc;
 
         struct spx_msg_header *reader_header;
         struct spx_msg *reader_header_ctx;
