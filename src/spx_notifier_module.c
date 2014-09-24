@@ -25,6 +25,7 @@
 #include "spx_network_module.h"
 #include "spx_socket.h"
 #include "spx_job.h"
+#include "spx_time.h"
 
 struct spx_module_context *g_spx_notifier_module = NULL;
 
@@ -61,11 +62,18 @@ void spx_notifier_module_wakeup_handler(int revents,void *arg){
     err_t err = 0;
     struct spx_job_context *jc = (struct spx_job_context *) arg;
     if((revents & EV_TIMEOUT) || (revents & EV_ERROR)){
-        SpxLog1(jc->log,SpxLogError,
-                "wake up notify module is fail.");
+        SpxLogFmt1(jc->log,SpxLogError,
+                "wake up notify module is fail,no:%d.",revents);
         spx_job_pool_push(g_spx_job_pool,jc);
     }
     if(revents & EV_WRITE){
+        struct spx_datetime dt;
+        SpxZero(dt);
+        spx_get_curr_datetime(&dt);
+        SpxLogFmt1(jc->log,SpxLogInfo,"%04d-%02d-%02d %02d:%02d:%02d notify is well.",
+                SpxYear(&dt),SpxMonth(&dt),SpxDay(&dt),
+                SpxHour(&dt),SpxMinute(&dt),SpxSecond(&dt));
+
         size_t len = 0;
         err = spx_write_nb(jc->tc->pipe[1],(byte_t *) &jc,sizeof(jc),&len);
         if (0 != err || sizeof(jc) != len) {

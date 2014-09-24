@@ -22,6 +22,7 @@
 #include "spx_module.h"
 #include "spx_job.h"
 #include "spx_socket_accept.h"
+#include "spx_time.h"
 
 void spx_socket_accept_nb(SpxLogDelegate *log,int fd){
     err_t err = 0;
@@ -51,6 +52,13 @@ void spx_socket_accept_nb(SpxLogDelegate *log,int fd){
                     "pop nio context is fail.");
             return;
         }
+
+        struct spx_datetime dt;
+        SpxZero(dt);
+        spx_get_curr_datetime(&(dt));
+        SpxLogFmt1(log,SpxLogInfo,"%04d-%02d-%02d %02d:%02d:%02d recv socket conntect.",
+                SpxYear(&(dt)),SpxMonth(&(dt)),SpxDay(&(dt)),
+                SpxHour(&(dt)),SpxMinute(&(dt)),SpxSecond(&(dt)));
 
         jcontext->fd = client_sock;
 

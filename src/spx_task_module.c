@@ -99,8 +99,9 @@ void spx_task_module_wakeup_handler(int revents,void *arg){
         spx_job_pool_push(g_spx_job_pool,jc);
     }
     if(revents & EV_WRITE){
+        SpxLog1(jc->log,SpxLogInfo,"task is well.");
         size_t len = 0;
-        err = spx_write_nb(jc->tc->pipe[1],(byte_t *) &jc,sizeof(jc),&len);
+        err = spx_write_nb(jc->tc->pipe[1],(byte_t *) &tcontext,sizeof(tcontext),&len);
         if (0 != err || sizeof(jc) != len) {
             SpxLog1(jc->log,SpxLogError,\
                     "send tcontext to dio thread is fail."\

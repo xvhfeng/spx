@@ -228,7 +228,7 @@ void spx_socket_accept_nb(int fd){
 
 string_t spx_ip_get(int sock,err_t *err) {
 
-	string_t ip = spx_string_empty(err);
+	string_t ip = spx_string_emptylen(SpxIpv4Size,err);
 	if(NULL == ip){
         return NULL;
     }

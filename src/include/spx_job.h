@@ -107,6 +107,7 @@ extern "C" {
         int sendfile_fd;
         off_t sendfile_begin;
         size_t sendfile_size;
+
     };
 
     struct spx_job_pool {

@@ -25,12 +25,7 @@
 #include "spx_alloc.h"
 #include "spx_defs.h"
 #include "spx_string.h"
-
-//struct spx_dispatch_context_transport{
-//    SpxDispatchTriggerDelegate *dispatcher;
-//    int event;
-//    SpxLogDelegate *log;
-//};
+#include "spx_io.h"
 
 struct spx_recvive_context_transport{
     SpxReceiveTriggerDelegate *recviver;
@@ -61,6 +56,9 @@ spx_private void *spx_thread_context_new(size_t idx,void *arg,err_t *err){/*{{{*
     }
     tc->idx = idx;
     tc->loop = ev_loop_new(0);
+//    ev_set_timeout_collect_interval (tc->loop, 0.1);
+//    ev_set_io_collect_interval (tc->loop, 0.01);
+
     tc->log = log;
     if(-1 == pipe(tc->pipe)){
         *err = errno;
@@ -68,6 +66,8 @@ spx_private void *spx_thread_context_new(size_t idx,void *arg,err_t *err){/*{{{*
         SpxFree(tc);
         return NULL;
     }
+    spx_set_nb(tc->pipe[0]);
+    spx_set_nb(tc->pipe[1]);
     return tc;
 }/*}}}*/
 
@@ -108,35 +108,6 @@ spx_private err_t spx_receiver_free(void **arg){/*{{{*/
 }/*}}}*/
 
 
-/*
-spx_private void *spx_dispatcher_new(size_t idx,void *arg,err_t *err){
-    struct spx_dispatch_context_transport *dct = (struct spx_dispatch_context_transport *) arg;
-    if(NULL == dct){
-        *err = EINVAL;
-        return NULL;
-    }
-    struct spx_dispatch_context *t = (struct spx_dispatch_context *) \
-                                    spx_alloc_alone(sizeof(*t),err);
-    if(NULL == t){
-        SpxLog2(dct->log,SpxLogError,*err,\
-                "alloc trigger context is fail.");
-        return NULL;
-    }
-    t->log = dct->log;
-    t->idx = idx;
-    t->dispatch_handler = dct->dispatcher;
-    return t;
-}
-
-spx_private err_t spx_dispatcher_free(void **arg){
-    struct spx_dispatch_context **t = (struct spx_dispatch_context **) arg;
-    SpxFree(*t);
-    return 0;
-}
-*/
-
-
-
 spx_private void *spx_thread_listening(void *arg){/*{{{*/
     struct spx_thread_pending_transport *tpt = (struct spx_thread_pending_transport *) arg;
     size_t idx = tpt->idx;
@@ -154,7 +125,6 @@ struct spx_module_context *spx_module_new(\
         SpxLogDelegate *log,\
         u32_t threadsize,\
         size_t stack_size,
-//        SpxDispatchTriggerDelegate *dispatch_handler,
         SpxReceiveTriggerDelegate *receive_handler,
         err_t *err){
     struct spx_module_context *mc = (struct spx_module_context *)\
@@ -196,24 +166,6 @@ struct spx_module_context *spx_module_new(\
         goto r2;
     }
 
-    /*
-    struct spx_dispatch_context_transport dct;
-    SpxZero(dct);
-    dct.event = EV_WRITE;
-    dct.dispatcher = dispatch_handler;
-    dct.log = log;
-    mc->dispatch_triggers = spx_fixed_vector_new(log,\
-            2 * threadsize,\
-            spx_dispatcher_new,\
-            &dct,\
-            spx_dispatcher_free,\
-            err);
-    if(NULL == mc->dispatch_triggers){
-        SpxLog2(log,SpxLogError,*err,\
-                "alloc dispatch triggers are fail.");
-        goto r2;
-    }
-  */
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     size_t ostack_size = 0;
@@ -257,27 +209,15 @@ err_t spx_module_free(struct spx_module_context **mc){
     if(NULL != (*mc)->receive_triggers) {
         spx_list_free(&((*mc)->receive_triggers));
     }
-//    if(NULL != (*mc)->dispatch_triggers){
-//        spx_fixed_vector_free(&((*mc)->dispatch_triggers));
-//    }
     SpxFree(*mc);
     return 0;
 }
 
 
-//struct spx_dispatch_context *spx_module_dispatcher_pop(struct spx_module_context *mc,err_t *err){
-//    return (struct spx_dispatch_context *) spx_fixed_vector_pop(mc->dispatch_triggers,err);
-//}
-//
-//err_t spx_module_dispatcher__push(struct spx_module_context *mc,struct spx_dispatch_context *dc){
-//    dc->msg = NULL;
-//    dc->threadcontext = NULL;
-//    return spx_fixed_vector_push(mc->dispatch_triggers,dc);
-//}
-
 err_t spx_module_dispatch(struct spx_thread_context *tc,
         SpxDispatchTriggerDelegate *dispatcher, void *msg){
-    ev_once(tc->loop,tc->pipe[1],EV_WRITE,(double) 1,dispatcher,msg);
+    dispatcher(EV_WRITE,msg);
+//    ev_once(tc->loop,tc->pipe[1],EV_WRITE,-1,dispatcher,msg);
     return 0;
 }
 

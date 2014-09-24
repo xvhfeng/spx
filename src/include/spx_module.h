@@ -48,19 +48,9 @@ struct spx_module_context{
     //dispatch watcher is maybe n:1 banding with loop when loop is busy
     //so we set the n equal 2,donot ask me why,this is a magic
     struct spx_list *receive_triggers;
-//    struct spx_fixed_vector *dispatch_triggers;
     SpxLogDelegate *log;
 };
 
-
-//struct spx_dispatch_context{
-//    void *msg;
-//    SpxDispatchTriggerDelegate *dispatch_handler;
-//    SpxLogDelegate *log;
-//    size_t idx;
-//
-//    struct spx_thread_context *threadcontext;
-//};
 
 struct spx_receive_context{
     ev_io watcher;
@@ -79,18 +69,12 @@ struct spx_module_context *spx_module_new(\
         SpxLogDelegate *log,\
         u32_t threadsize,\
         size_t stack_size,\
-//        SpxDispatchTriggerDelegate *dispatch_handler,
         SpxReceiveTriggerDelegate *receive_handler,\
         err_t *err);
 
 err_t spx_module_free(struct spx_module_context **mc);
 
-//err_t spx_module_dispatch(struct spx_module_context *mc,size_t idx,void *msg);
 err_t spx_module_dispatch(struct spx_thread_context *tc,SpxDispatchTriggerDelegate *dispatcher, void *msg);
-
-//struct spx_dispatch_context *spx_module_dispatcher_pop(struct spx_module_context *mc,err_t *err);
-
-//err_t spx_module_dispatcher__push(struct spx_module_context *mc,struct spx_dispatch_context *dc);
 
 spx_private struct spx_thread_context *spx_get_thread(struct spx_module_context *mc,size_t idx){
     struct spx_thread_context *stc = spx_list_get(mc->threadpool,idx);

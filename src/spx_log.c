@@ -203,12 +203,25 @@ spx_private spx_inline string_t get_log_line(err_t *err,\
     if(NULL == line){
         return NULL;
     }
-    string_t newline = spx_string_cat_vprintf(err,line,fmt,ap);
+
+    struct spx_datetime dt;
+    SpxZero(dt);
+    spx_get_curr_datetime(&dt);
+
+    string_t newline = spx_string_cat_printf(err,line,"%04d-%02d-%2d %02d:%02d:%02d.",
+            dt.d.year,dt.d.month,dt.d.day,dt.t.hour,dt.t.min,dt.t.sec);
     if(NULL == newline){
         spx_string_free(line);
         return NULL;
     }
-    return newline;
+    line = newline;
+    newline = spx_string_cat_vprintf(err,line,fmt,ap);
+    if(NULL == newline){
+        spx_string_free(line);
+        return NULL;
+    }
+    line = newline;
+    return line;
 }/*}}}*/
 
 spx_private spx_inline void logf_close(){
