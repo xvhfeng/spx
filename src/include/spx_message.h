@@ -18,6 +18,7 @@ extern "C" {
     struct spx_msg{
         uchar_t *buf;
         uchar_t *last;
+        size_t busylen;
         size_t s;
         err_t err;
     };
@@ -87,7 +88,7 @@ extern "C" {
     }
 
     spx_private spx_inline size_t spx_msg_len(struct spx_msg *ctx){
-        return ctx->last - ctx->buf;
+        return ctx->busylen;
     }
 #ifdef __cplusplus
 }

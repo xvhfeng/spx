@@ -314,12 +314,11 @@ struct spx_map_node *spx_map_iter_next(struct spx_map_iter *iter,err_t *err){
     return n;
 }
 
-struct spx_map_node *spx_map_iter_reset(struct spx_map_iter *iter){
+void spx_map_iter_reset(struct spx_map_iter *iter){
     if(NULL == iter){
-        return NULL;
+        return ;
     }
-    iter->curr = iter->map->keys_header;
-    return iter->curr->node;
+    iter->curr = NULL;
 }
 
 err_t spx_map_iter_free(struct spx_map_iter ** iter){

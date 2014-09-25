@@ -39,6 +39,7 @@ struct spx_msg *spx_msg_new(const size_t len,err_t *err){/*{{{*/
     }
     ctx->last = ctx->buf;
     ctx->s = len;
+    ctx->busylen = 0;
     return ctx;
 r1:
     SpxFree(ctx);
@@ -83,6 +84,7 @@ err_t spx_msg_align(struct spx_msg *ctx,off_t offset){
 void spx_msg_clear(struct spx_msg *ctx){
     SpxZeroLen(ctx->buf,ctx->s);
     ctx->last = ctx->buf;
+    ctx->busylen = 0;
     ctx->err = 0;
 }
 
@@ -95,6 +97,7 @@ err_t spx_msg_pack_i8(struct spx_msg *ctx,const i8_t v){/*{{{*/
     if(NULL == ctx) return EINVAL;
     *(ctx->last) = (char) v;
     (ctx->last)++;
+    ctx->busylen++;
     return 0;
 }/*}}}*/
 
@@ -102,6 +105,7 @@ err_t spx_msg_pack_i32( struct spx_msg *ctx,const i32_t v){/*{{{*/
     if(NULL == ctx) return EINVAL;
     spx_msg_i2b(ctx->last,v);
     (ctx->last) += sizeof(i32_t);
+    ctx->busylen += sizeof(i32_t);
     return 0;
 }/*}}}*/
 
@@ -109,24 +113,28 @@ err_t spx_msg_pack_i64( struct spx_msg *ctx,const i64_t v) {/*{{{*/
     if (NULL == ctx) return EINVAL;
     spx_msg_l2b(ctx->last,v);
     (ctx->last) += sizeof(i64_t);
+    ctx->busylen += sizeof(i64_t);
     return 0;
 }/*}}}*/
 err_t spx_msg_pack_u8( struct spx_msg *ctx,const u8_t v){/*{{{*/
     if (NULL == ctx) return EINVAL;
     *(ctx->last) = (uchar_t) v;
     (ctx->last)++;
+    ctx->busylen ++;
     return 0;
 }/*}}}*/
 err_t spx_msg_pack_u32( struct spx_msg *ctx,const u32_t v){/*{{{*/
     if(NULL == ctx) return EINVAL;
     spx_msg_i2b(ctx->last,(i32_t) v);
     (ctx->last) += sizeof(u32_t);
+    ctx->busylen += sizeof(u32_t);
     return 0;
 }/*}}}*/
 err_t spx_msg_pack_u64( struct spx_msg *ctx,const u64_t v){/*{{{*/
     if(NULL == ctx) return EINVAL;
     spx_msg_l2b(ctx->last,(i64_t) v);
     (ctx->last) += sizeof(u64_t);
+    ctx->busylen += sizeof(u64_t);
     return 0;
 }/*}}}*/
 err_t spx_msg_pack_double( struct spx_msg *ctx,const double v){/*{{{*/
@@ -136,6 +144,7 @@ err_t spx_msg_pack_double( struct spx_msg *ctx,const double v){/*{{{*/
     n.v = v;
     spx_msg_l2b(ctx->last,n.i);
     (ctx->last) += sizeof(n.i);
+    (ctx->busylen) += sizeof(n.i);
     return 0;
 }/*}}}*/
 err_t spx_msg_pack_float( struct spx_msg *ctx,const float v){/*{{{*/
@@ -145,39 +154,46 @@ err_t spx_msg_pack_float( struct spx_msg *ctx,const float v){/*{{{*/
     n.v = v;
     spx_msg_i2b(ctx->last,n.i);
     (ctx->last) += sizeof(n.i);
+    (ctx->busylen) += sizeof(n.i);
     return 0;
 }/*}}}*/
 err_t spx_msg_pack_true( struct spx_msg *ctx){/*{{{*/
     if (NULL == ctx) return EINVAL;
     *(ctx->last) = (uchar_t) true;
     (ctx->last)++;
+    ctx->busylen ++;
     return 0;
 }/*}}}*/
 err_t spx_msg_pack_false( struct spx_msg *ctx){/*{{{*/
     if (NULL == ctx) return EINVAL;
     *(ctx->last) = (uchar_t) false;
     (ctx->last)++;
+    ctx->busylen ++;
     return 0;
 }/*}}}*/
 err_t spx_msg_pack_string( struct spx_msg *ctx,string_t s){/*{{{*/
     if (NULL == ctx) return EINVAL;
     ctx->last = SpxMemcpy(ctx->last,s,spx_string_len(s));
+    ctx->busylen += spx_string_len(s);
     return 0;
 }/*}}}*/
 err_t spx_msg_pack_fixed_string( struct spx_msg *ctx,string_t s,size_t len){/*{{{*/
     if (NULL == ctx) return EINVAL;
     ctx->last = SpxMemcpy(ctx->last,s,spx_string_len(s));
     ctx->last += len - spx_string_len(s);
+    ctx->busylen += len;
     return 0;
 }/*}}}*/
 err_t spx_msg_pack_ubytes( struct spx_msg *ctx,const ubyte_t *b,const size_t len){/*{{{*/
     if (NULL == ctx) return EINVAL;
     ctx->last = SpxMemcpy(ctx->last,b,len);
+    ctx->busylen += len;
     return 0;
 }/*}}}*/
 err_t spx_msg_pack_bytes( struct spx_msg *ctx,const byte_t *b,const size_t len){/*{{{*/
     if (NULL == ctx) return EINVAL;
     ctx->last =  SpxMemcpy(ctx->last,b,len);
+    ctx->busylen += len;
     return 0;
 }/*}}}*/
 

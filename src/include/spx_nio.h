@@ -47,9 +47,13 @@ err_t  spx_dio_regedit_async(ev_async *w,
  */
 void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents);
 void spx_nio_writer(struct ev_loop *loop,ev_io *watcher,int revents);
+void spx_nio_writer_faster(struct ev_loop *loop,int fd,struct spx_job_context *jc);
+
+
 
 void spx_nio_reader_body_handler(struct ev_loop *loop,int fd,struct spx_job_context *jcontext);
 void spx_nio_writer_body_handler(struct ev_loop *loop,int fd,struct spx_job_context *jcontext);
+void spx_nio_writer_body_faster_handler(struct ev_loop *loop,int fd,struct spx_job_context *jcontext);
 
 
 

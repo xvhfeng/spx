@@ -277,7 +277,7 @@ err_t spx_write_context(SpxLogDelegate *log,int fd,struct spx_msg_context *ctx){
         }
     } else {
         err = spx_write_from_msg(fd,ctx->body,ctx->header->bodylen,&len);
-        if(0 != err || len != ctx->header->offset){
+        if(0 != err || len != ctx->header->bodylen){
             SpxLogFmt2(log,SpxLogError,err,
                     "write body buffer:%ulld,realsize:%ulld.",
                     ctx->header->offset,len);
@@ -406,7 +406,7 @@ struct spx_msg *spx_read_body(SpxLogDelegate *log,int fd,size_t size,err_t *err)
         return NULL;
     }
     *err = spx_read_to_msg(fd,ctx,size,&len);
-    if(0 != err || size != len){
+    if(0 != *err || size != len){
         SpxLogFmt2(log,SpxLogError,*err,
                 "read body buffer:%ulld realsize:%ulld.",
                 size,len);
@@ -426,7 +426,7 @@ struct spx_msg *spx_read_body_nb(SpxLogDelegate *log,int fd,size_t size,err_t *e
         return NULL;
     }
     *err = spx_read_to_msg_nb(fd,ctx,size,&len);
-    if(0 != err || size != len){
+    if(0 != *err || size != len){
         SpxLogFmt2(log,SpxLogError,*err,
                 "read body buffer:%ulld realsize:%ulld.",
                 size,len);

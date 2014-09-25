@@ -30,13 +30,14 @@
 #include "spx_vector.h"
 #include "spx_string.h"
 
+/*
 #define SkipListNodeSize(s) \
     (sizeof(struct spx_skiplist_n) \
      + sizeof(struct spx_skiplist_n *) * (s))
 
 spx_private int get_skiplist_level(u32_t max_level);
 
-spx_private int get_skiplist_level(u32_t max_level){/*{{{*/
+spx_private int get_skiplist_level(u32_t max_level){
     u32_t seedVal = 0;
     struct timeval tv;
     struct timezone tz;
@@ -46,7 +47,7 @@ spx_private int get_skiplist_level(u32_t max_level){/*{{{*/
             (unsigned int)tv.tv_usec);
     srand((unsigned int)seedVal +  rand());
     return rand() % max_level + 1;
-}/*}}}*/
+}
 
 struct spx_skiplist *spx_skiplist_new(SpxLogDelegate *log,\
             int type,u32_t maxlevel,\
@@ -56,7 +57,7 @@ struct spx_skiplist *spx_skiplist_new(SpxLogDelegate *log,\
             SpxCollectionKeyPrintfDelegate *kprintf,\
             SpxCollectionKeyFreeDelegate *kfree,\
             SpxCollectionValueFreeDelegate *vfree,\
-        err_t *err){/*{{{*/
+        err_t *err){
     if(0 > type || type == SPX_SKIPLIST_IDX_OBJECT){
         SpxLogFmt1(log,SpxLogDebug,\
                 "the argument is fail.type is %d,but compers count is %d.",\
@@ -99,13 +100,13 @@ r1:
         SpxFree(spl);
     }
     return NULL;
-}/*}}}*/
+}
 
 //Spaghetti algorithm
 //if you modify the code ,please make sure you understand this code.
 err_t spx_skiplist_insert(struct spx_skiplist *spl,\
         void *k,u32_t kl,void *v,u64_t vl,
-        int level){/*{{{*/
+        int level){
     if(NULL == spl){
         return EINVAL;
     }
@@ -246,10 +247,10 @@ r2:
         SpxFree(up);
     }
     return err;
-}/*}}}*/
+}
 
 err_t spx_skiplist_delete(struct spx_skiplist *spl,\
-        void *k,u32_t kl){/*{{{*/
+        void *k,u32_t kl){
     if(NULL == spl){
         return EINVAL;
     }
@@ -369,11 +370,11 @@ r1:
         SpxFree(up);
     }
     return err;
-}/*}}}*/
+}
 
 err_t spx_skiplist_out(struct spx_skiplist *spl,\
         void *k,u32_t kl,void **v,u64_t *vl,
-        SpxSkipListRangeCmperDelegate *searcher){/*{{{*/
+        SpxSkipListRangeCmperDelegate *searcher){
     if(NULL == spl){
         return EINVAL;
     }
@@ -504,17 +505,15 @@ r1:
         SpxFree(up);
     }
     return err;
-}/*}}}*/
+}
 
-/*
    err_t spx_skiplist_search(struct spx_skiplist *spl,\
    void *min,u32_t l1,void *max,u32_t l2,
    struct spx_vector **rc);
 
    err_t spx_skiplist_find(struct spx_skiplist *spl,\
    void *k,u32_t l,void **rc);
-   */
-void spx_skiplist_free(struct spx_skiplist **spl){/*{{{*/
+void spx_skiplist_free(struct spx_skiplist **spl){
     if(NULL == *spl){
         return;
     }
@@ -541,7 +540,7 @@ void spx_skiplist_free(struct spx_skiplist **spl){/*{{{*/
     SpxFree((*spl)->header);
     SpxFree(*spl);
     return;
-}/*}}}*/
+}
 
-
+*/
 

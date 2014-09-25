@@ -30,6 +30,9 @@ struct spx_list *spx_list_new(SpxLogDelegate *log,\
     if(NULL == list){
         return NULL;
     }
+    if(0 == init_size){
+        init_size = 16;
+    }
     list->log = log;
     list->busy_size = 0;
     list->free_size = init_size;

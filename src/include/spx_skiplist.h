@@ -21,6 +21,7 @@
 extern "C" {
 #endif
 
+    /*
 #include "spx_types.h"
 #include "spx_vector.h"
 #include "spx_collection.h"
@@ -92,15 +93,14 @@ err_t spx_skiplist_out(struct spx_skiplist *spl,\
 
     err_t spx_skiplist_delete(struct spx_skiplist *spl,\
             void *k,u32_t l);
-    /*
        err_t spx_skiplist_search(struct spx_skiplist *spl,\
        void *min,u32_t l1,void *max,u32_t l2);
 
        err_t spx_skiplist_find(struct spx_skiplist *spl,\
        void *k,u32_t l);
-       */
     void spx_skiplist_free(struct spx_skiplist **spl);
 
+    */
 #ifdef __cplusplus
 }
 #endif

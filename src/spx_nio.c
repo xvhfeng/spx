@@ -323,4 +323,107 @@ void spx_nio_writer_body_handler(struct ev_loop *loop,int fd,struct spx_job_cont
 
 
 
+//notice :
+//this two faster function is not the best
+//int thr version 2
+//please open the errno(EAGIN and all of retry) to return
+//and please regedit writer to loop when errno == eagin
+//so faster means try direct write first if write is error,then use loop
+//in the version 1,we just deal with error and over the write
+
+void spx_nio_writer_faster(struct ev_loop *loop,int fd,struct spx_job_context *jc){/*{{{*/
+    size_t len = 0;
+    err_t err = 0;
+    if(NULL == jc){
+        return;
+    }
+    if(SpxNioLifeCycleHeader == jc->lifecycle){
+        struct spx_msg *ctx = spx_header_to_msg(jc->writer_header,SpxMsgHeaderSize,&err);
+        if(NULL == ctx){
+            jc->err = err;
+            SpxLog2(jc->log,SpxLogError,err,\
+                    "convert writer header to msg ctx is fail."\
+                    "and forced push jc to pool.");
+            return;
+        }
+        jc->writer_header_ctx = ctx;
+        err =  spx_write_from_msg_nb(fd,ctx,SpxMsgHeaderSize,&len);
+        if(0 != err){
+            jc->err = err;
+            SpxLogFmt2(jc->log,SpxLogError,err,\
+                    "write writer header is fail.client:&s."\
+                    "and forced push jc to pool.",\
+                    jc->client_ip);
+            return;
+        }
+
+        if(SpxMsgHeaderSize != len){
+            jc->err = EIO;
+            SpxLogFmt2(jc->log,SpxLogError,err,\
+                    "write writer header to client:%s is fail.len:%d."\
+                    "and forced push jc to pool.",\
+                    jc->client_ip,len);
+            return;
+        }
+        jc->lifecycle = SpxNioLifeCycleBody;
+    }
+
+    len = 0;
+    if((SpxNioLifeCycleBody == jc->lifecycle) \
+            && (0 != jc->writer_header->bodylen)){
+        jc->writer_body_process(loop,fd,jc);
+        if(0 != jc->err){
+            SpxLogFmt2(jc->log,SpxLogError,jc->err,\
+                    "call write body handler to client:%s is fail."\
+                    "and forced push jc to pool.",\
+                    jc->client_ip);
+            return;
+        }
+    }
+}/*}}}*/
+
+void spx_nio_writer_body_faster_handler(struct ev_loop *loop,int fd,struct spx_job_context *jc){/*{{{*/
+    if(0 == fd || NULL == jc){
+        return;
+    }
+    if(SpxNioLifeCycleBody != jc->lifecycle){
+        SpxLog1(jc->log,SpxLogError,\
+                "the jc lifecycle is not body."\
+                "and forced push jc to pool.");
+        return;
+    }
+    size_t len = 0;
+    if(jc->is_sendfile){
+        jc->err =  spx_write_from_msg_nb(fd,jc->writer_body_ctx,\
+                jc->writer_header->offset,&len);
+        if(0 != jc->err || jc->writer_header->offset != len){
+            SpxLogFmt2(jc->log,SpxLogError,jc->err,\
+                    "write  header to client :%s is fail.len:%d."\
+                    "and forced push jc to pool.",\
+                    jc->client_ip,len);
+            return;
+        }
+        size_t sendbytes = 0;
+        jc->err = spx_sendfile(jc->fd,jc->sendfile_fd,\
+                jc->sendfile_begin,jc->sendfile_size,&sendbytes);
+        if(0 != jc->err || jc->sendfile_size != sendbytes){
+            SpxLogFmt2(jc->log,SpxLogError,jc->err,\
+                    "sndfile size:%lld is no equal sendbytes:%lld.",
+                    jc->sendfile_size,sendbytes);
+            return;
+        }
+    }else {
+        jc->err =  spx_write_from_msg_nb(fd,jc->writer_body_ctx,\
+                jc->writer_header->bodylen,&len);
+        if(0 != jc->err || jc->writer_header->bodylen != len){
+            SpxLogFmt2(jc->log,SpxLogError,jc->err,\
+                    "write  header to client :%s is fail.len:%d."\
+                    "and forced push jc to pool.",\
+                    jc->client_ip,len);
+            return;
+        }
+    }
+    jc->lifecycle = SpxNioLifeCycleNormal;
+    return;
+}/*}}}*/
 
