@@ -63,6 +63,7 @@ extern "C" {
     err_t spx_msg_pack_fixed_string( struct spx_msg *ctx,string_t s,size_t len);
     err_t spx_msg_pack_ubytes( struct spx_msg *ctx,const ubyte_t *b,const size_t len);
     err_t spx_msg_pack_bytes( struct spx_msg *ctx,const byte_t *b,const size_t len);
+    err_t spx_msg_pack_fixed_chars( struct spx_msg *ctx,const char *b,const size_t len);
 
     int spx_msg_unpack_int( struct spx_msg *ctx);
     i8_t spx_msg_unpack_i8( struct spx_msg *ctx);

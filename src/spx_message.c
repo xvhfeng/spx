@@ -197,6 +197,16 @@ err_t spx_msg_pack_bytes( struct spx_msg *ctx,const byte_t *b,const size_t len){
     return 0;
 }/*}}}*/
 
+
+err_t spx_msg_pack_fixed_chars( struct spx_msg *ctx,const char *b,const size_t len){/*{{{*/
+    if (NULL == ctx) return EINVAL;
+    size_t size = strlen(b);
+    ctx->last =  SpxMemcpy(ctx->last,b,size);
+    ctx->last += len - size;
+    ctx->busylen += len;
+    return 0;
+}/*}}}*/
+
 int spx_msg_unpack_int( struct spx_msg *ctx){/*{{{*/
     return spx_msg_unpack_i32(ctx);
 }/*}}}*/

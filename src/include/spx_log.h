@@ -15,9 +15,10 @@ extern "C" {
 #define spx_m2s(m) spx_m2s_d(m)
 
     struct spx_log{
-        int fd;//the file desc
+//        int fd;//the file desc
         off_t offset;
-        void *ptr;//the mmap ptr
+        FILE *fp;
+//        void *ptr;//the mmap ptr
         size_t size;
 //        size_t csize;//current size of context
         u8_t level;

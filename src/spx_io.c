@@ -129,12 +129,14 @@ err_t spx_write_nb(int fd,byte_t *buf,const size_t size,size_t *len){/*{{{*/
 err_t spx_read_to_msg(int fd,struct spx_msg *ctx,const size_t size,size_t *len){/*{{{*/
     err_t err = spx_read(fd,(byte_t *) ctx->last ,size,len);
     spx_msg_seek(ctx,spx_msg_len(ctx),SpxMsgSeekSet);
+    ctx->busylen = *len;
     return err;
 }/*}}}*/
 
 err_t spx_read_to_msg_nb(int fd,struct spx_msg *ctx,const size_t size,size_t *len){/*{{{*/
     err_t err = spx_read_nb(fd,(byte_t *) ctx->last,size,len);
     spx_msg_seek(ctx,spx_msg_len(ctx),SpxMsgSeekSet);
+    ctx->busylen = *len;
     return err;
 }/*}}}*/
 
