@@ -42,7 +42,6 @@ spx_private err_t spx_socket_reuseaddr(int sock) ;
 spx_private err_t spx_socket_keepalive(int fd,bool_t enable,\
         size_t alive_timeout,size_t detect_times,size_t detect_timeout);
 spx_private err_t spx_socket_linger(const int fd,bool_t enable, size_t timeout);
-spx_private err_t spx_tcp_nodelay(int fd,bool_t enable);
 spx_private err_t spx_socket_timout(int fd, size_t timeout);
 
 
@@ -109,7 +108,7 @@ spx_private err_t spx_socket_linger(const int fd,bool_t enable, size_t timeout) 
 }/*}}}*/
 
 
-spx_private err_t spx_tcp_nodelay(int fd,bool_t enable) {/*{{{*/
+err_t spx_tcp_nodelay(int fd,bool_t enable) {/*{{{*/
 #ifdef SpxLinux
 	if (-1 == setsockopt(fd, SOL_TCP, TCP_NODELAY, &enable, sizeof(enable))) {
 	    return errno;

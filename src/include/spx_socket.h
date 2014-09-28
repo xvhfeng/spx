@@ -58,6 +58,7 @@ err_t spx_socket_connect(int fd,string_t ip,int port);
 err_t spx_socket_connect_nb(int fd,string_t ip,int port,u32_t timeout);
 string_t spx_socket_getipbyname(string_t name,err_t *err);
 bool_t spx_socket_is_ip(string_t ip);
+err_t spx_tcp_nodelay(int fd,bool_t enable);
 
 #ifdef __cplusplus
 }
