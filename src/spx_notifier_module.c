@@ -45,11 +45,11 @@ void spx_notifier_module_receive_handler(struct ev_loop *loop,ev_io *w,int reven
     jc->client_ip = spx_ip_get(jc->fd,&err);
     spx_set_nb(jc->fd);
     jc->moore = SpxNioMooreRequest;
-    size_t idx = jc->idx % g_spx_network_module->threadpool->size;
+    size_t idx = spx_network_module_wakeup_idx(jc);
     SpxLogFmt1(rc->log,SpxLogDebug,\
-            "recv the client:%s connection."\
+            "recv the client:%s connection.sock:%d."\
             "and send to thread:%d to deal.",
-            jc->client_ip,idx);
+            jc->client_ip,jc->fd,idx);
     struct spx_thread_context *tc = spx_get_thread(g_spx_network_module,idx);
     jc->tc = tc;
     err = spx_module_dispatch(tc,spx_network_module_wakeup_handler,jc);
@@ -67,12 +67,7 @@ void spx_notifier_module_wakeup_handler(int revents,void *arg){
         spx_job_pool_push(g_spx_job_pool,jc);
     }
     if(revents & EV_WRITE){
-        struct spx_datetime dt;
-        SpxZero(dt);
-        spx_get_curr_datetime(&dt);
-        SpxLogFmt1(jc->log,SpxLogInfo,"%04d-%02d-%02d %02d:%02d:%02d notify is well.",
-                SpxYear(&dt),SpxMonth(&dt),SpxDay(&dt),
-                SpxHour(&dt),SpxMinute(&dt),SpxSecond(&dt));
+        SpxLog1(jc->log,SpxLogDebug,"notify is well.");
 
         size_t len = 0;
         err = spx_write_nb(jc->tc->pipe[1],(byte_t *) &jc,sizeof(jc),&len);

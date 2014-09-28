@@ -74,7 +74,7 @@ r1:
 }/*}}}*/
 
 void spx_log(int level,char *fmt,...){/*{{{*/
-    if((level < 0 || (int)sizeof(SpxLogDesc) <= level) || NULL == fmt) return;
+    if((level < 0 || (int)sizeof(SpxLogDesc) < level) || NULL == fmt) return;
 
     err_t err = 0;
     va_list ap;

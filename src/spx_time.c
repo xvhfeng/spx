@@ -58,6 +58,13 @@ time_t spx_now() {/*{{{*/
     return timep;
 } /*}}}*/
 
+u64_t spx_now_usec(){
+    struct timeval tv;
+    gettimeofday(&tv,NULL);
+    return tv.tv_usec;
+}
+
+
 time_t spx_zero(struct spx_date *d){
     time_t timep;
     struct tm p;

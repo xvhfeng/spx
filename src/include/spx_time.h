@@ -36,6 +36,7 @@ extern "C" {
     void spx_get_curr_datetime(struct spx_datetime *dt);
     struct spx_date *spx_get_today(struct spx_date *d);
     time_t spx_now();
+    u64_t spx_now_usec();
     time_t spx_mktime(struct spx_datetime *dt);
     struct spx_datetime *spx_datetime_dup(struct spx_datetime *dt,err_t *err);
     struct spx_datetime *spx_datetime_add_days(struct spx_datetime *dt,int days);

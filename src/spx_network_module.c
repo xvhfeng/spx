@@ -98,7 +98,7 @@ void spx_network_module_wakeup_handler(int revents,void *arg){
     }
     if(revents & EV_WRITE){
         size_t len = 0;
-        SpxLog1(jc->log,SpxLogInfo,"network is well.");
+        SpxLog1(jc->log,SpxLogDebug,"network is well.");
         err = spx_write_nb(jc->tc->pipe[1],(byte_t *) &jc,sizeof(jc),&len);
         if (0 != err || sizeof(jc) != len) {
             SpxLog1(jc->log,SpxLogError,\

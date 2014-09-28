@@ -53,12 +53,8 @@ void spx_socket_accept_nb(SpxLogDelegate *log,int fd){
             return;
         }
 
-        struct spx_datetime dt;
-        SpxZero(dt);
-        spx_get_curr_datetime(&(dt));
-        SpxLogFmt1(log,SpxLogInfo,"%04d-%02d-%02d %02d:%02d:%02d recv socket conntect.",
-                SpxYear(&(dt)),SpxMonth(&(dt)),SpxDay(&(dt)),
-                SpxHour(&(dt)),SpxMinute(&(dt)),SpxSecond(&(dt)));
+        SpxLogFmt1(log,SpxLogDebug,"recv socket conntect.wakeup notifier module idx:%d.jc idx:%d."
+                ,idx,jcontext->idx);
 
         jcontext->fd = client_sock;
 

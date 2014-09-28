@@ -242,7 +242,7 @@ string_t spx_ip_get(int sock,err_t *err) {
 	char *tmp;
 	tmp = inet_ntoa(addr.sin_addr);
 	spx_string_cat(ip,tmp,err);
-	if(0 != err){
+	if(0 != *err){
 	    spx_string_free(ip);
         return NULL;
     }

@@ -23,12 +23,12 @@
 
 #define PHI 161803398
 u32_t spx_random(u32_t idx){
-    pthread_t tid = pthread_self();
-    pid_t pid = getpid();
-    time_t  time = spx_now();
-    u64_t seed = (u64_t) (((u64_t) tid) & ((u32_t) pid) & idx & time & PHI);
-     srand(seed);
-    u32_t r = rand();
+//    pthread_t tid = pthread_self();
+//    pid_t pid = getpid();
+    time_t  time = spx_now_usec();
+//    u64_t seed = (u64_t) (((u64_t) tid) & ((u32_t) pid) & idx & time & PHI);
+     srand(time);
+    u32_t r = 1+(int) (100.0*rand()/(RAND_MAX+1.0));
     return r;
 }
 
