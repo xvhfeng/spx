@@ -388,3 +388,19 @@ bool_t spx_socket_is_ip(string_t ip){
     int rc = inet_pton(AF_INET, ip, &(sa.sin_addr));
     return 1 == rc ? true : false;
 }
+
+bool_t spx_socket_ready_read(int fd,u32_t timeout){
+    struct timeval tv;
+    SpxZero(tv);
+    tv.tv_sec = timeout;
+    tv.tv_usec = 0;
+    fd_set frd;
+    FD_ZERO(&frd);
+    FD_SET(fd,&frd);
+    int n = select (fd+1 , &frd,NULL,NULL,&tv);
+    if(0 < n && FD_ISSET(fd,&frd)){
+        return true;
+    }
+    return false;
+}
+
