@@ -5,6 +5,7 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+#include <stdio.h>
 #include <sys/types.h>
 #include <stddef.h>
 #include <wchar.h>
@@ -137,6 +138,36 @@ extern "C" {
         "false",
         "true"
     };
+
+#define SpxObjectStruct \
+    bool_t spx_object_is_pooling;\
+    u32_t spx_object_refs;\
+    size_t spx_object_size
+
+    struct spx_object{
+        SpxObjectStruct;
+        char obj[0];
+    };
+
+#ifndef spx_res_t
+    typedef struct spx_res{
+        int t;
+        union{
+            int fd;
+            struct{
+                int fd;
+                char *ptr;
+            }mmap;
+            FILE *fp;
+        }r;
+    }spx_res_t;
+#define SpxFd(r) (r->r.file.fd)
+#define SpxMapFd(r) (r->r.mmap.fd)
+#define SpxMap(r) (r->r.mmap.ptr)
+#define SpxFILE(r) (r->r.fp);
+#endif
+
+
 #ifdef __cplusplus
 }
 #endif

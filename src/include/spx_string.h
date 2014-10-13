@@ -281,6 +281,8 @@ size_t spxStringAllocSize(string_t s);
 
 #define SpxMemcpy(d,s,l) (((uchar_t *) memcpy(d,s,l)) + l)
 
+#define SpxStringFree(s) spx_string_free(s);s = NULL
+
 #ifdef __cplusplus
 }
 #endif

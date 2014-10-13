@@ -133,6 +133,8 @@ spx_private char *SpxLogDesc[] = {
 #define SpxAtomicSize            (sizeof("-2147483648") - 1)
 #endif
 
+#define TypeConvert(t,p,v) t p = (t) (v)
+
 
 #if ((__GNU__ == 2) && (__GNUC_MINOR__ < 8))
 #define SpxU32Max  (u32_t) 0xffffffffLL
@@ -147,6 +149,23 @@ spx_private char *SpxLogDesc[] = {
             fd = 0;\
         } \
     }while(false)
+
+
+#define SpxAlign(d, a)     (((d) + (a - 1)) & ~(a - 1))
+
+#if Spx32
+#define SpxAlignSize 4
+#elif Spx64
+#define SpxAlignSize 8
+#else
+#define SpxAlignSize 8
+#endif
+
+#define SpxObjectAlignSize SpxAlign(sizeof(struct spx_object),SpxAlignSize)
+#define SpxMemIncr(p,s) (((char *) p) + (s))
+#define SpxMemDecr(p,s) (((char *) p) - (s))
+#define SpxPtrDecr(p1,p2) ((size_t ) (((char *) p1) - ((char *) p2)))
+
 
 #ifdef __cplusplus
 }
