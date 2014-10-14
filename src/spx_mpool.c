@@ -125,7 +125,7 @@ void *spx_mpool_alloc_alone(struct spx_mpool *pool,
 }/*}}}*/
 
 void *spx_mpool_realloc(struct spx_mpool *pool,
-        void *p,size_t s,err_t *err){
+        void *p,size_t s,err_t *err){/*{{{*/
     if(NULL == p){
         return spx_mpool_malloc(pool,s,err);
     }
@@ -196,14 +196,18 @@ void *spx_mpool_realloc(struct spx_mpool *pool,
         }
         if(NULL != nlarge->prev){
             nlarge->prev->next = nlarge;
+        }else{
+            pool->lg_header = nlarge;
         }
         if(NULL != nlarge->next){
             nlarge->next->prev = nlarge;
+        }else{
+            pool->lg_tail = nlarge;
         }
         return SpxMemIncr(nlarge, sizeof(struct spx_large));
     }
     return NULL;
-}
+}/*}}}*/
 
 bool_t spx_mpool_free(struct spx_mpool *pool,
         void *p){/*{{{*/
@@ -229,14 +233,12 @@ bool_t spx_mpool_free(struct spx_mpool *pool,
                SpxMemDecr(p, sizeof(struct spx_large));
             if(NULL == large->prev){
                 pool->lg_header = large->next;
+            } else {
+                large->prev->next = large->next;
             }
             if(NULL == large->next){
                 pool->lg_tail = large->prev;
-            }
-            if(NULL != large->prev){
-                large->prev->next = large->next;
-            }
-            if(NULL != large->next){
+            } else {
                 large->next->prev = large->prev;
             }
             SpxFree(large);
