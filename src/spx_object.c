@@ -122,3 +122,32 @@ bool_t spx_object_free(void *p){
     }
     return false;
 }
+
+void *spx_object_ref(void *p){
+    if(NULL == p){
+        return NULL;
+    }
+    struct spx_object *o = (struct spx_object *) ((char *) p - SpxObjectAlignSize);
+    if(0 == o->spx_object_refs){
+        return NULL;
+    }
+    SpxAtomicVIncr(o->spx_object_refs);
+    return p;
+}
+
+void *spx_object_unref(void *p){
+    if(NULL == p){
+        return NULL;
+    }
+    struct spx_object *o = (struct spx_object *) ((char *) p - SpxObjectAlignSize);
+    if(0 == o->spx_object_refs){
+        return NULL;
+    }
+    if(0 == SpxAtomicVDecr(o->spx_object_refs)){
+        if(!o->spx_object_is_pooling){
+            SpxFree(o);
+            return NULL;
+        }
+    }
+    return p;
+}

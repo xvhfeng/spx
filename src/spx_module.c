@@ -116,7 +116,7 @@ spx_private void *spx_thread_listening(void *arg){/*{{{*/
     struct spx_receive_context *tc = spx_list_get(mc->receive_triggers,idx);
     struct spx_thread_context *stc = spx_list_get(mc->threadpool,idx);
     ev_io_init(&(tc->watcher),tc->receive_handler,stc->pipe[0],EV_READ);
-    ev_io_start(stc->loop,&(tc->watcher));
+     ev_io_start(stc->loop,&(tc->watcher));
     ev_run(stc->loop,0);
     return NULL;
 }/*}}}*/

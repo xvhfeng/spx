@@ -13,6 +13,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <ev.h>
 
 #include "spx_types.h"
 #include "spx_string.h"
@@ -24,24 +25,39 @@
 #include "spx_socket_accept.h"
 #include "spx_time.h"
 
-void spx_socket_accept_nb(SpxLogDelegate *log,int fd){
+spx_private ev_io main_watcher;
+spx_private void spx_socket_main_reciver(struct ev_loop *loop,
+        ev_io *watcher,int revents);
+
+void spx_socket_accept_nb(SpxLogDelegate *log,
+        struct ev_loop *loop,int fd){
+    SpxZero(main_watcher);
+    ev_io_init(&main_watcher,spx_socket_main_reciver,fd,EV_READ);
+    main_watcher.data = log;
+     ev_io_start(loop,&(main_watcher));
+    ev_run(loop,0);
+}
+
+spx_private void spx_socket_main_reciver(struct ev_loop *loop,ev_io *watcher,int revents){
+    ev_io_stop(loop,watcher);
+    SpxLogDelegate *log = (SpxLogDelegate *) watcher->data;
     err_t err = 0;
     while(true){
         struct sockaddr_in client_addr;
         unsigned int socket_len = 0;
         int client_sock = 0;
         socket_len = sizeof(struct sockaddr_in);
-        client_sock = accept(fd, (struct sockaddr *) &client_addr,
+        client_sock = accept(watcher->fd, (struct sockaddr *) &client_addr,
                 &socket_len);
         if (0 > client_sock) {
             if (EWOULDBLOCK == errno || EAGAIN == errno) {
-                continue;
+                break;
             }
-            continue;
+            break;
         }
 
         if (0 == client_sock) {
-            continue;
+            break;
         }
 
         size_t idx = client_sock % g_spx_notifier_module->threadpool->size;
@@ -50,7 +66,7 @@ void spx_socket_accept_nb(SpxLogDelegate *log,int fd){
             SpxClose(client_sock);
             SpxLog1(log,SpxLogError,\
                     "pop nio context is fail.");
-            return;
+            break;
         }
 
         SpxLogFmt1(log,SpxLogDebug,"recv socket conntect.wakeup notifier module idx:%d.jc idx:%d."
@@ -62,5 +78,8 @@ void spx_socket_accept_nb(SpxLogDelegate *log,int fd){
         jcontext->tc = tc;
         spx_module_dispatch(tc,spx_notifier_module_wakeup_handler, jcontext);
     }
+    ev_io_start(loop,watcher);
 }
+
+
 
