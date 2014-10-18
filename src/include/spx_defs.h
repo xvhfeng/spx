@@ -133,7 +133,8 @@ spx_private char *SpxLogDesc[] = {
 #define SpxAtomicSize            (sizeof("-2147483648") - 1)
 #endif
 
-#define TypeConvert(t,p,v) t p = (t) (v)
+#define TypeConvert(t,name,old) t name = (tp) (old)
+#define TypeConvert2(t,newp,old) t *newp = (t *) (old)
 
 
 #if ((__GNU__ == 2) && (__GNUC_MINOR__ < 8))
