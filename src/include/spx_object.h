@@ -51,6 +51,7 @@ extern "C" {
 #include <stdio.h>
 
 #include "spx_types.h"
+#include "spx_defs.h"
 
     void *spx_object_new(const size_t s,err_t *err);
     void *spx_object_news(const size_t numbs,const size_t s,err_t *err);
@@ -58,6 +59,19 @@ extern "C" {
     void *spx_object_new_algin(const size_t s,err_t *err) ;
     void *spx_object_renew(void *p,const size_t s,err_t *err);
     bool_t spx_object_free(void *p);
+    void *spx_object_ref(void *p);
+    void *spx_object_unref(void *p);
+
+    spx_private u32_t spx_object_refcount(void *p){
+        if(NULL == p){
+            return 0;
+        }
+        struct spx_object *o = (struct spx_object *) ((char *) p - SpxObjectAlignSize);
+        if(0 == o->spx_object_refs){
+            return 0;
+        }
+        return o->spx_object_refs;
+    }
 
 #define SpxObjectFree(p) \
     do { \
