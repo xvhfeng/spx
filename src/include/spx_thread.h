@@ -49,6 +49,23 @@ extern "C" {
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <pthread.h>
+
+#include "spx_types.h"
+
+    /**
+     * this function alloc mutex-locker must use
+     * spx_thread_mutex_free function to free the mutex locker
+     */
+    pthread_mutex_t *spx_thread_mutex_new(SpxLogDelegate *log,
+            err_t *err);
+    void spx_thread_mutex_free(pthread_mutex_t **mlock);
+
+    pthread_t spx_thread_new(SpxLogDelegate *log,
+            size_t stacksize,
+            void *(*start_routine)(void*),
+            void *arg,
+            err_t *err);
 
 #ifdef __cplusplus
 }

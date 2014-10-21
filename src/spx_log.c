@@ -9,30 +9,31 @@
 
 #include "spx_alloc.h"
 #include "spx_errno.h"
-#include "spx_log.h"
 #include "spx_string.h"
 #include "spx_types.h"
 #include "spx_path.h"
 #include "spx_defs.h"
 #include "spx_time.h"
+#include "spx_thread.h"
+#include "spx_log.h"
 
 
+spx_private struct spx_log *g_spx_log = NULL;
 
-spx_private struct spx_log *g_log = NULL;
-
-spx_private spx_inline string_t get_log_line(err_t *err,\
+spx_private spx_inline string_t get_log_line(err_t *err,
         u8_t level,string_t fmt,va_list ap);
-spx_private FILE *logf_create(SpxLogDelegate log,\
-        const string_t path,\
-        const string_t name,u64_t max_size,\
+
+spx_private FILE *logf_create(SpxLogDelegate log,
+        const string_t path,
+        const string_t name,u64_t max_size,
         err_t *err);
-//        int *fd,void **p);
+
 spx_private spx_inline void logf_close();
 
 
-err_t spx_log_new(SpxLogDelegate log,\
-        const string_t path,\
-        const string_t name,const u64_t max_size,\
+err_t spx_log_new(SpxLogDelegate log,
+        const string_t path,
+        const string_t name,const u64_t max_size,
         const u8_t level){/*{{{*/
     if(SpxStringIsNullOrEmpty(path)
             || SpxStringIsNullOrEmpty(name)){
@@ -40,36 +41,46 @@ err_t spx_log_new(SpxLogDelegate log,\
     }
     err_t err = 0;
     u64_t size = 0 == max_size ? 10 * SpxMB : max_size;
-    g_log = spx_alloc_alone(sizeof(*g_log),&err);
-    if(NULL == g_log){
+    g_spx_log = spx_alloc_alone(sizeof(struct spx_log),&err);
+    if(NULL == g_spx_log){
         return err;
     }
-    g_log->size =size;
-    g_log->level = level;
-    g_log->log = log;
-    g_log->path = spx_string_dup(path,&err);
-    if(NULL == g_log->path){
+    g_spx_log->size =size;
+    g_spx_log->level = level;
+    g_spx_log->log = log;
+    g_spx_log->path = spx_string_dup(path,&err);
+    if(NULL == g_spx_log->path){
         goto r1;
     }
-    g_log->name = spx_string_dup(name,&err);
-    if(NULL == g_log->name){
+    g_spx_log->name = spx_string_dup(name,&err);
+    if(NULL == g_spx_log->name){
+        goto r1;
+    }
+    g_spx_log->mlock = spx_thread_mutex_new(log,&err);
+    if(NULL == g_spx_log->mlock){
         goto r1;
     }
 
-    g_log->fp = logf_create(log,g_log->path,g_log->name,
-            g_log->size,&err);
-//    if(0 != (err = logf_create(log,g_log->path,g_log->name,
-//                    g_log->size,&(g_log->fd),&(g_log->ptr)))){
-//        goto r1;
-//    }
+    g_spx_log->fp = logf_create(log,g_spx_log->path,g_spx_log->name,
+            g_spx_log->size,&err);
+    if(NULL == g_spx_log->fp){
+        goto r1;
+    }
 
     return err;
 r1:
-    if(NULL != g_log->path)
-        spx_string_free(g_log->path);
-    if(NULL != g_log->name)
-        spx_string_free(g_log->name);
-    SpxFree(g_log);
+    if(NULL != g_spx_log->path)
+        spx_string_free(g_spx_log->path);
+    if(NULL != g_spx_log->name)
+        spx_string_free(g_spx_log->name);
+    if(NULL != g_spx_log->mlock){
+        pthread_mutex_destroy(g_spx_log->mlock);
+        SpxFree(g_spx_log->mlock);
+    }
+    if(NULL != g_spx_log->fp){
+        fclose(g_spx_log->fp);
+    }
+    SpxFree(g_spx_log);
     return err;
 }/*}}}*/
 
@@ -90,42 +101,49 @@ void spx_log(int level,char *fmt,...){/*{{{*/
         return;
     }
 
-    if(NULL == g_log || 0 == g_log->fp ){
+    if(NULL == g_spx_log || 0 == g_spx_log->fp ){
         fprintf(stdout,"%s",SpxString2Char2(newline));
         spx_string_free(newline);
         return;
     }
 
-    if(level < g_log->level){
+    if(level < g_spx_log->level){
         spx_string_free(newline);
         return;
     }
 
     size_t s = spx_string_len(newline);
-    if(g_log->offset + s > g_log->size){
-        logf_close(g_log);
-        g_log->fp = logf_create(g_log->log,g_log->path,g_log->name\
-                ,g_log->size,&err);
-        if(NULL == g_log->fp){
-            return;
-        }
+    if(0 == pthread_mutex_lock(g_spx_log->mlock)){
+        do{
+            if(g_spx_log->offset + s > g_spx_log->size){
+                logf_close(g_spx_log);
+                g_spx_log->fp = logf_create(g_spx_log->log,
+                        g_spx_log->path,g_spx_log->name,
+                        g_spx_log->size,&err);
+                if(NULL == g_spx_log->fp){
+                    break;
+                }
+            }
+            fwrite(newline,s,sizeof(char),g_spx_log->fp);
+            g_spx_log->offset += s;
+        }while(false);
+        pthread_mutex_unlock(g_spx_log->mlock);
     }
-//    fprintf(stdout,"%s",SpxString2Char2(newline));
-//    memcpy(((char *) g_log->ptr) + g_log->offset,newline,s);
-    //write(g_log->fd,line,s);
-    fwrite(newline,s,sizeof(char),g_log->fp);
-    g_log->offset += s;
     spx_string_free(newline);
     return;
 }/*}}}*/
 
 void spx_log_free(){
     logf_close();
-    if(NULL != g_log->path)
-        spx_string_free(g_log->path);
-    if(NULL != g_log->name)
-        spx_string_free(g_log->name);
-    SpxFree(g_log);
+    if(NULL != g_spx_log->path)
+        spx_string_free(g_spx_log->path);
+    if(NULL != g_spx_log->name)
+        spx_string_free(g_spx_log->name);
+    if(NULL != g_spx_log->mlock){
+        pthread_mutex_destroy(g_spx_log->mlock);
+        SpxFree(g_spx_log->mlock);
+    }
+    SpxFree(g_spx_log);
 }
 
 spx_private FILE *logf_create(SpxLogDelegate log,\
@@ -168,22 +186,12 @@ spx_private FILE *logf_create(SpxLogDelegate log,\
         goto r1;
     }
     fp = newfp;
-//    *fd = open(SpxString2Char2(fp),O_RDWR|O_APPEND|O_CREAT,SpxFileMode);
-//    if(0 >= *fd) {
     f = fopen(SpxString2Char2(fp),"a+");
     if(NULL == f){
         *err = 0 == errno ? EACCES : errno;
         goto r1;
     }
     setlinebuf(f);
-//    if(0 != (err = ftruncate(*fd,max_size))){
-//        goto r1;
-//    }
-//    *p = mmap(NULL,max_size,PROT_READ | PROT_WRITE , MAP_SHARED,*fd,0);
-//    if(MAP_FAILED == *p){
-//        err = errno;
-//        goto r1;
-//    }
     if(NULL != newfp){
         spx_string_free(newfp);
     } else {
@@ -205,11 +213,6 @@ r1:
         fclose(f);
     }
     return NULL;
-//    if(0 != *fd){
-//        close(*fd);
-//        *fd = 0;
-//    }
-//    return err;
 }/*}}}*/
 
 spx_private spx_inline string_t get_log_line(err_t *err,\
@@ -240,18 +243,9 @@ spx_private spx_inline string_t get_log_line(err_t *err,\
 }/*}}}*/
 
 spx_private spx_inline void logf_close(){
-    if(NULL != g_log->fp){
-        fflush(g_log->fp);
-        fclose(g_log->fp);
+    if(NULL != g_spx_log->fp){
+        fflush(g_spx_log->fp);
+        fclose(g_spx_log->fp);
     }
-//    if(NULL != g_log->ptr){
-//        fprintf(stdout,"%s",(char *) g_log->ptr);
-//        msync(g_log->ptr,g_log->offset,MS_SYNC);
-//        munmap(g_log->ptr,g_log->size);
-//        g_log->ptr = NULL;
-//    }
-//    if(0 != g_log->fd){
-//        close(g_log->fd);
-//    }
-    g_log->offset = 0;
+    g_spx_log->offset = 0;
 }

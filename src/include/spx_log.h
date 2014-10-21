@@ -1,10 +1,13 @@
-
 #ifndef SPX_LOG_H
 #define SPX_LOG_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <pthread.h>
 
 #include "spx_types.h"
 #include "spx_string.h"
@@ -15,16 +18,14 @@ extern "C" {
 #define spx_m2s(m) spx_m2s_d(m)
 
     struct spx_log{
-//        int fd;//the file desc
         off_t offset;
         FILE *fp;
-//        void *ptr;//the mmap ptr
         size_t size;
-//        size_t csize;//current size of context
         u8_t level;
         string_t path;
         string_t name;
         SpxLogDelegate *log;
+        pthread_mutex_t *mlock;
     };
 
     err_t spx_log_new(SpxLogDelegate log,\

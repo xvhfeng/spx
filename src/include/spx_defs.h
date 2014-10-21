@@ -81,6 +81,11 @@ spx_private char *SpxLogDesc[] = {
 #define SpxMB (1024 * 1024)
 #define SpxKB (1024)
 
+#define SpxSecondTick 1
+#define SpxMinuteTick 60
+#define SpxHourTick (60 * 60)
+#define SpxDayTick (24 * 60 * 60)
+
 #define SpxDiskUnitPB 0
 #define SpxDiskUnitTB 1
 #define SpxDiskUnitGB 2
@@ -133,7 +138,7 @@ spx_private char *SpxLogDesc[] = {
 #define SpxAtomicSize            (sizeof("-2147483648") - 1)
 #endif
 
-#define TypeConvert(t,name,old) t name = (tp) (old)
+#define TypeConvert(tp,name,old) tp name = (tp) (old)
 #define TypeConvert2(t,newp,old) t *newp = (t *) (old)
 
 
