@@ -53,6 +53,8 @@ extern "C" {
 
 #include "spx_types.h"
 
+    typedef void (SpxThreadCleanupDelegate)(void *arg);
+
     /**
      * this function alloc mutex-locker must use
      * spx_thread_mutex_free function to free the mutex locker
@@ -67,6 +69,11 @@ extern "C" {
             void *arg,
             err_t *err);
 
+    pthread_t spx_thread_new_cancelability(SpxLogDelegate *log,
+        size_t stacksize,
+        void *(*start_routine)(void *),
+        void *arg,
+        err_t *err);
 #ifdef __cplusplus
 }
 #endif

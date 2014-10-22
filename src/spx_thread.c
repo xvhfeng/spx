@@ -41,6 +41,15 @@
 #include "spx_alloc.h"
 #include "spx_defs.h"
 
+struct spx_thread_sportran{
+    SpxLogDelegate *log;
+    void *(*start_routine)(void*);
+    void *arg;
+};
+
+spx_private void *spx_thread_cancelability_start_routine(void *arg);
+
+
 pthread_mutex_t *spx_thread_mutex_new(SpxLogDelegate *log,
         err_t *err){
     pthread_mutex_t *m = spx_alloc_alone(sizeof(*m),err);
@@ -89,3 +98,30 @@ pthread_t spx_thread_new(SpxLogDelegate *log,
     return tid;
 }
 
+
+spx_private void *spx_thread_cancelability_start_routine(void *arg){
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE,NULL);
+    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED,NULL);//run to next cannel-pointer
+    TypeConvert2(struct spx_thread_sportran,sts,arg);
+    void *real_arg = sts->arg;
+    void *(*start_routine)(void*) = sts->start_routine;
+    SpxFree(sts);
+    start_routine(real_arg);
+    return NULL;
+}
+
+pthread_t spx_thread_new_cancelability(SpxLogDelegate *log,
+        size_t stacksize,
+        void *(*start_routine)(void *),
+        void *arg,
+        err_t *err){
+    struct spx_thread_sportran *sts = spx_alloc_alone(sizeof(*sts),err);
+    if(NULL == sts){
+        return 0;
+    }
+    sts->log = log;
+    sts->arg = arg;
+    sts->start_routine = start_routine;
+    return spx_thread_new(log,stacksize,spx_thread_cancelability_start_routine,
+            (void *) sts,err);
+}
