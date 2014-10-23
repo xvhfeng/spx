@@ -214,10 +214,15 @@ err_t spx_module_free(struct spx_module_context **mc){
 }
 
 
+/*
 err_t spx_module_dispatch(struct spx_thread_context *tc,
         SpxDispatchTriggerDelegate *dispatcher, void *msg){
     dispatcher(EV_WRITE,msg);
 //    ev_once(tc->loop,tc->pipe[1],EV_WRITE,-1,dispatcher,msg);
     return 0;
 }
+ */
 
+//void spx_module_dispatch(SpxDispatchTriggerDelegate *dispatcher,void *msg){
+//    dispatcher(EV_WRITE,msg);
+//}

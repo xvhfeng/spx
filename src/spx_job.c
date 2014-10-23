@@ -62,7 +62,7 @@ err_t spx_job_context_free(void **arg){
     return 0;
 }
 
-void spx_job_context_clear(struct spx_job_context *jcontext){
+void spx_job_context_clear(struct spx_job_context *jcontext){/*{{{*/
 
     if(NULL != jcontext->client_ip){
         spx_string_clear(jcontext->client_ip);
@@ -96,11 +96,44 @@ void spx_job_context_clear(struct spx_job_context *jcontext){
         jcontext->sendfile_size = 0;
     }
     SpxClose(jcontext->fd);
-//    jcontext->lazy_recv_offet = 0;
-//    jcontext->lazy_recv_size = 0;
+    jcontext->err = 0;
+    jcontext->moore = SpxNioMooreNormal;
+}/*}}}*/
+
+
+void spx_job_context_reset(struct spx_job_context *jcontext){
+
+    if(NULL != jcontext->reader_header){
+        SpxFree(jcontext->reader_header);
+    }
+    if(NULL != jcontext->reader_header_ctx){
+        spx_msg_free(&((jcontext)->reader_header_ctx));
+    }
+    if(NULL != jcontext->reader_body_ctx){
+        spx_msg_free(&((jcontext)->reader_body_ctx));
+    }
+
+    if(NULL != (jcontext)->writer_header){
+        SpxFree((jcontext)->writer_header);
+    }
+    if(NULL != (jcontext)->writer_header_ctx){
+        spx_msg_free(&((jcontext)->writer_header_ctx));
+    }
+    if(NULL != (jcontext)->writer_body_ctx){
+        spx_msg_free(&((jcontext)->writer_body_ctx));
+    }
+
+    if(jcontext->is_sendfile){
+        if(0 != jcontext->sendfile_fd){
+            SpxClose(jcontext->sendfile_fd);
+        }
+        jcontext->sendfile_begin = 0;
+        jcontext->sendfile_size = 0;
+    }
     jcontext->err = 0;
     jcontext->moore = SpxNioMooreNormal;
 }
+
 
 struct spx_job_pool *spx_job_pool_new(SpxLogDelegate *log,\
         void *config,\

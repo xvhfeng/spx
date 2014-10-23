@@ -63,6 +63,10 @@ extern "C" {
             err_t *err);
     void spx_thread_mutex_free(pthread_mutex_t **mlock);
 
+    pthread_cond_t *spx_thread_cond_new(SpxLogDelegate *log,
+            err_t *err);
+    void spx_thread_cond_free(pthread_cond_t **clock);
+
     pthread_t spx_thread_new(SpxLogDelegate *log,
             size_t stacksize,
             void *(*start_routine)(void*),

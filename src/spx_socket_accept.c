@@ -76,7 +76,9 @@ spx_private void spx_socket_main_reciver(struct ev_loop *loop,ev_io *watcher,int
 
         struct spx_thread_context *tc = spx_get_thread(g_spx_notifier_module,idx);
         jcontext->tc = tc;
-        spx_module_dispatch(tc,spx_notifier_module_wakeup_handler, jcontext);
+//        spx_module_dispatch(tc,spx_notifier_module_wakeup_handler, jcontext);
+//        spx_notifier_module_wakeup_handler(EV_WRITE,jcontext);
+        SpxModuleDispatch(spx_notifier_module_wakeup_handler,jcontext);
     }
     ev_io_start(loop,watcher);
 }

@@ -9,7 +9,7 @@ extern "C" {
 
 #include "spx_types.h"
 
-#define SpxMsgHeaderSize (3 * sizeof(u32_t) + 2 * sizeof(u64_t))
+#define SpxMsgHeaderSize (3 * sizeof(u32_t) + 2 * sizeof(u64_t) + sizeof(char))
 
 #define SpxMsgSeekSet 0
 #define SpxMsgSeekCurrent 1
@@ -24,11 +24,15 @@ extern "C" {
     };
 
 
+    //add the keepalive for unclosed-connection
+    //but if you use unclosed-connection,you must regedit event by yourself
+    //when the request is doing over
     struct spx_msg_header{
         u32_t version;
         u32_t protocol;
         u64_t bodylen;
         u64_t offset;
+        bool_t is_keepalive;
         u32_t err;
     };
 

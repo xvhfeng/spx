@@ -36,6 +36,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <time.h>
+#include <sys/time.h>
 
 #include "spx_alloc.h"
 #include "spx_types.h"
@@ -214,14 +216,32 @@ struct spx_timer *spx_timer_async_run(SpxLogDelegate *log,
     t->log = log;
     t->arg = arg;
     t->timeout_handler = timeout_handler;
+    t->mlock = spx_thread_mutex_new(log,err);
+    if(NULL == t->mlock){
+        goto r1;
+    }
+    t->clock = spx_thread_cond_new(log,err);
+    if(NULL == t->clock){
+        goto r1;
+    }
 
     t->tid = spx_thread_new_cancelability(log,
             stacksize,spx_timer_run_async,(void *) t,err);
     if(0 == t->tid){
-        SpxFree(t);
-        return NULL;
+        goto r1;
     }
     return t;
+r1:
+    if(NULL != t->clock){
+        spx_thread_cond_free(&(t->clock));
+    }
+    if(NULL != t->mlock){
+        spx_thread_mutex_free(&(t->mlock));
+    }
+    if(NULL != t){
+        SpxFree(t);
+    }
+    return NULL;
 }/*}}}*/
 
 struct spx_timer *spx_timer_async_run_once(SpxLogDelegate *log,
@@ -246,14 +266,32 @@ struct spx_timer *spx_timer_async_run_once(SpxLogDelegate *log,
     t->log = log;
     t->arg = arg;
     t->timeout_handler = timeout_handler;
+    t->mlock = spx_thread_mutex_new(log,err);
+    if(NULL == t->mlock){
+        goto r1;
+    }
+    t->clock = spx_thread_cond_new(log,err);
+    if(NULL == t->clock){
+        goto r1;
+    }
 
     t->tid = spx_thread_new_cancelability(log,
-            stacksize,timeout_handler,(void *) t,err);
+            stacksize,spx_timer_run_async,(void *) t,err);
     if(0 == t->tid){
-        SpxFree(t);
-        return NULL;
+        goto r1;
     }
     return t;
+r1:
+    if(NULL != t->clock){
+        spx_thread_cond_free(&(t->clock));
+    }
+    if(NULL != t->mlock){
+        spx_thread_mutex_free(&(t->mlock));
+    }
+    if(NULL != t){
+        SpxFree(t);
+    }
+    return NULL;
 }/*}}}*/
 
 struct spx_timer *spx_timer_async_exec_and_run(SpxLogDelegate *log,
@@ -278,14 +316,32 @@ struct spx_timer *spx_timer_async_exec_and_run(SpxLogDelegate *log,
     t->log = log;
     t->arg = arg;
     t->timeout_handler = timeout_handler;
+    t->mlock = spx_thread_mutex_new(log,err);
+    if(NULL == t->mlock){
+        goto r1;
+    }
+    t->clock = spx_thread_cond_new(log,err);
+    if(NULL == t->clock){
+        goto r1;
+    }
 
     t->tid = spx_thread_new_cancelability(log,
-            stacksize,spx_timer_exec_and_run_async,(void *) t,err);
+            stacksize,spx_timer_run_async,(void *) t,err);
     if(0 == t->tid){
-        SpxFree(t);
-        return NULL;
+        goto r1;
     }
     return t;
+r1:
+    if(NULL != t->clock){
+        spx_thread_cond_free(&(t->clock));
+    }
+    if(NULL != t->mlock){
+        spx_thread_mutex_free(&(t->mlock));
+    }
+    if(NULL != t){
+        SpxFree(t);
+    }
+    return NULL;
 }/*}}}*/
 
 struct spx_timer *spx_timer_exec_and_async_run(SpxLogDelegate *log,
@@ -331,12 +387,10 @@ void spx_timer_stop(struct spx_timer **timer){/*{{{*/
     }
     pthread_join(t->tid,NULL);
     if(NULL != t->mlock){
-        pthread_mutex_destroy(t->mlock);
-        SpxFree(t->mlock);
+        spx_thread_mutex_free(&(t->mlock));
     }
     if(NULL != t->clock){
-        pthread_cond_destroy(t->clock);
-        SpxFree(t->clock);
+        spx_thread_cond_free(&(t->clock));
     }
     SpxFree(*timer);
 }/*}}}*/

@@ -53,7 +53,9 @@ void spx_notifier_module_receive_handler(struct ev_loop *loop,ev_io *w,int reven
             jc->client_ip,jc->fd,idx);
     struct spx_thread_context *tc = spx_get_thread(g_spx_network_module,idx);
     jc->tc = tc;
-    err = spx_module_dispatch(tc,spx_network_module_wakeup_handler,jc);
+//    err = spx_module_dispatch(tc,spx_network_module_wakeup_handler,jc);
+//    spx_network_module_wakeup_handler(EV_WRITE,jc);
+    SpxModuleDispatch(spx_network_module_wakeup_handler,jc);
     return ;
 
 }

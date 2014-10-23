@@ -118,6 +118,7 @@ extern "C" {
     void *spx_job_context_new(size_t idx,void *arg,err_t *err);
     err_t spx_job_context_free(void **arg);
     void spx_job_context_clear(struct spx_job_context *jcontext);
+    void spx_job_context_reset(struct spx_job_context *jcontext);
 
     struct spx_job_pool *spx_job_pool_new(SpxLogDelegate *log,\
             void *config,\

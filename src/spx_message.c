@@ -306,6 +306,7 @@ struct spx_msg_header *spx_msg_to_header(struct spx_msg *ctx,err_t *err){/*{{{*/
     header->protocol = spx_msg_unpack_u32(ctx);
     header->bodylen = spx_msg_unpack_u64(ctx);
     header->offset = spx_msg_unpack_u64(ctx);
+    header->is_keepalive = spx_msg_unpack_bool(ctx);
     header->err = spx_msg_unpack_u32(ctx);
     return header;
 }/*}}}*/
@@ -323,6 +324,11 @@ struct spx_msg *spx_header_to_msg(struct spx_msg_header *header,size_t len,err_t
     spx_msg_pack_u32(ctx,header->protocol);
     spx_msg_pack_u64(ctx,header->bodylen);
     spx_msg_pack_u64(ctx,header->offset);
+    if(header->is_keepalive){
+        spx_msg_pack_true(ctx);
+    } else {
+        spx_msg_pack_false(ctx);
+    }
     spx_msg_pack_u32(ctx,header->err);
     return ctx;
 }/*}}}*/

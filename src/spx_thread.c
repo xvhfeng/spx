@@ -68,11 +68,33 @@ void spx_thread_mutex_free(pthread_mutex_t **mlock){
     }
 }
 
+
+pthread_cond_t *spx_thread_cond_new(SpxLogDelegate *log,
+        err_t *err){
+    pthread_cond_t *m = spx_alloc_alone(sizeof(*m),err);
+    if(NULL == m){
+        SpxLog2(log,SpxLogError,*err,
+                "alloc cond locker is fail.");
+    }
+    pthread_cond_init(m,NULL);
+    return m;
+
+}
+
+void spx_thread_cond_free(pthread_cond_t **clock){
+    if(NULL != *clock){
+        pthread_cond_destroy(*clock);
+        SpxFree(*clock);
+    }
+}
+
+
+
 pthread_t spx_thread_new(SpxLogDelegate *log,
         size_t stacksize,
-    void *(*start_routine)(void*),
-    void *arg,
-    err_t *err){
+        void *(*start_routine)(void*),
+        void *arg,
+        err_t *err){
     pthread_t tid = 0;
     pthread_attr_t attr;
     pthread_attr_init(&attr);

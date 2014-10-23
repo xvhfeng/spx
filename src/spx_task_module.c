@@ -52,16 +52,6 @@ void spx_task_module_receive_handler(struct ev_loop *loop,ev_io *w,int revents){
     /*  here no deal the error from dio_process_handler
      *  as we donot know deal flow whether use noblacking or blacking
      *  so, we must deal the error in the handler by yourself
-    if(0 != err){
-        struct spx_job_context *jcontext = tcontext->jcontext;
-        SpxLog2(tc->log,SpxLogError,err,\
-                "deal dio process handler is fail.");
-        jcontext->err = err;
-        spx_task_pool_push(g_spx_task_pool,tcontext);
-        jcontext->moore = SpxNioMooreResponse;
-        size_t idx = jcontext->idx % g_spx_network_module->threadpool->curr_size;
-        err = spx_module_dispatch(g_spx_network_module,idx,jcontext);
-    }
     */
 
     return ;
@@ -70,25 +60,6 @@ void spx_task_module_receive_handler(struct ev_loop *loop,ev_io *w,int revents){
 
 //void spx_task_module_wakeup_handler(struct ev_loop *loop,ev_io *w,int revents){
 void spx_task_module_wakeup_handler(int revents,void *arg){
-    //    ev_io_stop(loop,w);
-    //    err_t err = 0;
-    //    struct spx_task_context *tcontext = (struct spx_task_context *)w->data;
-    //    size_t len = 0;
-    //    struct spx_trigger_context *tc = (struct spx_trigger_context *) w;//magic,yeah
-    //    struct spx_job_context *jcontext = tcontext->jcontext;
-    //    err = spx_write_nb(w->fd,(byte_t *) &tcontext,sizeof(tcontext),&len);
-    //    if (0 != err || sizeof(tcontext) != len) {
-    //        SpxLog1(tc->log,SpxLogError,
-    //                "send tcontext to dio thread is fail."
-    //                "then dispatch notice to nio thread deal.");
-    //        spx_task_pool_push(g_spx_task_pool,tcontext);
-    //        jcontext->err = err;
-    //        jcontext->moore = SpxNioMooreResponse;
-    //        size_t idx = spx_network_module_wakeup_idx(jcontext);
-    //        err = spx_module_dispatch(g_spx_network_module,idx,jcontext);
-    //    }
-    //    spx_module_dispatch_trigger_push(g_spx_task_module,tc);
-
     err_t err = 0;
     struct spx_task_context *tcontext = (struct spx_task_context *) arg;
     struct spx_job_context *jc = tcontext->jcontext;
@@ -112,7 +83,8 @@ void spx_task_module_wakeup_handler(int revents,void *arg){
             size_t idx = spx_network_module_wakeup_idx(jc);
             struct spx_thread_context *tc = spx_get_thread(g_spx_network_module,idx);
             jc->tc = tc;
-            err = spx_module_dispatch(tc,spx_network_module_wakeup_handler,jc);
+//            err = spx_module_dispatch(tc,spx_network_module_wakeup_handler,jc);
+            SpxModuleDispatch(spx_network_module_wakeup_handler,jc);
         }
     }
 }

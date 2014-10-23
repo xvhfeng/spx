@@ -95,6 +95,14 @@ void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents){/*{{{*/
         return;
     }
 
+    if(EV_ERROR == revents){
+        jcontext->err = 0 == errno ? EIO : errno;
+        SpxLogFmt2(jcontext->log,SpxLogError,jcontext->err,
+                "nio-read is fail,fd:%d,ip:%s.",
+                jcontext->fd, jcontext->client_ip)
+        goto r1;
+    }
+
     if(SpxNioLifeCycleHeader == jcontext->lifecycle){
         struct spx_msg *ctx = spx_msg_new(SpxMsgHeaderSize,&err);
         if(NULL == ctx){
@@ -160,7 +168,7 @@ void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents){/*{{{*/
     }
     return;
 r1:
-        spx_job_pool_push(g_spx_job_pool,jcontext);
+    spx_job_pool_push(g_spx_job_pool,jcontext);
 }/*}}}*/
 
 void spx_nio_writer(struct ev_loop *loop,ev_io *watcher,int revents){/*{{{*/
@@ -174,6 +182,15 @@ void spx_nio_writer(struct ev_loop *loop,ev_io *watcher,int revents){/*{{{*/
     if(NULL == jcontext){
         return;
     }
+
+    if(EV_ERROR == revents){
+        jcontext->err = 0 == errno ? EIO : errno;
+        SpxLogFmt2(jcontext->log,SpxLogError,jcontext->err,
+                "nio-read is fail,fd:%d,ip:%s.",
+                jcontext->fd, jcontext->client_ip)
+        goto r1;
+    }
+
     if(SpxNioLifeCycleHeader == jcontext->lifecycle){
         struct spx_msg *ctx = spx_header_to_msg(jcontext->writer_header,SpxMsgHeaderSize,&err);
         if(NULL == ctx){
@@ -333,6 +350,7 @@ void spx_nio_writer_faster(struct ev_loop *loop,int fd,struct spx_job_context *j
     if(NULL == jc){
         return;
     }
+
     if(SpxNioLifeCycleHeader == jc->lifecycle){
         struct spx_msg *ctx = spx_header_to_msg(jc->writer_header,SpxMsgHeaderSize,&err);
         if(NULL == ctx){

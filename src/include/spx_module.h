@@ -74,7 +74,9 @@ struct spx_module_context *spx_module_new(\
 
 err_t spx_module_free(struct spx_module_context **mc);
 
-err_t spx_module_dispatch(struct spx_thread_context *tc,SpxDispatchTriggerDelegate *dispatcher, void *msg);
+//void spx_module_dispatch(SpxDispatchTriggerDelegate *dispatcher,void *msg);
+
+#define SpxModuleDispatch(dispatcher,msg) dispatcher(EV_WRITE,msg)
 
 spx_private struct spx_thread_context *spx_get_thread(struct spx_module_context *mc,size_t idx){
     struct spx_thread_context *stc = spx_list_get(mc->threadpool,idx);
