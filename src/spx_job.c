@@ -24,6 +24,7 @@
 #include "spx_string.h"
 #include "spx_message.h"
 #include "spx_job.h"
+#include "spx_time.h"
 
 
 struct spx_job_pool *g_spx_job_pool = NULL;
@@ -98,6 +99,7 @@ void spx_job_context_clear(struct spx_job_context *jcontext){/*{{{*/
     SpxClose(jcontext->fd);
     jcontext->err = 0;
     jcontext->moore = SpxNioMooreNormal;
+    jcontext->request_timespan = 0;
 }/*}}}*/
 
 
@@ -132,6 +134,7 @@ void spx_job_context_reset(struct spx_job_context *jcontext){
     }
     jcontext->err = 0;
     jcontext->moore = SpxNioMooreNormal;
+    jcontext->request_timespan = spx_now();
 }
 
 
@@ -183,6 +186,11 @@ struct spx_job_pool *spx_job_pool_new(SpxLogDelegate *log,\
 
 struct spx_job_context *spx_job_pool_pop(struct spx_job_pool *pool,err_t *err){
     struct spx_job_context *jcontext = spx_fixed_vector_pop(pool->pool,err);
+    if(NULL == jcontext){
+        *err = 0 == *err ? ENOENT : *err;
+        return NULL;
+    }
+    jcontext->request_timespan = spx_now();
     return jcontext;
 }
 

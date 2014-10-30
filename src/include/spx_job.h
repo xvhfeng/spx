@@ -92,6 +92,7 @@ extern "C" {
         SpxNioBodyProcessDelegate *writer_body_process;
 
         string_t client_ip;
+        time_t request_timespan;
 
         void *config;
 

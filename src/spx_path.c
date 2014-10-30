@@ -125,24 +125,24 @@ string_t spx_basepath(const string_t path,err_t *err){/*{{{*/
     return newbp;
 }/*}}}*/
 
-u64_t spx_mountpoint_freesize(string_t path,err_t *err){
+u64_t spx_mountpoint_availsize(string_t path,err_t *err){
     struct statfs buf;
     SpxZero(buf);
     if(0 > statfs(path,&buf)) {
         *err = errno;
         return 0;
     }
+    //not use buf.f_free,because 5%(ofter) for root
     return (u64_t) buf.f_bavail * buf.f_bsize;
 }
 
-u64_t spx_mountpoint_size(string_t path,err_t *err){
+u64_t spx_mountpoint_totalsize(string_t path,err_t *err){
     struct statfs buf;
     SpxZero(buf);
     if(0 > statfs(path,&buf)) {
         *err = errno;
         return 0;
     }
-//    return (u64_t) fs.f_blocks * fs.f_frsize;
     return (u64_t) buf.f_blocks * buf.f_bsize;
 }
 
