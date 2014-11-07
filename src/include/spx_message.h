@@ -95,6 +95,15 @@ extern "C" {
     spx_private spx_inline size_t spx_msg_len(struct spx_msg *ctx){
         return ctx->busylen;
     }
+
+#define SpxMsgFree(ctx) \
+    do{ \
+        if(NULL != (ctx)){ \
+            spx_msg_free(&(ctx)); \
+            ctx = NULL; \
+        } \
+    }while(false)
+
 #ifdef __cplusplus
 }
 #endif

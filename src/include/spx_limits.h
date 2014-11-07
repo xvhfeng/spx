@@ -50,36 +50,30 @@ extern "C" {
 #include <stdlib.h>
 #include <stdio.h>
 
-#define i8_MAX 127
-#define i8_MIN (-128)
-#define u8_MAX 255
-#define i8_MAX_LENGTH sizeof("-127")
+#define SpxI8Max 127
+#define SpxI8Min (-128)
+#define SpxU8Mac 255
+#define SpxI8MaxLength sizeof("-127")
+#define SpxU8MaxLength SpxI8MaxLength
 
-#define i16_MAX 32767
-#define i16_MIN (-32768)
-#define u16_MAX 65535
-#define i16_MAX_LENGTH sizeof("-32768")
+#define SpxI16Max 32767
+#define SpxI16Min (-32768)
+#define SpxU16Max 65535
+#define SpxI16MaxLength sizeof("-32768")
+#define SpxU16MaxLength SpxI16MaxLength
 
 
-#define i32_MIN (-2147483647 - 1)
-#define i32_MAX 2147483647
-#define u32_MAX 4294967295
-#define i32_MAX_LENGTH sizeof("-4294967295")
+#define SpxI32Max 2147483647
+#define SpxI32Min (-2147483648)
+#define SpxU32Max 4294967295
+#define SpxI32MaxLength sizeof("-4294967295")
+#define SpxU32MaxLength SpxI32MaxLength
 
-#define i64_MAX 9223372036854775807
-#define i64_MIN -9223372036854775808
-#define u64_MAX 18446744073709551615L
-#define u64_MAX_LENGTH sizeof("-9223372036854775808")
-
-#define CHAR_BIT 8
-#define CHAR_MIN i8_MIN
-#define CHAR_MAX i8_MAX
-#define UCHAR_MAX u8_MAX
-
-#define BYTE_MIN i8_MIN
-#define BYTE_MAX i8_MAX
-#define UBYTE_MAX u8_MAX
-
+#define SpxI64Max 9223372036854775807
+#define SpxI64Min -9223372036854775808
+#define SpxU64Max 18446744073709551615L
+#define SpxI64MaxLength sizeof("-9223372036854775808")
+#define SpxU64MaxLength SpxI64MaxLength
 
 #ifdef __cplusplus
 }

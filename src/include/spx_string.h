@@ -87,6 +87,12 @@ void spx_string_trim(string_t s, const char *cset);
 void spx_string_ltrim(string_t s, const char *cset);
 void spx_string_rtrim(string_t s, const char *cset);
 
+/*
+ *  strip the line feed.
+ *  line feed is SpxLineEndDltmString
+ */
+void spx_string_strip_linefeed(string_t s);
+
 /* Turn the string into a smaller (or equal) string containing only the
  * substring specified by the 'start' and 'end' indexes.
  *

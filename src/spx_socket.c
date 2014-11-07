@@ -192,39 +192,6 @@ err_t spx_socket_start(const int fd,\
     return 0;
 }
 
-/*
-void spx_socket_accept_nb(int fd){
-    err_t err = 0;
-    while(true){
-        struct sockaddr_in client_addr;
-        unsigned int socket_len = 0;
-        int client_sock = 0;
-        socket_len = sizeof(struct sockaddr_in);
-        client_sock = accept(fd, (struct sockaddr *) &client_addr,
-                &socket_len);
-        if (0 > client_sock) {
-            if (EWOULDBLOCK == errno || EAGAIN == errno) {
-                continue;
-            }
-            continue;
-        }
-
-        if (0 == client_sock) {
-            continue;
-        }
-
-        size_t idx = client_sock % g_spx_notifier_module->threadpool->size;
-        if(0 != (err = spx_module_dispatch(g_spx_notifier_module,idx,&client_sock))){
-            SpxClose(client_sock);
-            SpxLogFmt2(g_spx_notifier_module->log,SpxLogError,err,\
-                    "dispatch notifier module with thread idx:%d is fail.",\
-                    idx);
-        }
-    }
-}
-
-*/
-
 string_t spx_ip_get(int sock,err_t *err) {
 
 	string_t ip = spx_string_emptylen(SpxIpv4Size,err);
@@ -389,7 +356,7 @@ bool_t spx_socket_is_ip(string_t ip){
     return 1 == rc ? true : false;
 }
 
-bool_t spx_socket_ready_read(int fd,u32_t timeout){
+bool_t spx_socket_read_timeout(int fd,u32_t timeout){
     struct timeval tv;
     SpxZero(tv);
     tv.tv_sec = timeout;
@@ -402,5 +369,9 @@ bool_t spx_socket_ready_read(int fd,u32_t timeout){
         return true;
     }
     return false;
+}
+
+bool_t spx_socket_ready_read(int fd,u32_t timeout){
+    return spx_socket_read_timeout(fd,timeout);
 }
 

@@ -43,6 +43,7 @@ extern "C" {
     err_t spx_list_insert(struct spx_list *list,int idx,void *v);
     err_t spx_list_add(struct spx_list *list,void *v);
     err_t spx_list_free(struct spx_list **list);
+    err_t spx_list_set(struct spx_list *list,int idx,void *v);
 
 #ifdef __cplusplus
 }

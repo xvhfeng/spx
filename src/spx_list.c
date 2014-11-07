@@ -159,6 +159,26 @@ err_t spx_list_insert(struct spx_list *list,int idx,void *v){
     return 0;
 }
 
+err_t spx_list_set(struct spx_list *list,int idx,void *v){
+    size_t i = idx < 0 ? list->size + idx : (size_t) idx;
+    err_t err = 0;
+    if(i >= list->size){
+        size_t size = i > 2 * list->size ? i : 2 * list->size;
+        struct spx_list_node *new_nodes = spx_realloc(list->nodes,size,&err);
+        if(NULL == new_nodes){
+            return err;
+        }
+        list->nodes = new_nodes;
+        list->size = size;
+        list->free_size = size - list->busy_size;
+    }
+    struct spx_list_node *node =  list->nodes + i;
+    if(NULL != node->v){
+        list->node_free(&(node->v));
+    }
+    node->v = v;
+    return 0;
+}
 err_t spx_list_add(struct spx_list *list,void *v){
     err_t err = 0;
     if(list->busy_size == list->size){

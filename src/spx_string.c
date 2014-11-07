@@ -226,6 +226,10 @@ void spx_string_ltrim(string_t s, const char *cset){/*{{{*/
     sh->len = len;
 }/*}}}*/
 
+void spx_string_strip_linefeed(string_t s){
+    spx_string_rtrim(s," ");
+    spx_string_rtrim(s, SpxLineEndDlmtString);
+}
 
 void spx_string_range(string_t s, int start, int end){/*{{{*/
     struct sds *sh = (void*) (s-sizeof *sh);;
