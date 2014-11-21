@@ -24,6 +24,10 @@ extern "C" {
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "spx_types.h"
 #include "spx_message.h"
@@ -38,6 +42,7 @@ extern "C" {
 #define SpxFileWritable(filename) (0 == access(filename,W_OK))
 #define SpxFileExecutable(filename) (0 == access(filename,X_OK))
 
+#define SpxMmap(fd,begin,len)  mmap(NULL,len,PROT_READ | PROT_WRITE ,MAP_SHARED,fd,begin)
 
 err_t spx_read(int fd,byte_t *buf,const size_t size,size_t *len);
 err_t spx_write(int fd,byte_t *buf,const size_t size,size_t *len);

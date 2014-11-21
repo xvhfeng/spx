@@ -182,3 +182,12 @@ void *spx_vector_iter_next(struct spx_vector_iter *iter) {/*{{{*/
     v = iter->curr->v;
     return v;
 }/*}}}*/
+
+void spx_vector_iter_reset(struct spx_vector_iter *iter){/*{{{*/
+    if(NULL == iter){
+        return;
+    }
+    iter->curr = NULL;
+    return;
+}/*}}}*/
+

@@ -45,7 +45,7 @@ extern "C" {
     };
 
 
-    void spx_sleep(int sec,int usec);
+    void spx_periodic_sleep(int sec,int usec);
 
     void spx_periodic_run(SpxLogDelegate *log,
             u32_t secs,u64_t usecs,
@@ -99,7 +99,10 @@ extern "C" {
      */
 bool_t spx_periodic_async_suspend(struct spx_periodic *t);
 bool_t spx_periodic_async_resume(struct spx_periodic *t);
-void spx_periodic_stop(struct spx_periodic **periodic);
+
+void spx_periodic_stop(
+        struct spx_periodic **periodic,
+        bool_t isblocking);
 
 #ifdef __cplusplus
 }

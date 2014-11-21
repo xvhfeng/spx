@@ -43,6 +43,7 @@ extern "C" {
             err_t *err);
     err_t spx_vector_iter_free(struct spx_vector_iter **iter);
     void *spx_vector_iter_next(struct spx_vector_iter *iter) ;
+    void spx_vector_iter_reset(struct spx_vector_iter *iter);
 
 
 #ifdef __cplusplus

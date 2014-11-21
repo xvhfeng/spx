@@ -48,7 +48,24 @@ extern "C" {
     bool_t spx_date_is_before(struct spx_date *d);
     bool_t spx_date_is_after(struct spx_date *d);
     bool_t spx_date_is_today(struct spx_date *d);
+    /* *
+     * cmp d1 and d2
+     * if d1 < d2   return -1
+     * if d1 == d2 return 0
+     * if d1 > d2 return 1
+     * notes:base of cmper is 00:00:00
+     * */
+    int spx_date_cmp(struct spx_date *d1,struct spx_date *d2);
 
+    /* *
+     * cmp dt1 and dt2
+     * if d1 < d2   return -1
+     * if d1 == d2 return 0
+     * if d1 > d2 return 1
+     * */
+    int spx_datetime_cmp(struct spx_datetime *dt1,struct spx_datetime *dt2);
+
+    struct spx_date *spx_date_convert(struct spx_date *d,string_t s,char *fmt);
 #if __cplusplus
 }
 #endif

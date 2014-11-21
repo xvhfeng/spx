@@ -177,3 +177,30 @@ bool_t spx_date_is_today(struct spx_date *d){
     time_t dzero = spx_mkzero(d);
     return zero = dzero;
 }
+
+int spx_date_cmp(struct spx_date *d1,struct spx_date *d2){
+    time_t dz1 = spx_mkzero(d1);
+    time_t dz2 = spx_mkzero(d2);
+    if(dz1 < dz2) return -1;
+    if(dz1 == dz2) return 0;
+    else return 1;
+}
+
+int spx_datetime_cmp(struct spx_datetime *dt1,struct spx_datetime *dt2){
+    time_t dz1 = spx_mktime(dt1);
+    time_t dz2 = spx_mktime(dt2);
+    if(dz1 < dz2) return -1;
+    if(dz1 == dz2) return 0;
+    else return 1;
+}
+
+struct spx_date *spx_date_convert(struct spx_date *d,string_t s,char *fmt){
+    struct tm tm;
+    SpxZero(tm);
+    strptime(s,fmt,&tm);
+    p=localtime(tm);
+    d->year = 1900 + p->tm_year;
+    d->month = 1 + p->tm_mon;
+    d->day = p->tm_mday;
+    return d;
+}

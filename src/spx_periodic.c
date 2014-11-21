@@ -116,13 +116,13 @@ spx_private void *spx_periodic_exec_and_run_async(void *arg){/*{{{*/
     return NULL;
 }/*}}}*/
 
-void spx_sleep(int sec,int usec) {/*{{{*/
+    void spx_periodic_sleep(int sec,int usec){
     struct timeval timespan;
     timespan.tv_sec = sec;
     timespan.tv_usec = usec;
     select(0,NULL,NULL,NULL,&timespan);
     return;
-}/*}}}*/
+}
 
 void spx_periodic_run(SpxLogDelegate *log,
         u32_t secs,u64_t usecs,
@@ -378,10 +378,16 @@ bool_t spx_periodic_async_resume(struct spx_periodic *t){/*{{{*/
     return false;
 }/*}}}*/
 
-void spx_periodic_stop(struct spx_periodic **periodic){/*{{{*/
+void spx_periodic_stop(
+        struct spx_periodic **periodic,
+        bool_t isblocking
+        ){/*{{{*/
     struct spx_periodic *t = *periodic;
     SpxAtomicVSet(t->is_run,false);
     pthread_cancel(t->tid);
+    if(isblocking){
+        pthread_join(t->tid,NULL);
+    }
     if(SpxperiodicSetPausing == t->status
             || SpxperiodicPausing == t->status){
         spx_periodic_async_resume(t);
