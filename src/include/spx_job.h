@@ -28,6 +28,8 @@ extern "C" {
 #include "spx_message.h"
 #include "spx_properties.h"
 #include "spx_module.h"
+#include "spx_object.h"
+#include "spx_mpool.h"
 
 #define SpxNioLifeCycleNormal 0
 #define SpxNioLifeCycleHeader 1
@@ -51,6 +53,9 @@ extern "C" {
 
     struct spx_job_context_transport{
         u32_t timeout;
+        size_t pooling_size;
+        size_t mbuff_size;
+        size_t keep_mbuff_count;
         SpxNioDelegate *nio_reader;
         SpxNioDelegate *nio_writer;
         SpxNioHeaderValidatorDelegate *reader_header_validator;
@@ -65,6 +70,7 @@ extern "C" {
 
     struct spx_job_context{
         ev_io watcher;
+        struct spx_mpool *mpool;
         int fd;
         int use;
         size_t idx;
@@ -101,8 +107,6 @@ extern "C" {
          * and the part of recved must in the end of the body
          */
         bool_t is_lazy_recv;
-        //        off_t lazy_recv_offet;
-        //        size_t lazy_recv_size;
 
         bool_t is_sendfile;
         int sendfile_fd;
@@ -124,6 +128,9 @@ extern "C" {
     struct spx_job_pool *spx_job_pool_new(SpxLogDelegate *log,\
             void *config,\
             size_t size,u32_t timeout,\
+            size_t pooling_size,
+            size_t mbuff_size,
+            size_t keep_mbuff_count,
             SpxNioDelegate *nio_reader,\
             SpxNioDelegate *nio_writer,\
             SpxNioHeaderValidatorDelegate *reader_header_validator,\

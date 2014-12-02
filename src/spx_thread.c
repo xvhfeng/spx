@@ -124,7 +124,7 @@ pthread_t spx_thread_new(SpxLogDelegate *log,
 spx_private void *spx_thread_cancelability_start_routine(void *arg){
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE,NULL);
     pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED,NULL);//run to next cannel-pointer
-    TypeConvert2(struct spx_thread_sportran,sts,arg);
+    SpxTypeConvert2(struct spx_thread_sportran,sts,arg);
     void *real_arg = sts->arg;
     void *(*start_routine)(void*) = sts->start_routine;
     SpxFree(sts);

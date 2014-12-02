@@ -33,26 +33,31 @@ struct spx_job_pool *g_spx_job_pool = NULL;
 void *spx_job_context_new(size_t idx,void *arg,err_t *err){
 
     struct spx_job_context_transport *jct = (struct spx_job_context_transport *) arg;
-    struct spx_job_context *jcontext = NULL;
-    jcontext = spx_alloc_alone(sizeof(*jcontext),err);
-    if(NULL == jcontext){
+    struct spx_job_context *jc = NULL;
+    jc = spx_alloc_alone(sizeof(*jc),err);
+    if(NULL == jc){
         return NULL;
     }
 
-    jcontext->log = jct->log;
-    jcontext->idx = idx;
-    jcontext->timeout = jct->timeout;
-    jcontext->nio_reader = jct->nio_reader;
-    jcontext->nio_writer = jct->nio_writer;
-    jcontext->reader_body_process = jct->reader_body_process;
-    jcontext->reader_header_validator = jct->reader_header_validator;
-    jcontext->reader_body_process_before = jct->reader_body_process_before;
-    jcontext->writer_body_process = jct->writer_body_process;
-    jcontext->reader_header_validator_fail = jct->reader_header_validator_fail;
-    jcontext->config = jct->config;
-    jcontext->is_lazy_recv = false;
-    jcontext->is_sendfile = false;
-    return jcontext;
+    jc->mpool = spx_mpool_new(jct->log,jct->pooling_size,
+            jct->mbuff_size,jct->keep_mbuff_count,err);
+    if(NULL == jc->mpool){
+        SpxFree(jc);
+    }
+    jc->log = jct->log;
+    jc->idx = idx;
+    jc->timeout = jct->timeout;
+    jc->nio_reader = jct->nio_reader;
+    jc->nio_writer = jct->nio_writer;
+    jc->reader_body_process = jct->reader_body_process;
+    jc->reader_header_validator = jct->reader_header_validator;
+    jc->reader_body_process_before = jct->reader_body_process_before;
+    jc->writer_body_process = jct->writer_body_process;
+    jc->reader_header_validator_fail = jct->reader_header_validator_fail;
+    jc->config = jct->config;
+    jc->is_lazy_recv = false;
+    jc->is_sendfile = false;
+    return jc;
 
 }
 
@@ -141,6 +146,9 @@ void spx_job_context_reset(struct spx_job_context *jcontext){
 struct spx_job_pool *spx_job_pool_new(SpxLogDelegate *log,\
         void *config,\
         size_t size,u32_t timeout,\
+            size_t pooling_size,
+            size_t mbuff_size,
+            size_t keep_mbuff_count,
         SpxNioDelegate *nio_reader,\
         SpxNioDelegate *nio_writer,\
         SpxNioHeaderValidatorDelegate *reader_header_validator,\
@@ -160,6 +168,9 @@ struct spx_job_pool *spx_job_pool_new(SpxLogDelegate *log,\
 
     struct spx_job_context_transport arg;
     SpxZero(arg);
+    arg.pooling_size = pooling_size;
+    arg.mbuff_size = mbuff_size;
+    arg.keep_mbuff_count = keep_mbuff_count;
     arg.timeout = timeout;
     arg.nio_reader = nio_reader;
     arg.nio_writer = nio_writer;

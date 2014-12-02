@@ -123,6 +123,15 @@ bool_t spx_object_free(void *p){
     return false;
 }
 
+bool_t spx_object_free_force(void *p){
+    struct spx_object *o = (struct spx_object *) SpxMemDecr(p,SpxObjectAlignSize);
+    if(!o->spx_object_is_pooling){
+        SpxFree(o);
+        return true;
+    }
+    return false;
+}
+
 void *spx_object_ref(void *p){
     if(NULL == p){
         return NULL;

@@ -100,6 +100,9 @@ extern "C" {
     bool_t spx_mpool_free(struct spx_mpool *pool,
             void *p);
 
+    bool_t spx_mpool_free_force(struct spx_mpool *pool,
+            void *p);
+
     err_t spx_mpool_clear(struct spx_mpool *pool);
 
     err_t spx_mpool_destory(struct spx_mpool *pool);
@@ -110,6 +113,15 @@ extern "C" {
             p = NULL; \
         } \
     }while(false)
+
+#define SpxMemPoolFreeForce(pool,p) \
+    do { \
+        if(NULL != p) {\
+            spx_mpool_free_force(pool,p);\
+            p = NULL; \
+        } \
+    }while(false)
+
 
 #define SpxMemPoolDestory(p) \
     do { \

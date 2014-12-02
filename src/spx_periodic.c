@@ -52,7 +52,7 @@ spx_private void *spx_periodic_run_async(void *arg);
 spx_private void *spx_periodic_exec_and_run_async(void *arg);
 
 spx_private void *spx_periodic_run_async(void *arg){/*{{{*/
-    TypeConvert2(struct spx_periodic,t,arg);
+    SpxTypeConvert2(struct spx_periodic,t,arg);
     t->status = SpxperiodicRunning;
     struct timeval timespan;
     do{
@@ -84,7 +84,7 @@ spx_private void *spx_periodic_run_async(void *arg){/*{{{*/
 }/*}}}*/
 
 spx_private void *spx_periodic_exec_and_run_async(void *arg){/*{{{*/
-    TypeConvert2(struct spx_periodic,t,arg);
+    SpxTypeConvert2(struct spx_periodic,t,arg);
     t->status = SpxperiodicRunning;
     t->periodic_handler(t->arg);
     struct timeval timespan;

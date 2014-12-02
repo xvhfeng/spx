@@ -11,8 +11,8 @@
 #define mem_align_ptr(p, a)                                                   \
     (ubyte_t *) (((uintptr_t) (p) + ((uintptr_t) a - 1)) & ~((uintptr_t) a - 1))
 
-#define SpxMemPoolingSizeDefault (8 * SpxKB)
-#define SpxMemPoolBufferSizeDefault (1 * SpxMB)
+#define SpxMemPoolingSizeDefault (4 * SpxKB)
+#define SpxMemPoolBufferSizeDefault (512 * SpxKB)
 
 struct spx_mpool *spx_mpool_new(SpxLogDelegate *log,
         size_t pooling_size,
@@ -247,6 +247,43 @@ bool_t spx_mpool_free(struct spx_mpool *pool,
     }
     return false;
 }/*}}}*/
+
+
+bool_t spx_mpool_free_force(struct spx_mpool *pool,
+        void *p){/*{{{*/
+    if(NULL == pool){
+        SpxObjectFreeForce(p);
+        return false;//no any operator
+    }
+
+    struct spx_object *o =(struct spx_object *) SpxMemDecr(p, SpxObjectAlignSize);
+    if(o->spx_object_is_pooling){
+        size_t realsize = o->spx_object_size + SpxObjectAlignSize;//just reuse memory in the end
+        memset(o,0,realsize);
+        if( realsize == SpxPtrDecr(pool->mb_curr->ptr,o)){
+            pool->mb_curr->ptr = (char *) o;
+            pool->mb_curr->freesize += realsize;
+        }
+        return true;
+    } else {
+        struct spx_large *large = (struct spx_large *)
+            SpxMemDecr(p, sizeof(struct spx_large));
+        if(NULL == large->prev){
+            pool->lg_header = large->next;
+        } else {
+            large->prev->next = large->next;
+        }
+        if(NULL == large->next){
+            pool->lg_tail = large->prev;
+        } else {
+            large->next->prev = large->prev;
+        }
+        SpxFree(large);
+        return true;
+    }
+    return false;
+}/*}}}*/
+
 
 err_t spx_mpool_clear(struct spx_mpool *pool){/*{{{*/
     if(NULL == pool){

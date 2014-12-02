@@ -65,7 +65,19 @@ extern "C" {
      * */
     int spx_datetime_cmp(struct spx_datetime *dt1,struct spx_datetime *dt2);
 
-    struct spx_date *spx_date_convert(struct spx_date *d,string_t s,char *fmt);
+    struct spx_date *spx_date_convert(SpxLogDelegate *log,
+            struct spx_date *d,
+            string_t s,char *fmt,err_t *err);
+
+    struct spx_time *spx_time_convert(SpxLogDelegate *log,
+            struct spx_time *t,
+            string_t s,char *fmt,err_t *err);
+
+    struct spx_datetime *spx_datetime_convert(SpxLogDelegate *log,
+            struct spx_datetime *dt,
+        string_t s,char *fmt,err_t *err);
+
+
 #if __cplusplus
 }
 #endif

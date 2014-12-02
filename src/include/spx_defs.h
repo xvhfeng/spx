@@ -142,12 +142,6 @@ spx_private char *SpxLogDesc[] = {
 #define SpxTypeConvert2(t,newp,old) t *newp = (t *) (old)
 
 
-#if ((__GNU__ == 2) && (__GNUC_MINOR__ < 8))
-#define SpxU32Max  (u32_t) 0xffffffffLL
-#else
-#define SpxI32Max  (u32_t) 0xffffffff
-#endif
-
 #define SpxClose(fd)  \
     do { \
         if(0 != fd) { \

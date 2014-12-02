@@ -59,6 +59,7 @@ extern "C" {
     void *spx_object_new_algin(const size_t s,err_t *err) ;
     void *spx_object_renew(void *p,const size_t s,err_t *err);
     bool_t spx_object_free(void *p);
+    bool_t spx_object_free_force(void *p);
     void *spx_object_ref(void *p);
     void *spx_object_unref(void *p);
 
@@ -80,6 +81,13 @@ extern "C" {
         } \
     }while(false)
 
+#define SpxObjectFreeForce(p) \
+    do { \
+        if(NULL != p) {\
+            spx_object_free_force(p);\
+            p = NULL; \
+        } \
+    }while(false)
 #ifdef __cplusplus
 }
 #endif

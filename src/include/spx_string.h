@@ -17,6 +17,7 @@ extern "C" {
 
 #include "spx_types.h"
 #include "spx_vector.h"
+#include "spx_mpool.h"
 
 struct sds{
     int len;
@@ -44,6 +45,7 @@ string_t spx_string_emptylen(size_t initlen,err_t *err);
 string_t spx_string_dup(const string_t s,err_t *err);
 
 void spx_string_free(string_t s);
+void spx_string_free_pooing(struct spx_mpool *pool,string_t s);
 
 /* Grow the sds to have the specified length. Bytes that were not part of
  * the original length of the sds will be set to zero.
@@ -288,6 +290,8 @@ size_t spxStringAllocSize(string_t s);
 #define SpxMemcpy(d,s,l) (((uchar_t *) memcpy(d,s,l)) + l)
 
 #define SpxStringFree(s) spx_string_free(s);s = NULL
+#define SpxStringFreePooling(p,s) spx_string_free_pooling(p,s)
+#define SpxStringFreePoolingForce(p,s) spx_string_free_pooling_force(p,s)
 
 #ifdef __cplusplus
 }
