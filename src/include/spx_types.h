@@ -139,19 +139,8 @@ extern "C" {
         "true"
     };
 
-#define SpxObjectTypeNormal 0
-#define SpxObjectTypeString 1
 
-#define SpxObjectStruct \
-    bool_t spx_object_is_pooling;\
-    u32_t spx_object_refs;\
-    size_t spx_object_size;\
-    int spx_object_type
 
-    struct spx_object{
-        SpxObjectStruct;
-        char obj[0];
-    };
 
 #ifndef spx_res_t
     typedef struct spx_res{

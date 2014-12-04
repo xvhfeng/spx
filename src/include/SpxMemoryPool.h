@@ -33,19 +33,18 @@
  * this software or lib may be copied only under the terms of the gnu general
  * public license v3, which may be found in the source kit.
  *
- *       Filename:  spx_mpool.h
- *        Created:  2014/10/11 08时52分00秒
+ *       Filename:  SpxMemoryPool.h
+ *        Created:  2014/12/03 10时04分57秒
  *         Author:  Seapeak.Xu (seapeak.cnblog.com), xvhfeng@gmail.com
  *        Company:  Tencent Literature
  *         Remark:
  *
  ****************************************************************************/
-#ifndef _SPX_MPOOL_H_
-#define _SPX_MPOOL_H_
+#ifndef _SPXMEMORYPOOL_H_
+#define _SPXMEMORYPOOL_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -53,108 +52,108 @@ extern "C" {
 #include "spx_defs.h"
 #include "spx_types.h"
 #include "spx_atomic.h"
+#include "SpxObject.h"
 
-    struct spx_mbuff{
-        struct spx_mbuff *next;
-        size_t freesize;
-        char *ptr;
-        char buff[0];
+    struct SpxMemoryBuffer{
+        char *p;
+        struct SpxMemoryBuffer *next;
+        size_t freeSize;
+        char buf[0];
     };
 
-    struct spx_large{//large is extends spx_object;
-        struct spx_large *prev;
-        struct spx_large *next;
-        SpxObjectStruct;//must input there top buff
-        char buff[0];
+    struct SpxLargeObject{//large is extends spx_object;
+        struct SpxLargeObject *prev;
+        struct SpxLargeObject *next;
+        SpxObjectBase ;//must input there top buff
+        char buf[0];
     };
 
-    struct spx_mpool{
+    struct SpxMemoryPool{
         SpxLogDelegate *log;
-        size_t pooling_size;
-        size_t mbuff_size;
-        size_t keep_mbuff_size;
-        struct spx_mbuff *mb_header;
-        struct spx_mbuff *mb_curr;
-        struct spx_large *lg_header;
-        struct spx_large *lg_tail;
+        size_t poolingMax;
+        size_t bufferSize;
+        size_t keepBufferSize;
+        struct SpxMemoryBuffer *bufferHeader;
+        struct SpxMemoryBuffer *bufferCurrent;
+        struct SpxLargeObject *largeObjectHeader;
+        struct SpxLargeObject *largeObjectTail;
     };
 
-    struct spx_mpool *spx_mpool_new(
+    struct SpxMemoryPool *spxMemoryPoolNew(
             SpxLogDelegate *log,
-            const size_t pooling_size,
-            const size_t mbuff_size,
-            const size_t keep_mbuff_size,
+            const size_t poolingMax,
+            const size_t bufferSize,
+            const size_t keepBufferSize,
             err_t *err
             );
 
-    void *spx_mpool_malloc(
-            struct spx_mpool *pool,
-            const size_t size,
-            err_t *err
-            );
-
-    void *spx_mpool_realloc(
-            struct spx_mpool *pool,
-            void *p,
-            const size_t s,
-            err_t *err
-            );
-
-    void *spx_mpool_alloc(
-            struct spx_mpool *pool,
+    void *spxMemoryPoolAllocNumbs(
+            struct SpxMemoryPool *pool,
             const size_t numbs,
             const size_t size,
             err_t *err
             );
 
-    void *spx_mpool_alloc_alone(
-            struct spx_mpool *pool,
+    void *spxMemoryPoolAlloc(
+            struct SpxMemoryPool *pool,
             const  size_t size,
             err_t *err
             );
 
-    bool_t spx_mpool_free(
-            struct spx_mpool *pool,
+    void *spxMemoryPoolReAlloc(
+        struct SpxMemoryPool *pool,
+        void *p,
+        const size_t s,
+        err_t *err
+        );
+
+    bool_t spxMemoryPoolFree(
+            struct SpxMemoryPool *pool,
             void *p
             );
 
-    bool_t spx_mpool_free_force(
-            struct spx_mpool *pool,
+    bool_t spxMemoryPoolFreeForce(
+            struct SpxMemoryPool *pool,
             void *p
             );
 
-    err_t spx_mpool_clear(
-            struct spx_mpool *pool
+    err_t spxMemoryPoolClear(
+            struct SpxMemoryPool *pool
             );
 
-    err_t spx_mpool_destory(
-            struct spx_mpool *pool
+    err_t spxMemoryPoolDestory(
+            struct SpxMemoryPool *pool
             );
 
-#define SpxMemPoolFree(pool,p) \
+#define SpxMemoryPoolFree(pool,p) \
     do { \
-        if(NULL != p && (spx_mpool_free(pool,p))){ \
+        if(NULL != p && (spxMemoryPoolFree(pool,p))){ \
             p = NULL; \
         } \
     }while(false)
 
-#define SpxMemPoolFreeForce(pool,p) \
-    do { \
-        if(NULL != p) {\
-            spx_mpool_free_force(pool,p);\
-            p = NULL; \
-        } \
-    }while(false)
-
-
-#define SpxMemPoolDestory(p) \
+#define SpxMemoryPoolFreeForce(pool,p) \
     do { \
         if(NULL != p) {\
-            spx_mpool_destory(p); \
+            spxMemoryPoolFreeForce(pool,p);\
             p = NULL; \
         } \
     }while(false)
 
+
+#define SpxMemoryPoolDestory(p) \
+    do { \
+        if(NULL != p) {\
+            spxMemoryPoolDestory(p); \
+            p = NULL; \
+        } \
+    }while(false)
+
+
+#ifdef __cplusplus
+}
+#endif
+#endif
 
 #ifdef __cplusplus
 }

@@ -161,7 +161,6 @@ spx_private char *SpxLogDesc[] = {
 #define SpxAlignSize 8
 #endif
 
-#define SpxObjectAlignSize SpxAlign(sizeof(struct spx_object),SpxAlignSize)
 #define SpxMemIncr(p,s) (((char *) p) + (s))
 #define SpxMemDecr(p,s) (((char *) p) - (s))
 #define SpxPtrDecr(p1,p2) ((size_t ) (((char *) p1) - ((char *) p2)))

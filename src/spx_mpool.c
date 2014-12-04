@@ -14,10 +14,11 @@
 #define SpxMemPoolingSizeDefault (4 * SpxKB)
 #define SpxMemPoolBufferSizeDefault (512 * SpxKB)
 
-struct spx_mpool *spx_mpool_new(SpxLogDelegate *log,
-        size_t pooling_size,
-        size_t mbuff_size,
-        size_t keep_mbuff_size,
+struct spx_mpool *spx_mpool_new(
+        SpxLogDelegate *log,
+        const size_t pooling_size,
+        const size_t mbuff_size,
+        const size_t keep_mbuff_size,
         err_t *err){/*{{{*/
     size_t real_pooing_size =
         0 == pooling_size ? SpxMemPoolingSizeDefault : pooling_size;
@@ -58,8 +59,11 @@ struct spx_mpool *spx_mpool_new(SpxLogDelegate *log,
     return pool;
 }/*}}}*/
 
-void *spx_mpool_malloc(struct spx_mpool *pool,
-        size_t size,err_t *err){/*{{{*/
+void *spx_mpool_malloc(
+       struct spx_mpool *pool,
+       const size_t size,
+       err_t *err
+       ){/*{{{*/
     if(0 == size){
         *err = EINVAL;
         return NULL;
@@ -114,18 +118,29 @@ void *spx_mpool_malloc(struct spx_mpool *pool,
     return NULL;
 }/*}}}*/
 
-void *spx_mpool_alloc(struct spx_mpool *pool,
-        size_t numbs,size_t size,err_t *err){/*{{{*/
+void *spx_mpool_alloc(
+        struct spx_mpool *pool,
+       const size_t numbs,
+       const size_t size,
+       err_t *err
+       ){/*{{{*/
     return spx_mpool_malloc(pool,numbs * size,err);
 }/*}}}*/
 
-void *spx_mpool_alloc_alone(struct spx_mpool *pool,
-        size_t size,err_t *err){/*{{{*/
+void *spx_mpool_alloc_alone(
+         struct spx_mpool *pool,
+        const size_t size,
+        err_t *err
+        ){/*{{{*/
     return spx_mpool_malloc(pool,size,err);
 }/*}}}*/
 
-void *spx_mpool_realloc(struct spx_mpool *pool,
-        void *p,size_t s,err_t *err){/*{{{*/
+void *spx_mpool_realloc(
+         struct spx_mpool *pool,
+         void *p,
+        const size_t s,
+        err_t *err
+        ){/*{{{*/
     if(NULL == p){
         return spx_mpool_malloc(pool,s,err);
     }
@@ -248,7 +263,6 @@ bool_t spx_mpool_free(struct spx_mpool *pool,
     return false;
 }/*}}}*/
 
-
 bool_t spx_mpool_free_force(struct spx_mpool *pool,
         void *p){/*{{{*/
     if(NULL == pool){
@@ -283,7 +297,6 @@ bool_t spx_mpool_free_force(struct spx_mpool *pool,
     }
     return false;
 }/*}}}*/
-
 
 err_t spx_mpool_clear(struct spx_mpool *pool){/*{{{*/
     if(NULL == pool){

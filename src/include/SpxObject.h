@@ -33,128 +33,74 @@
  * this software or lib may be copied only under the terms of the gnu general
  * public license v3, which may be found in the source kit.
  *
- *       Filename:  spx_mpool.h
- *        Created:  2014/10/11 08时52分00秒
+ *       Filename:  SpxObject.h
+ *        Created:  2014/12/03 11时30分48秒
  *         Author:  Seapeak.Xu (seapeak.cnblog.com), xvhfeng@gmail.com
  *        Company:  Tencent Literature
- *         Remark:
+ *         Remark:  this is alloctor for SpxObject
+ *                  and all the object of alloctor is memory-algin
+ *                  and all memory-buffer is filled-zero
  *
  ****************************************************************************/
-#ifndef _SPX_MPOOL_H_
-#define _SPX_MPOOL_H_
+#ifndef _SPXOBJECT_H_
+#define _SPXOBJECT_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "spx_defs.h"
 #include "spx_types.h"
-#include "spx_atomic.h"
+#include "spx_defs.h"
 
-    struct spx_mbuff{
-        struct spx_mbuff *next;
-        size_t freesize;
-        char *ptr;
-        char buff[0];
+#define SpxObjectBase \
+    bool_t _spxObjectIsPooling;\
+    u32_t _spxObjectRefs;\
+    size_t _spxObjectSize;\
+    size_t _spxObjectAvail
+
+    struct SpxObject{
+        SpxObjectBase;
+        char buf[0];
     };
 
-    struct spx_large{//large is extends spx_object;
-        struct spx_large *prev;
-        struct spx_large *next;
-        SpxObjectStruct;//must input there top buff
-        char buff[0];
-    };
+#define SpxObjectAlignSize SpxAlign(sizeof(struct SpxObject),SpxAlignSize)
 
-    struct spx_mpool{
-        SpxLogDelegate *log;
-        size_t pooling_size;
-        size_t mbuff_size;
-        size_t keep_mbuff_size;
-        struct spx_mbuff *mb_header;
-        struct spx_mbuff *mb_curr;
-        struct spx_large *lg_header;
-        struct spx_large *lg_tail;
-    };
+    void *spxObjectNew(const size_t s,err_t *err);
+    void *spxObjectNewNumbs(const size_t numbs,const size_t s,err_t *err);
+    void *spxObjectReNew(void *p,const size_t s,err_t *err);
+    bool_t spxObjectFree(void *p);
+    bool_t spxObjectFreeForce(void *p);
+    void *spxObjectRef(void *p);
+    void *spxObjectUnRef(void *p);
 
-    struct spx_mpool *spx_mpool_new(
-            SpxLogDelegate *log,
-            const size_t pooling_size,
-            const size_t mbuff_size,
-            const size_t keep_mbuff_size,
-            err_t *err
-            );
+    spx_private u32_t spxObjectRefCount(void *p){
+        if(NULL == p){
+            return 0;
+        }
+        struct SpxObject *o = (struct SpxObject *) ((char *) p - SpxObjectAlignSize);
+        return o->_spxObjectRefs;
+    }
 
-    void *spx_mpool_malloc(
-            struct spx_mpool *pool,
-            const size_t size,
-            err_t *err
-            );
-
-    void *spx_mpool_realloc(
-            struct spx_mpool *pool,
-            void *p,
-            const size_t s,
-            err_t *err
-            );
-
-    void *spx_mpool_alloc(
-            struct spx_mpool *pool,
-            const size_t numbs,
-            const size_t size,
-            err_t *err
-            );
-
-    void *spx_mpool_alloc_alone(
-            struct spx_mpool *pool,
-            const  size_t size,
-            err_t *err
-            );
-
-    bool_t spx_mpool_free(
-            struct spx_mpool *pool,
-            void *p
-            );
-
-    bool_t spx_mpool_free_force(
-            struct spx_mpool *pool,
-            void *p
-            );
-
-    err_t spx_mpool_clear(
-            struct spx_mpool *pool
-            );
-
-    err_t spx_mpool_destory(
-            struct spx_mpool *pool
-            );
-
-#define SpxMemPoolFree(pool,p) \
+#define SpxObjectFree(p) \
     do { \
-        if(NULL != p && (spx_mpool_free(pool,p))){ \
+        if(NULL != p && spxObjectFree(p)) { \
             p = NULL; \
         } \
     }while(false)
 
-#define SpxMemPoolFreeForce(pool,p) \
+#define SpxObjectFreeForce(p) \
     do { \
         if(NULL != p) {\
-            spx_mpool_free_force(pool,p);\
+            spxObjectFreeForce(p);\
             p = NULL; \
         } \
     }while(false)
-
-
-#define SpxMemPoolDestory(p) \
-    do { \
-        if(NULL != p) {\
-            spx_mpool_destory(p); \
-            p = NULL; \
-        } \
-    }while(false)
-
+#ifdef __cplusplus
+}
+#endif
+#endif
 
 #ifdef __cplusplus
 }
