@@ -8,7 +8,6 @@
 #include "spx_string.h"
 #include "spx_errno.h"
 #include "spx_defs.h"
-#include "spx_mpool.h"
 
 union d2i{
     double v;
@@ -70,19 +69,6 @@ void spx_string_free(string_t s){/*{{{*/
     struct sds *p = (struct sds *) (s-sizeof(struct sds));
     SpxFree(p);
 }/*}}}*/
-
-void spx_string_free_pooing(struct spx_mpool *pool,string_t s){
-    if (s == NULL) return;
-    struct sds *p = (struct sds *) (s-sizeof(struct sds));
-    SpxMemPoolFree(pool,p);
-}
-
-void spx_string_free_pooing_force(struct spx_mpool *pool,string_t s){
-    if (s == NULL) return;
-    struct sds *p = (struct sds *) (s-sizeof(struct sds));
-    SpxMemPoolFreeForce(pool,p);
-}
-
 
 string_t spx_string_grow_zero(string_t s, size_t len,err_t *err){/*{{{*/
     struct sds *sh = (void*) (s-sizeof *sh);

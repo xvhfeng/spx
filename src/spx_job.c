@@ -39,11 +39,6 @@ void *spx_job_context_new(size_t idx,void *arg,err_t *err){
         return NULL;
     }
 
-    jc->mpool = spx_mpool_new(jct->log,jct->pooling_size,
-            jct->mbuff_size,jct->keep_mbuff_count,err);
-    if(NULL == jc->mpool){
-        SpxFree(jc);
-    }
     jc->log = jct->log;
     jc->idx = idx;
     jc->timeout = jct->timeout;
@@ -146,9 +141,6 @@ void spx_job_context_reset(struct spx_job_context *jcontext){
 struct spx_job_pool *spx_job_pool_new(SpxLogDelegate *log,\
         void *config,\
         size_t size,u32_t timeout,\
-            size_t pooling_size,
-            size_t mbuff_size,
-            size_t keep_mbuff_count,
         SpxNioDelegate *nio_reader,\
         SpxNioDelegate *nio_writer,\
         SpxNioHeaderValidatorDelegate *reader_header_validator,\
@@ -168,9 +160,6 @@ struct spx_job_pool *spx_job_pool_new(SpxLogDelegate *log,\
 
     struct spx_job_context_transport arg;
     SpxZero(arg);
-    arg.pooling_size = pooling_size;
-    arg.mbuff_size = mbuff_size;
-    arg.keep_mbuff_count = keep_mbuff_count;
     arg.timeout = timeout;
     arg.nio_reader = nio_reader;
     arg.nio_writer = nio_writer;

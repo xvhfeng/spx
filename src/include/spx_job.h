@@ -28,8 +28,6 @@ extern "C" {
 #include "spx_message.h"
 #include "spx_properties.h"
 #include "spx_module.h"
-#include "spx_object.h"
-#include "spx_mpool.h"
 
 #define SpxNioLifeCycleNormal 0
 #define SpxNioLifeCycleHeader 1
@@ -128,9 +126,6 @@ extern "C" {
     struct spx_job_pool *spx_job_pool_new(SpxLogDelegate *log,\
             void *config,\
             size_t size,u32_t timeout,\
-            size_t pooling_size,
-            size_t mbuff_size,
-            size_t keep_mbuff_count,
             SpxNioDelegate *nio_reader,\
             SpxNioDelegate *nio_writer,\
             SpxNioHeaderValidatorDelegate *reader_header_validator,\
