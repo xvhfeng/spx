@@ -19,6 +19,8 @@
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <utime.h>
 
 #include "spx_types.h"
 #include "spx_defs.h"
@@ -427,3 +429,15 @@ struct spx_datetime *spx_datetime_convert(SpxLogDelegate *log,
 }/*}}}*/
 
 
+err_t spx_modify_filetime(
+        const string_t fname,
+        u64_t secs
+        ){
+    struct timeval val;
+    SpxZero(val);
+    val.tv_sec = secs;
+    if(0 != utimes(fname,&val)){
+        return errno;
+    }
+    return 0;
+}

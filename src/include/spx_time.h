@@ -75,8 +75,12 @@ extern "C" {
 
     struct spx_datetime *spx_datetime_convert(SpxLogDelegate *log,
             struct spx_datetime *dt,
-        string_t s,char *fmt,err_t *err);
+            string_t s,char *fmt,err_t *err);
 
+    err_t spx_modify_filetime(
+            const string_t fname,
+            u64_t secs
+            );
 
 #if __cplusplus
 }
