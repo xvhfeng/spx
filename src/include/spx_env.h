@@ -22,9 +22,11 @@ extern "C" {
 #endif
 
 #include "spx_types.h"
+    typedef void SpxSigActionDelegate(int sig);
 
 void spx_env_daemon();
 err_t spx_set_group_and_user(SpxLogDelegate *log,string_t gname,string_t uname);
+void spx_env_sigaction(int sig,SpxSigActionDelegate *act);
 
 #ifdef __cplusplus
 }

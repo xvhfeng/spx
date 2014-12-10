@@ -20,13 +20,15 @@
 #include <unistd.h>
 #include <grp.h>
 #include <pwd.h>
+#include <signal.h>
 
 #include "spx_types.h"
 #include "spx_string.h"
 #include "spx_defs.h"
+#include "spx_env.h"
 
 
-void spx_env_daemon() {
+void spx_env_daemon() {/*{{{*/
         pid_t pid;
 
         if ((pid = fork()) != 0) {
@@ -39,9 +41,9 @@ void spx_env_daemon() {
             exit(0);
         }
     return;
-}
+}/*}}}*/
 
-err_t spx_set_group_and_user(SpxLogDelegate *log,string_t gname,string_t uname){
+err_t spx_set_group_and_user(SpxLogDelegate *log,string_t gname,string_t uname){/*{{{*/
     err_t err = 0;
     SpxErrReset;
     if(!SpxStringIsNullOrEmpty(gname)){
@@ -77,5 +79,18 @@ err_t spx_set_group_and_user(SpxLogDelegate *log,string_t gname,string_t uname){
         return err;
     }
     return err;
+}/*}}}*/
+
+void spx_env_sigaction(int sig,SpxSigActionDelegate *act){
+    struct sigaction sa;
+    SpxZero(sa);
+    if(NULL == act) {
+        sa.sa_handler = SIG_IGN;
+    } else {
+        sa.sa_handler = act;
+    }
+    sigemptyset(&(sa.sa_mask));
+    sa.sa_flags = SA_RESTART;
+    sigaction(sig,&sa,NULL);
 }
 

@@ -262,7 +262,7 @@ err_t spx_socket_connect_nb(int fd,string_t ip,int port,u32_t timeout){
             fd_set frd;
             FD_ZERO(&frd);
             FD_SET(fd,&frd);
-            socklen_t len = 0;
+            socklen_t len = sizeof(err);
             if (0 < select (fd+1 , NULL,&frd,NULL,&tv)) {
                 if(0 > getsockopt(fd,SOL_SOCKET,SO_ERROR,(void*)(&err),&len)) {
                     err = errno;
