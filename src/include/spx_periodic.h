@@ -97,12 +97,12 @@ extern "C" {
     /**
      * pausing the periodic at next poll
      */
-bool_t spx_periodic_async_suspend(struct spx_periodic *t);
-bool_t spx_periodic_async_resume(struct spx_periodic *t);
+    bool_t spx_periodic_async_suspend(struct spx_periodic *t);
+    bool_t spx_periodic_async_resume(struct spx_periodic *t);
 
-void spx_periodic_stop(
-        struct spx_periodic **periodic,
-        bool_t isblocking);
+    void spx_periodic_stop(
+            struct spx_periodic **periodic,
+            bool_t isblocking);
 
 #ifdef __cplusplus
 }

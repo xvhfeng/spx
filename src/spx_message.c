@@ -33,7 +33,7 @@ struct spx_msg *spx_msg_new(const size_t len,err_t *err){/*{{{*/
     if(NULL == ctx){
         return NULL;
     }
-    ctx->buf = spx_alloc_alone(len,err);
+    ctx->buf = spx_alloc_alone(len ,err);
     if(NULL == ctx->buf){
         goto r1;
     }
@@ -62,15 +62,15 @@ err_t spx_msg_seek(struct spx_msg *ctx,off_t offset,int whence){
     }
     switch(whence){
         case SpxMsgSeekSet :{
-                                ctx->last = ctx->buf + offset;
+                                ctx->last =(uchar_t *) SpxMemIncr(ctx->buf,offset);
                                 break;
                             }
         case SpxMsgSeekCurrent:{
-                                   ctx->last += offset;
+                                   ctx->last =(uchar_t *) SpxMemIncr(ctx->last,offset);
                                    break;
                                }
         case SpxMsgSeekEnd:{
-                               ctx->last = ctx->buf + (spx_msg_size(ctx) + offset);
+                               ctx->last =(uchar_t *) SpxMemIncr(ctx->buf,spx_msg_size(ctx) + offset);
                                break;
                            }
     }

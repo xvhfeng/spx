@@ -375,3 +375,11 @@ bool_t spx_socket_ready_read(int fd,u32_t timeout){
     return spx_socket_read_timeout(fd,timeout);
 }
 
+bool_t spx_socket_test(int fd){
+    struct tcp_info info;
+    int len=sizeof(info);
+    getsockopt(fd, IPPROTO_TCP, TCP_INFO, &info, (socklen_t *)&len);
+    if((info.tcpi_state==TCP_ESTABLISHED))
+        return true;
+    return false;
+}

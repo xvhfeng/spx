@@ -287,7 +287,13 @@ size_t spxStringAllocSize(string_t s);
 
 #define SpxMemcpy(d,s,l) (((uchar_t *) memcpy(d,s,l)) + l)
 
-#define SpxStringFree(s) spx_string_free(s);s = NULL
+#define SpxStringFree(s) \
+    if(NULL != s) \
+do { \
+    spx_string_free(s);\
+    s = NULL;\
+}while(false)
+
 #define SpxStringFreePooling(p,s) spx_string_free_pooling(p,s)
 #define SpxStringFreePoolingForce(p,s) spx_string_free_pooling_force(p,s)
 

@@ -69,10 +69,12 @@ err_t spx_log_new(SpxLogDelegate log,
 
     return err;
 r1:
-    if(NULL != g_spx_log->path)
-        spx_string_free(g_spx_log->path);
-    if(NULL != g_spx_log->name)
-        spx_string_free(g_spx_log->name);
+    if(NULL != g_spx_log->path) {
+        SpxStringFree(g_spx_log->path);
+    }
+    if(NULL != g_spx_log->name) {
+        SpxStringFree(g_spx_log->name);
+    }
     if(NULL != g_spx_log->mlock){
         pthread_mutex_destroy(g_spx_log->mlock);
         SpxFree(g_spx_log->mlock);
@@ -85,7 +87,13 @@ r1:
 }/*}}}*/
 
 void spx_log(int level,char *fmt,...){/*{{{*/
-    if((level < 0 || (int)sizeof(SpxLogDesc) < level) || NULL == fmt) return;
+    if(NULL == g_spx_log
+            ||   level < 0
+            || level < g_spx_log->level
+            || NULL == fmt
+      ) {
+        return;
+    }
 
     err_t err = 0;
     va_list ap;
@@ -95,24 +103,19 @@ void spx_log(int level,char *fmt,...){/*{{{*/
     if(NULL == line){
         return;
     }
-    string_t newline = spx_string_cat(line,SpxLineEndDlmtString,&err);
-    if(NULL == newline){
-        spx_string_free(line);
-        return;
-    }
 
     if(NULL == g_spx_log || 0 == g_spx_log->fp ){
-        fprintf(stdout,"%s",SpxString2Char2(newline));
-        spx_string_free(newline);
+        fprintf(stdout,"%s",SpxString2Char2(line));
+        SpxStringFree(line);
         return;
     }
 
     if(level < g_spx_log->level){
-        spx_string_free(newline);
+        SpxStringFree(line);
         return;
     }
 
-    size_t s = spx_string_len(newline);
+    size_t s = spx_string_len(line);
     if(0 == pthread_mutex_lock(g_spx_log->mlock)){
         do{
             if(g_spx_log->offset + s > g_spx_log->size){
@@ -124,21 +127,21 @@ void spx_log(int level,char *fmt,...){/*{{{*/
                     break;
                 }
             }
-            fwrite(newline,s,sizeof(char),g_spx_log->fp);
+            fwrite(line,s,sizeof(char),g_spx_log->fp);
             g_spx_log->offset += s;
         }while(false);
         pthread_mutex_unlock(g_spx_log->mlock);
     }
-    spx_string_free(newline);
+    SpxStringFree(line);
     return;
 }/*}}}*/
 
 void spx_log_free(){
     logf_close();
     if(NULL != g_spx_log->path)
-        spx_string_free(g_spx_log->path);
+        SpxStringFree(g_spx_log->path);
     if(NULL != g_spx_log->name)
-        spx_string_free(g_spx_log->name);
+        SpxStringFree(g_spx_log->name);
     if(NULL != g_spx_log->mlock){
         pthread_mutex_destroy(g_spx_log->mlock);
         SpxFree(g_spx_log->mlock);
@@ -193,20 +196,20 @@ spx_private FILE *logf_create(SpxLogDelegate log,\
     }
     setlinebuf(f);
     if(NULL != newfp){
-        spx_string_free(newfp);
+        SpxStringFree(newfp);
     } else {
         if(NULL != fp){
-            spx_string_free(fp);
+            SpxStringFree(fp);
         }
     }
     return f;
 
 r1:
     if(NULL != newfp){
-        spx_string_free(newfp);
+        SpxStringFree(newfp);
     } else {
         if(NULL != fp){
-            spx_string_free(fp);
+            SpxStringFree(fp);
         }
     }
     if(NULL != f){
@@ -229,13 +232,19 @@ spx_private spx_inline string_t get_log_line(err_t *err,\
     string_t newline = spx_string_cat_printf(err,line,"%04d-%02d-%2d %02d:%02d:%02d.",
             dt.d.year,dt.d.month,dt.d.day,dt.t.hour,dt.t.min,dt.t.sec);
     if(NULL == newline){
-        spx_string_free(line);
+        SpxStringFree(line);
         return NULL;
     }
     line = newline;
     newline = spx_string_cat_vprintf(err,line,fmt,ap);
     if(NULL == newline){
-        spx_string_free(line);
+        SpxStringFree(line);
+        return NULL;
+    }
+    line = newline;
+    newline = spx_string_cat(line,SpxLineEndDlmtString,err);
+    if(NULL == newline){
+        SpxStringFree(line);
         return NULL;
     }
     line = newline;
