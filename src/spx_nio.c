@@ -157,8 +157,7 @@ void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents){/*{{{*/
     }
 
     len = 0;
-    if((SpxNioLifeCycleBody == jcontext->lifecycle) \
-            && (0 != jcontext->reader_header->bodylen)){
+    if(SpxNioLifeCycleBody == jcontext->lifecycle) {
         jcontext->reader_body_process(loop,watcher->fd, jcontext);
         if(0 != jcontext->err){
             SpxLog2(jcontext->log,SpxLogError,jcontext->err,\
@@ -224,8 +223,7 @@ void spx_nio_writer(struct ev_loop *loop,ev_io *watcher,int revents){/*{{{*/
     }
 
     len = 0;
-    if((SpxNioLifeCycleBody == jcontext->lifecycle) \
-            && (0 != jcontext->writer_header->bodylen)){
+    if(SpxNioLifeCycleBody == jcontext->lifecycle) {
         jcontext->writer_body_process(loop,watcher->fd,jcontext);
         if(0 != jcontext->err){
             SpxLogFmt2(jcontext->log,SpxLogError,jcontext->err,\
@@ -242,7 +240,25 @@ r1:
 }/*}}}*/
 
 void spx_nio_reader_body_handler(struct ev_loop *loop,int fd,struct spx_job_context *jcontext){/*{{{*/
+
+    if(0 == fd || NULL == jcontext){
+        return;
+    }
+    if(SpxNioLifeCycleBody != jcontext->lifecycle){
+        SpxLog1(jcontext->log,SpxLogError,\
+                "the jcontext lifecycle is not body."\
+                "and forced push jcontext to pool.");
+        goto r1;
+    }
+
     struct spx_msg_header *header = jcontext->reader_header;
+    if(0 == header->bodylen){
+        SpxLog1(jcontext->log,SpxLogWarn,\
+                "the jcontext lifecycle is not body."\
+                "and the body length is 0 then no to be read.");
+        return;
+    }
+
     size_t len = 0;
     if(jcontext->is_lazy_recv){
         struct spx_msg *ctx = spx_msg_new(header->offset,&(jcontext->err));
@@ -292,8 +308,16 @@ void spx_nio_writer_body_handler(struct ev_loop *loop,int fd,struct spx_job_cont
         SpxLog1(jcontext->log,SpxLogError,\
                 "the jcontext lifecycle is not body."\
                 "and forced push jcontext to pool.");
+        goto r1;
+    }
+
+    if(0 == jcontext->writer_header->bodylen){
+        SpxLog1(jcontext->log,SpxLogWarn,\
+                "the jcontext lifecycle is not body."\
+                "and the body length is 0 then no to be send.");
         return;
     }
+
     size_t len = 0;
     if(jcontext->is_sendfile){
         if(NULL != jcontext->writer_body_ctx && 0 != jcontext->writer_header->offset) {//no metedata

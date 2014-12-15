@@ -256,7 +256,7 @@ err_t spx_write_context(SpxLogDelegate *log,int fd,struct spx_msg_context *ctx){
     if(0 != err || len != SpxMsgHeaderSize){
         if(0 == err){
             SpxLogFmt2(log,SpxLogError,err,
-                    "write header size:%ulld,realsize:%ulld.",
+                    "write header size:%lld,realsize:%lld.",
                     SpxMsgHeaderSize,len);
             err = EIO;
         }
@@ -266,14 +266,14 @@ err_t spx_write_context(SpxLogDelegate *log,int fd,struct spx_msg_context *ctx){
         err = spx_write_from_msg(fd,ctx->body,ctx->header->offset,&len);
         if(0 != err || len != ctx->header->offset){
             SpxLogFmt2(log,SpxLogError,err,
-                    "write body buffer:%ulld,realsize:%ulld.",
+                    "write body buffer:%lld,realsize:%lld.",
                     ctx->header->offset,len);
             goto r1;
         }
         err = spx_sendfile(fd,ctx->sendfile_fd,ctx->sendfile_begin,ctx->sendfile_size,&len);
         if(0 != err || ctx->sendfile_size != len){
             SpxLogFmt2(log,SpxLogError,err,
-                    "sendfile size:%ulld,realsize:%ulld.",
+                    "sendfile size:%lld,realsize:%lld.",
                     ctx->sendfile_size,len);
             goto r1;
         }
@@ -281,14 +281,14 @@ err_t spx_write_context(SpxLogDelegate *log,int fd,struct spx_msg_context *ctx){
         err = spx_write_from_msg(fd,ctx->body,ctx->header->bodylen,&len);
         if(0 != err || len != ctx->header->bodylen){
             SpxLogFmt2(log,SpxLogError,err,
-                    "write body buffer:%ulld,realsize:%ulld.",
-                    ctx->header->offset,len);
+                    "write body buffer:%lld,realsize:%lld.",
+                    ctx->header->bodylen,len);
             goto r1;
         }
     }
 r1:
     if(NULL != hctx){
-        spx_msg_free(&hctx);
+        SpxMsgFree(hctx);
     }
     return err;
 }/*}}}*/
@@ -302,7 +302,7 @@ err_t spx_write_context_nb(SpxLogDelegate *log,int fd,struct spx_msg_context *ct
                 "alloc header ctx is fail.");
         return err;
     }
-    err = spx_write_from_msg(fd,hctx,SpxMsgHeaderSize,&len);
+    err = spx_write_from_msg_nb(fd,hctx,SpxMsgHeaderSize,&len);
     if(0 != err || len != SpxMsgHeaderSize){
         if(0 == err){
             SpxLogFmt2(log,SpxLogError,err,
@@ -313,7 +313,7 @@ err_t spx_write_context_nb(SpxLogDelegate *log,int fd,struct spx_msg_context *ct
         goto r1;
     }
     if(ctx->is_sendfile){
-        err = spx_write_from_msg(fd,ctx->body,ctx->header->offset,&len);
+        err = spx_write_from_msg_nb(fd,ctx->body,ctx->header->offset,&len);
         if(0 != err || len != ctx->header->offset){
             SpxLogFmt2(log,SpxLogError,err,
                     "write body buffer:%ulld,realsize:%ulld.",
@@ -323,22 +323,22 @@ err_t spx_write_context_nb(SpxLogDelegate *log,int fd,struct spx_msg_context *ct
         err = spx_sendfile(fd,ctx->sendfile_fd,ctx->sendfile_begin,ctx->sendfile_size,&len);
         if(0 != err || ctx->sendfile_size != len){
             SpxLogFmt2(log,SpxLogError,err,
-                    "sendfile size:%ulld,realsize:%ulld.",
+                    "sendfile size:%lld,realsize:%lld.",
                     ctx->sendfile_size,len);
             goto r1;
         }
     } else {
-        err = spx_write_from_msg(fd,ctx->body,ctx->header->bodylen,&len);
-        if(0 != err || len != ctx->header->offset){
+        err = spx_write_from_msg_nb(fd,ctx->body,ctx->header->bodylen,&len);
+        if(0 != err || len != ctx->header->bodylen){
             SpxLogFmt2(log,SpxLogError,err,
-                    "write body buffer:%ulld,realsize:%ulld.",
-                    ctx->header->offset,len);
+                    "write body buffer:%lld,realsize:%lld.",
+                    ctx->header->bodylen,len);
             goto r1;
         }
     }
 r1:
     if(NULL != hctx){
-        spx_msg_free(&hctx);
+        SpxMsgFree(hctx);
     }
     return err;
 }/*}}}*/
@@ -357,7 +357,7 @@ struct spx_msg_header *spx_read_header(SpxLogDelegate *log,int fd,err_t *err){/*
         SpxLogFmt2(log,SpxLogError,*err,
                 "recv header buff:%uuld,realsize:%ulld.",
                 SpxMsgHeaderSize,len);
-        spx_msg_free(&hbuff);
+        SpxMsgFree(hbuff);
         return NULL;
     }
 
@@ -365,7 +365,7 @@ struct spx_msg_header *spx_read_header(SpxLogDelegate *log,int fd,err_t *err){/*
     if(NULL == h){
         SpxLog2(log,SpxLogError,*err,
                 "msg to header is fail.");
-        spx_msg_free(&hbuff);
+        SpxMsgFree(hbuff);
         return NULL;
     }
     return h;
@@ -385,7 +385,7 @@ struct spx_msg_header *spx_read_header_nb(SpxLogDelegate *log,int fd,err_t *err)
         SpxLogFmt2(log,SpxLogError,*err,
                 "recv header buff:%uuld,realsize:%ulld.",
                 SpxMsgHeaderSize,len);
-        spx_msg_free(&hbuff);
+        SpxMsgFree(hbuff);
         return NULL;
     }
 
@@ -393,7 +393,7 @@ struct spx_msg_header *spx_read_header_nb(SpxLogDelegate *log,int fd,err_t *err)
     if(NULL == h){
         SpxLog2(log,SpxLogError,*err,
                 "msg to header is fail.");
-        spx_msg_free(&hbuff);
+        SpxMsgFree(hbuff);
         return NULL;
     }
     return h;
@@ -412,7 +412,7 @@ struct spx_msg *spx_read_body(SpxLogDelegate *log,int fd,size_t size,err_t *err)
         SpxLogFmt2(log,SpxLogError,*err,
                 "read body buffer:%ulld realsize:%ulld.",
                 size,len);
-        spx_msg_free(&ctx);
+        SpxMsgFree(ctx);
         return NULL;
     }
     return ctx;
@@ -432,7 +432,7 @@ struct spx_msg *spx_read_body_nb(SpxLogDelegate *log,int fd,size_t size,err_t *e
         SpxLogFmt2(log,SpxLogError,*err,
                 "read body buffer:%ulld realsize:%ulld.",
                 size,len);
-        spx_msg_free(&ctx);
+        SpxMsgFree(ctx);
         return NULL;
     }
     return ctx;
@@ -471,7 +471,7 @@ err_t spx_lazy_recv(SpxLogDelegate *log,int fd,int sock,size_t size){/*{{{*/
         recvbytes += recvs;
         spx_msg_clear(ctx);
     }
-    spx_msg_free(&ctx);
+    SpxMsgFree(ctx);
     return err;
 }/*}}}*/
 
@@ -507,7 +507,7 @@ err_t spx_lazy_recv_nb(SpxLogDelegate *log,int fd,int sock,size_t size){/*{{{*/
         recvbytes += recvs;
         spx_msg_clear(ctx);
     }
-    spx_msg_free(&ctx);
+    SpxMsgFree(ctx);
     return err;
 }/*}}}*/
 
