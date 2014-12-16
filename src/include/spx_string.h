@@ -34,6 +34,11 @@ spx_private spx_inline size_t spx_string_avail(const string_t s) {
     return sh->free;
 }
 
+spx_private spx_inline size_t spx_string_msize(const string_t s){
+    struct sds *sh = (void*)(s-sizeof *sh);
+    return sh->len + sh->free;
+}
+
 string_t spx_string_newlen(const void *init, size_t initlen,err_t *err);
 
 string_t spx_string_new(const char *init,err_t *err);

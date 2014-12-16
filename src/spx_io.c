@@ -170,7 +170,7 @@ err_t spx_fwrite_string(FILE *fp,string_t s,size_t size,size_t *len){/*{{{*/
     err_t err = 0;
     i64_t rc = 0;
     while(*len < size){
-        rc = fwrite(s + *len,size,sizeof(char),fp);
+        rc = fwrite(s + *len,sizeof(char),size,fp);
         if(0 > rc){
             if(EAGAIN == errno || EWOULDBLOCK == errno || EINTR == errno){
                 continue;

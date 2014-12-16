@@ -146,7 +146,19 @@ u64_t spx_mountpoint_totalsize(string_t path,err_t *err){
     return (u64_t) buf.f_blocks * buf.f_bsize;
 }
 
-
-
+string_t spx_file_suffix(string_t fname,err_t *err){
+    if(SpxStringIsNullOrEmpty(fname)){
+        *err = EINVAL;
+        return NULL;
+    }
+    const char *tmp = SpxString2Char2(fname);
+    string_t newbp = NULL;
+    ptr_t p = NULL;
+    if(NULL != (p =(ptr_t) rindex(tmp,(int) SpxPathSuffixDlmt))){
+        ptrdiff_t pd = p - tmp;
+        newbp = spx_string_newlen(path,pd,err);
+    }
+    return newbp;
+}
 
 

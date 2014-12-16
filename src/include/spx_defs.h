@@ -68,6 +68,9 @@ spx_private char *SpxLogDesc[] = {
 #define SpxPathSize 1023
 #define SpxFileNameSize 127
 #define SpxPathDlmt '/'
+#define SpxSuffixDlmt '.'
+#define SpxSuffixDlmtString "."
+#define SpxSuffixDlmtLen 1
 #define SpxPathDlmtLen 1
 #define SpxPathDlmtString "/"
 #define SpxLineSize 2047

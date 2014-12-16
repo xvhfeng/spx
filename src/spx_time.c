@@ -433,10 +433,11 @@ err_t spx_modify_filetime(
         const string_t fname,
         u64_t secs
         ){
-    struct timeval val;
-    SpxZero(val);
-    val.tv_sec = secs;
-    if(0 != utimes(fname,&val)){
+    struct timeval val[2];
+    memset(&val,0,2 * sizeof(struct timeval));
+    val[0].tv_sec = secs;
+    val[1].tv_sec = secs;
+    if(0 != utimes(fname,val)){
         return errno;
     }
     return 0;
