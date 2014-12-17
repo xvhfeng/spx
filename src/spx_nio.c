@@ -252,7 +252,7 @@ void spx_nio_reader_body_handler(struct ev_loop *loop,int fd,struct spx_job_cont
     }
 
     struct spx_msg_header *header = jcontext->reader_header;
-    if(0 == header->bodylen){
+    if(NULL == header || 0 == header->bodylen){
         SpxLog1(jcontext->log,SpxLogWarn,\
                 "the jcontext lifecycle is not body."\
                 "and the body length is 0 then no to be read.");
@@ -311,7 +311,7 @@ void spx_nio_writer_body_handler(struct ev_loop *loop,int fd,struct spx_job_cont
         goto r1;
     }
 
-    if(0 == jcontext->writer_header->bodylen){
+    if(NULL == jcontext->writer_header || 0 == jcontext->writer_header->bodylen){
         SpxLog1(jcontext->log,SpxLogWarn,\
                 "the jcontext lifecycle is not body."\
                 "and the body length is 0 then no to be send.");

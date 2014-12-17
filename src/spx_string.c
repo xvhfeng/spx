@@ -8,6 +8,7 @@
 #include "spx_string.h"
 #include "spx_errno.h"
 #include "spx_defs.h"
+#include "spx_limits.h"
 
 union d2i{
     double v;
@@ -548,18 +549,18 @@ void spx_string_toupper(string_t s){/*{{{*/
 }/*}}}*/
 
 string_t spx_string_from_i64(i64_t value,err_t *err){/*{{{*/
-    char buf[SpxI64Size], *p;
+    char buf[SpxI64MaxLength + 1], *p;
     unsigned long long v;
 
     v = (value < 0) ? -value : value;
-    p = buf+(SpxI64Size - 1); /* point to the last character */
+    p = buf+(SpxI64MaxLength); /* point to the last character */
     do {
         *p-- = '0'+(v%10);
         v /= 10;
     } while(v);
     if (value < 0) *p-- = '-';
     p++;
-    return spx_string_newlen(p,SpxI64Size-(p-buf),err);
+    return spx_string_newlen(p,SpxI64MaxLength -(p-buf),err);
 }/*}}}*/
 
 string_t spx_string_catrepr(string_t s, const char *p, size_t len,err_t *err){/*{{{*/
@@ -793,13 +794,13 @@ string_t spx_string_pack_i32(string_t s,const i32_t v,err_t *err){/*{{{*/
     struct sds *sh;
     size_t curlen = spx_string_len(s);
 
-    s = spxStringMakeRoomFor(s,SpxI32Size,err);
+    s = spxStringMakeRoomFor(s,sizeof(i32_t),err);
     if (s == NULL) return NULL;
     sh = (void*) (s-sizeof *sh);;
     spx_i2b((uchar_t *) s + curlen,v);
 
-    sh->len = curlen + SpxI32Size;
-    sh->free = sh->free - SpxI32Size;
+    sh->len = curlen + sizeof(i32_t);
+    sh->free = sh->free - sizeof(i32_t);
     s[sh->len] = '\0';
     return s;
 }/*}}}*/
@@ -823,6 +824,7 @@ string_t spxStringMakeRoomFor(string_t s, size_t addlen,err_t *err) {/*{{{*/
     if (newsh == NULL) return NULL;
 
     newsh->free = newlen - len;
+    memset(newsh->buf + len,0,newsh->free);
     return newsh->buf;
 }/*}}}*/
 

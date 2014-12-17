@@ -121,25 +121,25 @@ spx_private char *SpxLogDesc[] = {
 #define SpxPtrSize 4
 #endif
 
-#define SpxI32Size   (sizeof("-2147483648") - 1)
-#define SpxI64Size   (sizeof("-9223372036854775808") - 1)
+//#define SpxI32Size   (sizeof("-2147483648") - 1)
+//#define SpxI64Size   (sizeof("-9223372036854775808") - 1)
 
 #define LF     (u_char) 10
 #define CR     (u_char) 13
 #define CRLF   "\x0d\x0a"
 
 
-#if Spx32
-#define SpxIntSize   SpxI32Size
-#else
-#define SpxIntSize   SpxI64Size
-#endif
+//#if Spx32
+//#define SpxIntSize   SpxI32Size
+//#else
+//#define SpxIntSize   SpxI64Size
+//#endif
 
-#if (Spx64)
-#define SpxAtomicSize            (sizeof("-9223372036854775808") - 1)
-#else
-#define SpxAtomicSize            (sizeof("-2147483648") - 1)
-#endif
+//#if (Spx64)
+//#define SpxAtomicSize            (sizeof("-9223372036854775808") - 1)
+//#else
+//#define SpxAtomicSize            (sizeof("-2147483648") - 1)
+//#endif
 
 #define SpxTypeConvert(tp,name,old) tp name = (tp) (old)
 #define SpxTypeConvert2(t,newp,old) t *newp = (t *) (old)
