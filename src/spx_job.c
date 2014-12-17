@@ -191,7 +191,6 @@ struct spx_job_context *spx_job_pool_pop(struct spx_job_pool *pool,err_t *err){
         *err = 0 == *err ? ENOENT : *err;
         return NULL;
     }
-    jc->request_timespan = spx_now();
     return jc;
 }
 

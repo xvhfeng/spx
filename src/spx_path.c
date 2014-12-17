@@ -154,9 +154,9 @@ string_t spx_file_suffix(string_t fname,err_t *err){
     const char *tmp = SpxString2Char2(fname);
     string_t newbp = NULL;
     ptr_t p = NULL;
-    if(NULL != (p =(ptr_t) rindex(tmp,(int) SpxPathSuffixDlmt))){
+    if(NULL != (p =(ptr_t) rindex(tmp,(int) SpxSuffixDlmt))){
         ptrdiff_t pd = p - tmp;
-        newbp = spx_string_newlen(path,pd,err);
+        newbp = spx_string_newlen(fname,pd,err);
     }
     return newbp;
 }

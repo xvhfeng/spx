@@ -61,8 +61,8 @@ spx_private void spx_socket_main_reciver(struct ev_loop *loop,ev_io *watcher,int
         }
 
         size_t idx = client_sock % g_spx_notifier_module->threadpool->size;
-        struct spx_job_context *jcontext =  spx_job_pool_pop(g_spx_job_pool,&err);
-        if(NULL == jcontext){
+        struct spx_job_context *jc =  spx_job_pool_pop(g_spx_job_pool,&err);
+        if(NULL == jc){
             SpxClose(client_sock);
             SpxLog1(log,SpxLogError,\
                     "pop nio context is fail.");
@@ -70,15 +70,16 @@ spx_private void spx_socket_main_reciver(struct ev_loop *loop,ev_io *watcher,int
         }
 
         SpxLogFmt1(log,SpxLogDebug,"recv socket conntect.wakeup notifier module idx:%d.jc idx:%d."
-                ,idx,jcontext->idx);
+                ,idx,jc->idx);
 
-        jcontext->fd = client_sock;
+        jc->fd = client_sock;
+        jc->request_timespan = spx_now();
 
         struct spx_thread_context *tc = spx_get_thread(g_spx_notifier_module,idx);
-        jcontext->tc = tc;
-//        spx_module_dispatch(tc,spx_notifier_module_wakeup_handler, jcontext);
-//        spx_notifier_module_wakeup_handler(EV_WRITE,jcontext);
-        SpxModuleDispatch(spx_notifier_module_wakeup_handler,jcontext);
+        jc->tc = tc;
+//        spx_module_dispatch(tc,spx_notifier_module_wakeup_handler, jc);
+//        spx_notifier_module_wakeup_handler(EV_WRITE,jc);
+        SpxModuleDispatch(spx_notifier_module_wakeup_handler,jc);
     }
     ev_io_start(loop,watcher);
 }
