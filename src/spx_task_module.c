@@ -83,7 +83,6 @@ void spx_task_module_wakeup_handler(int revents,void *arg){
             size_t idx = spx_network_module_wakeup_idx(jc);
             struct spx_thread_context *tc = spx_get_thread(g_spx_network_module,idx);
             jc->tc = tc;
-//            err = spx_module_dispatch(tc,spx_network_module_wakeup_handler,jc);
             SpxModuleDispatch(spx_network_module_wakeup_handler,jc);
         }
     }
