@@ -21,6 +21,7 @@ union f2i{
 };
 
 spx_private void spx_i2b(uchar_t *b,const i32_t n);
+spx_private void spx_l2b(uchar_t *b,const i64_t n);
 
 #define MaxReallocSize (1024*1024)
 /******************
@@ -805,6 +806,30 @@ string_t spx_string_pack_i32(string_t s,const i32_t v,err_t *err){/*{{{*/
     return s;
 }/*}}}*/
 
+
+string_t spx_string_pack_i64(string_t s,const i64_t v,err_t *err){/*{{{*/
+    if(NULL == s){
+        *err =  EINVAL;
+        return NULL;
+    }
+
+    struct sds *sh;
+    size_t curlen = spx_string_len(s);
+
+    s = spxStringMakeRoomFor(s,sizeof(i64_t),err);
+    if (s == NULL) return NULL;
+    sh = (void*) (s-sizeof *sh);;
+    spx_l2b((uchar_t *) s + curlen,v);
+
+    sh->len = curlen + sizeof(i64_t);
+    sh->free = sh->free - sizeof(i64_t);
+    s[sh->len] = '\0';
+    return s;
+}/*}}}*/
+
+string_t spx_string_pack_u64(string_t s,const u64_t v,err_t *err){
+    return spx_string_pack_i64(s,(i64_t) v,err);
+}
 
 /* Low level functions exposed to the user API */
 string_t spxStringMakeRoomFor(string_t s, size_t addlen,err_t *err) {/*{{{*/

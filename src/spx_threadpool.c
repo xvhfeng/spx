@@ -27,22 +27,20 @@
 
 spx_private bool_t push2pool(struct spx_threadpool *p, struct spx_thread *t);
 spx_private bool_t push2pool(struct spx_threadpool *p, struct spx_thread *t) {/*{{{*/
-    bool_t rc = false;
     do {
         pthread_mutex_lock(&p->mutex_locker);
-        if (p->idx <(int) p->totalsize) {
-            p->threads[p->idx] = t;
-            p->idx++;
-            rc = true;
-            pthread_cond_signal(&p->run_locker);
 
-            if (p->idx >=(int) p->currsize) {
-                pthread_cond_signal(&p->full_locker);
-            }
+        t->next = p->free;
+        p->free = t;
+        pthread_cond_signal(&p->run_locker);
+
+        if (0 < p->waits) {
+            p->waits--;
+            pthread_cond_signal(&p->full_locker);
         }
     } while (0);
     pthread_mutex_unlock(&p->mutex_locker);
-    return rc;
+    return true;
 }/*}}}*/
 
 spx_private void *spx_pooling_thread_listening(void *arg);
@@ -97,25 +95,14 @@ struct spx_threadpool *spx_threadpool_new(SpxLogDelegate *log,size_t max,
     p->log = log;
     p->totalsize = max;
     p->currsize = 0;
-    p->idx = 0;
     p->thread_stack_size = thread_stack_size;
+    p->free = NULL;
+    p->busy = NULL;
 
     pthread_mutex_init(&(p->mutex_locker), NULL );
     pthread_cond_init(&(p->run_locker), NULL );
     pthread_cond_init(&(p->empty_locker), NULL );
     pthread_cond_init(&(p->full_locker), NULL );
-
-    p->threads = (struct spx_thread **) spx_alloc(max,sizeof(struct spx_thread *),err);
-    if (NULL == p->threads) {
-        SpxLog2(p->log,SpxLogError,*err,
-                "init threads list is fail.");
-        pthread_cond_destroy(&(p->run_locker));
-        pthread_cond_destroy(&(p->empty_locker));
-        pthread_cond_destroy(&(p->full_locker));
-        pthread_mutex_destroy(&(p->mutex_locker));
-        SpxFree(p);
-        return NULL;
-    }
 
     p->state = initialized;
     return p;
@@ -134,13 +121,14 @@ err_t spx_threadpool_execute(struct spx_threadpool *p,
         return err;
     }
 
-    while(0 > p->idx && p->totalsize == p->currsize){
+    while(p->totalsize == p->currsize){
         SpxLog1(p->log,SpxLogWarn,
                 "threadpool is all busy,waitting...");
+        p->waits ++;
         pthread_cond_wait(&(p->run_locker),&(p->mutex_locker));
     }
 
-    if(0 > p->idx && p->totalsize > p->currsize){
+    if(NULL == p->free){
         struct spx_thread *t = (struct spx_thread *) spx_alloc_alone(sizeof(*t),&err);
         if(NULL == t){
             SpxLog2(p->log,SpxLogError,err,
@@ -170,6 +158,8 @@ err_t spx_threadpool_execute(struct spx_threadpool *p,
 
         if (0 == pthread_create(&(t->id), &attr, spx_pooling_thread_listening,t)) {
             p->currsize++;
+            t->next = p->busy;
+            p->busy = t;
         } else {
             pthread_mutex_destroy(&(t->mutex_locker));
             pthread_cond_destroy(&(t->run_locker));
@@ -177,9 +167,10 @@ err_t spx_threadpool_execute(struct spx_threadpool *p,
         }
         pthread_attr_destroy(&attr);
     } else {
-        p->idx--; //because the array begin with 0
-        struct spx_thread *t = p->threads[p->idx];
-        p->threads[p->idx] = NULL;
+        struct spx_thread *t = p->free;
+        p->free = t->next;
+        t->next = p->busy;
+        p->busy = t;
 
         t->func = func;
         t->arg = arg;

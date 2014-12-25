@@ -231,6 +231,8 @@ bool_t spx_string_exist(string_t s,char c);
 
 string_t spx_string_pack_i32(string_t s,const i32_t v,err_t *err);
 string_t spx_string_pack_int(string_t s,const int v,err_t *err);
+string_t spx_string_pack_i64(string_t s,const i64_t v,err_t *err);
+string_t spx_string_pack_u64(string_t s,const u64_t v,err_t *err);
 
 
 /* Low level functions exposed to the user API */

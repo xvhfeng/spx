@@ -43,11 +43,14 @@ struct spx_thread {
 	SpxThreadpoolExecuteDelegate *func;
 	struct spx_threadpool *parent;
 	void *arg;
+	struct spx_thread *next;
 } thread_t;
 
 struct spx_threadpool {
     SpxLogDelegate *log;
-    struct spx_thread **threads;
+//    struct spx_thread **threads;
+    struct spx_thread *busy;
+    struct spx_thread *free;
 	pthread_mutex_t mutex_locker;
 	pthread_cond_t run_locker;
 	pthread_cond_t full_locker;
@@ -56,7 +59,8 @@ struct spx_threadpool {
 	size_t totalsize;
     size_t currsize;
     size_t thread_stack_size;
-	int idx;
+    size_t waits;
+//	size_t idx;
 };
 
 struct spx_threadpool *spx_threadpool_new(SpxLogDelegate *log,
