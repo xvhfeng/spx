@@ -29,9 +29,7 @@
 
 struct spx_job_pool *g_spx_job_pool = NULL;
 
-
 void *spx_job_context_new(size_t idx,void *arg,err_t *err){
-
     struct spx_job_context_transport *jct = (struct spx_job_context_transport *) arg;
     struct spx_job_context *jc = NULL;
     jc = spx_alloc_alone(sizeof(*jc),err);

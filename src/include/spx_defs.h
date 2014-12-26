@@ -167,6 +167,8 @@ spx_private char *SpxLogDesc[] = {
 #define SpxMemIncr(p,s) (((char *) p) + (s))
 #define SpxMemDecr(p,s) (((char *) p) - (s))
 #define SpxPtrDecr(p1,p2) ((size_t ) (((char *) p1) - ((char *) p2)))
+#define SpxRightMovePointer(p,s) (((char *) p) + (s))
+#define SpxLeftMovePointer(p,s) (((char *) p) - (s))
 
 #define SpxSSet(o,p,v) o->p = (v)
 
