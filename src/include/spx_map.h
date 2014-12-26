@@ -79,13 +79,14 @@ extern "C" {
     err_t spx_map_insert(struct spx_map *map,\
             void *k,size_t kl,void *v,size_t vl);
 
-    err_t spx_map_get(struct spx_map *map,\
-            void *k,size_t kl,void **v,size_t *vl);
+    void *spx_map_get(struct spx_map *map,\
+            void *k,size_t kl,size_t *vl);
+
     bool_t spx_map_exist_key(struct spx_map *map,\
             void *k,size_t kl);
 
-    err_t spx_map_out(struct spx_map *map,\
-            void *k,size_t kl,void **v,size_t *vl);
+    void *spx_map_out(struct spx_map *map,\
+            void *k,size_t kl,size_t *vl);
 
     err_t spx_map_delete(struct spx_map *map,\
             void *k,size_t kl);

@@ -96,8 +96,8 @@ r1:
     return p;
 }
 
-err_t spx_properties_get(struct spx_properties *p,string_t name,void **v,size_t *size){
-    return spx_map_get(p->configurtion,name,spx_string_len(name),v,size);
+void *spx_properties_get(struct spx_properties *p,string_t name,size_t *size){
+    return spx_map_get(p->configurtion,name,spx_string_len(name),size);
 }
 
 err_t spx_properties_set(struct spx_properties *p,string_t name,void *value,size_t size){

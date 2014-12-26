@@ -148,16 +148,16 @@ r1:
     return err;
 }
 
-err_t spx_map_get(struct spx_map *map,\
-        void *k,size_t kl,void **v,size_t *vl){
-    err_t err = 0;
+void *spx_map_get(struct spx_map *map,\
+        void *k,size_t kl,size_t *vl){
     size_t hash = map->hash(k,kl);
     size_t idx = hash % map->slots_count;
     struct spx_map_slot *slot = map->slots + idx;
     struct spx_map_node *n = slot->header;
+    void *v = NULL;
     while(NULL != n){
        if(0 == map->cmper(k,kl,n->k,n->kl)){
-            *v = n->v;
+            v = n->v;
             if(NULL != vl) {
             *vl = n->vl;
             }
@@ -165,8 +165,7 @@ err_t spx_map_get(struct spx_map *map,\
        }
        n = n->next;
     }
-
-    return err;
+    return v;
 }
 
 bool_t spx_map_exist_key(struct spx_map *map,\
@@ -183,16 +182,17 @@ bool_t spx_map_exist_key(struct spx_map *map,\
     }
     return false;
 }
-err_t spx_map_out(struct spx_map *map,\
-        void *k,size_t kl,void **v,size_t *vl){
-    err_t err = 0;
+
+void *spx_map_out(struct spx_map *map,\
+        void *k,size_t kl,size_t *vl){
     size_t hash = map->hash(k,kl);
     size_t idx = hash % map->slots_count;
     struct spx_map_slot *slot = map->slots + idx;
     struct spx_map_node *n = slot->header;
+    void *v = NULL;
     while(NULL != n){
         if(0 == map->cmper(k,kl,n->k,n->kl)){
-            *v = n->v;
+            v = n->v;
             if(NULL != vl){
             *vl = n->vl;
             }
@@ -217,7 +217,7 @@ err_t spx_map_out(struct spx_map *map,\
         }
         n = n->next;
     }
-    return err;
+    return v;
 }
 
 err_t spx_map_delete(struct spx_map *map,\

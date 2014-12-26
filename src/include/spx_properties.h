@@ -48,7 +48,7 @@ extern "C" {
             SpxPropertyParserAfterDelegate *after,\
             err_t *err);
     struct spx_properties *spx_properties_parser(struct spx_properties *p,string_t filename,err_t *err);
-    err_t spx_properties_get(struct spx_properties *p,string_t name,void **v,size_t *size);
+    void *spx_properties_get(struct spx_properties *p,string_t name,size_t *size);
     err_t spx_properties_set(struct spx_properties *p,string_t name,void *value,size_t size);
     string_t spx_properties_tostring(struct spx_properties *p,err_t *err);
     void spx_properties_store(struct spx_properties *p,string_t filename,err_t *err);

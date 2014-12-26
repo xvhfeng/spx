@@ -62,7 +62,6 @@ err_t spx_job_context_free(void **arg){
 }
 
 void spx_job_context_clear(struct spx_job_context *jc){/*{{{*/
-
     if(NULL != jc->reader_body_ctx){
         SpxMsgFree(jc->reader_body_ctx);
     }
@@ -103,7 +102,6 @@ void spx_job_context_clear(struct spx_job_context *jc){/*{{{*/
 
 
 void spx_job_context_reset(struct spx_job_context *jc){
-
     if(NULL != jc->reader_header){
         SpxFree(jc->reader_header);
     }
