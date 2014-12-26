@@ -102,7 +102,7 @@ err_t spx_fixed_vector_push(struct spx_fixed_vector *vector,void *v){
     err_t rc = 0;
     struct spx_vector_node *node = NULL;
     if(NULL == vector->busy_header){
-        SpxLog1(vector->log,SpxLogError,"the busy vector is null.");
+        SpxLog1(vector->log,SpxLogError,"the busy node is null.");
         return ENOENT;
     }
     node = vector->busy_header;
@@ -151,6 +151,7 @@ void *spx_fixed_vector_pop(struct spx_fixed_vector *vector, err_t *err){
         vector->busysize ++;
     } else {
         v = NULL;
+        *err = ENOENT;
     }
     if(NULL == vector->header){
         vector->tail = NULL;

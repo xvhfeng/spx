@@ -31,12 +31,15 @@
 void spx_env_daemon() {/*{{{*/
         pid_t pid;
 
+        //no cmd
         if ((pid = fork()) != 0) {
             exit(0);
         }
 
+        //sid == pid and pgid == pid
         setsid();
 
+        //no open cmd again and cpid != sid
         if ((pid = fork()) != 0) {
             exit(0);
         }

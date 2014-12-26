@@ -249,14 +249,14 @@ err_t spx_write_context(SpxLogDelegate *log,int fd,struct spx_msg_context *ctx){
     struct spx_msg *hctx = spx_header_to_msg(ctx->header,SpxMsgHeaderSize,&err);
     if(NULL == hctx){
         SpxLog2(log,SpxLogError,err,
-                "alloc header ctx is fail.");
+                "header to header-ctx is fail.");
         return err;
     }
     err = spx_write_from_msg(fd,hctx,SpxMsgHeaderSize,&len);
     if(0 != err || len != SpxMsgHeaderSize){
         if(0 == err){
-            SpxLogFmt2(log,SpxLogError,err,
-                    "write header size:%lld,realsize:%lld.",
+            SpxLogFmt1(log,SpxLogError,
+                    "write header size:%d,realsize:%d.",
                     SpxMsgHeaderSize,len);
             err = EIO;
         }
