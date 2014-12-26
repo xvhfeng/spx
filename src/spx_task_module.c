@@ -35,7 +35,7 @@ void spx_task_module_receive_handler(struct ev_loop *loop,ev_io *w,int revents){
     size_t len = 0;
     err_t err= 0;
     err = spx_read_nb(w->fd,(byte_t *) &task,sizeof(task),&len);
-    if(0 != err || len != sizeof(task)){
+    if(0 != err){
         SpxLog2(tc->log,SpxLogError,err,\
                 "read the dio context is fail.");
         return;

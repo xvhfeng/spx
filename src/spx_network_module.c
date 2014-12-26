@@ -35,7 +35,7 @@ void spx_network_module_receive_handler(struct ev_loop *loop,ev_io *w,int revent
     struct spx_receive_context *rc = (struct spx_receive_context *) w;//magic,yeah
     err_t err= 0;
     err = spx_read_nb(w->fd,(byte_t *) &jcontext,sizeof(jcontext),&len);
-    if(0 != err || len != sizeof(jcontext)){
+    if(0 != err){
         SpxLog2(rc->log,SpxLogError,err,\
                 "read the nio context is fail."\
                 "forced push jcontext to pool.");
@@ -98,9 +98,9 @@ void spx_network_module_wakeup_handler(int revents,void *arg){
     }
     if(revents & EV_WRITE){
         size_t len = 0;
-        SpxLog1(jc->log,SpxLogDebug,"network is well.");
+        SpxLogFmt1(jc->log,SpxLogDebug,"wakeup thread:%d.",jc->tc->idx );
         err = spx_write_nb(jc->tc->pipe[1],(byte_t *) &jc,sizeof(jc),&len);
-        if (0 != err || sizeof(jc) != len) {
+        if (0 != err) {
             SpxLog1(jc->log,SpxLogError,\
                     "wake up network module is fail.");
             spx_job_pool_push(g_spx_job_pool,jc);

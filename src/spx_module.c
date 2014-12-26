@@ -56,8 +56,6 @@ spx_private void *spx_thread_context_new(size_t idx,void *arg,err_t *err){/*{{{*
     }
     tc->idx = idx;
     tc->loop = ev_loop_new(0);
-//    ev_set_timeout_collect_interval (tc->loop, 0.1);
-//    ev_set_io_collect_interval (tc->loop, 0.01);
 
     tc->log = log;
     if(-1 == pipe(tc->pipe)){
@@ -214,15 +212,3 @@ err_t spx_module_free(struct spx_module_context **mc){
 }
 
 
-/*
-err_t spx_module_dispatch(struct spx_thread_context *tc,
-        SpxDispatchTriggerDelegate *dispatcher, void *msg){
-    dispatcher(EV_WRITE,msg);
-//    ev_once(tc->loop,tc->pipe[1],EV_WRITE,-1,dispatcher,msg);
-    return 0;
-}
- */
-
-//void spx_module_dispatch(SpxDispatchTriggerDelegate *dispatcher,void *msg){
-//    dispatcher(EV_WRITE,msg);
-//}

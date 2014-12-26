@@ -53,8 +53,6 @@ void spx_notifier_module_receive_handler(struct ev_loop *loop,ev_io *w,int reven
             jc->client_ip,jc->fd,idx);
     struct spx_thread_context *tc = spx_get_thread(g_spx_network_module,idx);
     jc->tc = tc;
-//    err = spx_module_dispatch(tc,spx_network_module_wakeup_handler,jc);
-//    spx_network_module_wakeup_handler(EV_WRITE,jc);
     SpxModuleDispatch(spx_network_module_wakeup_handler,jc);
     return ;
 
@@ -70,7 +68,7 @@ void spx_notifier_module_wakeup_handler(int revents,void *arg){
         spx_job_pool_push(g_spx_job_pool,jc);
     }
     if(revents & EV_WRITE){
-        SpxLog1(jc->log,SpxLogDebug,"notify is well.");
+        SpxLogFmt1(jc->log,SpxLogDebug,"wakeup thread:%d.",jc->tc->idx );
 
         size_t len = 0;
         err = spx_write_nb(jc->tc->pipe[1],(byte_t *) &jc,sizeof(jc),&len);

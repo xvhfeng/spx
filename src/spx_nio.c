@@ -98,8 +98,11 @@ void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents){/*{{{*/
     if(EV_ERROR == revents){
         jcontext->err = 0 == errno ? EIO : errno;
         SpxLogFmt2(jcontext->log,SpxLogError,jcontext->err,
-                "nio-read is fail,fd:%d,ip:%s.",
-                jcontext->fd, jcontext->client_ip)
+                "nio-read is fail,fd:%d,ip:%s."
+                "proto:%d,version:%d.",
+                jcontext->fd, jcontext->client_ip,
+                jcontext->reader_header->protocol,
+                jcontext->reader_header->version);
         goto r1;
     }
 
@@ -107,32 +110,41 @@ void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents){/*{{{*/
         struct spx_msg *ctx = spx_msg_new(SpxMsgHeaderSize,&err);
         if(NULL == ctx){
             jcontext->err = err;
-            SpxLog2(jcontext->log,SpxLogError,err,\
-                    "alloc reader header msg is fail.");
+            SpxLogFmt2(jcontext->log,SpxLogError,err,\
+                    "alloc reader header msg is fail."
+                    "client ip:%s."
+                    "proto:%d,version:%d.",
+                    jcontext->client_ip,
+                    jcontext->reader_header->protocol,
+                    jcontext->reader_header->version);
             goto r1;
         }
         jcontext->reader_header_ctx = ctx;
         err = spx_read_to_msg_nb(watcher->fd,ctx,SpxMsgHeaderSize,&len);
         if(0 != err){
             jcontext->err = err;
-            SpxLogFmt2(jcontext->log,SpxLogError,err,\
-                    "read reader header msg is fail.client:%s.",\
-                    jcontext->client_ip);
-            goto r1;
-        }
-        if(SpxMsgHeaderSize != len){
-            jcontext->err = 0 == err ? EIO : err;
-            SpxLogFmt1(jcontext->log,SpxLogError,\
-                    "read reader header msg is fail,read len is %d.",\
-                    len);
+            SpxLogFmt2(jcontext->log,SpxLogError,err,
+                    "read header msg is fail."
+                    "read len is %d."
+                    "client ip:%s.",
+                    "proto:%d,version:%d.",
+                    len,
+                    jcontext->client_ip,
+                    jcontext->reader_header->protocol,
+                    jcontext->reader_header->version);
             goto r1;
         }
         spx_msg_seek(ctx,0,SpxMsgSeekSet);
         struct spx_msg_header *header = spx_msg_to_header(ctx,&err);
         if(NULL == header){
             jcontext->err = err;
-            SpxLog2(jcontext->log,SpxLogError,err,\
-                    "parser msg to header is fail.");
+            SpxLogFmt2(jcontext->log,SpxLogError,err,
+                    "convert msg-ctx to header is fail."
+                    "client ip:%s.",
+                    "proto:%d,version:%d.",
+                    jcontext->client_ip,
+                    jcontext->reader_header->protocol,
+                    jcontext->reader_header->version);
             goto r1;
         }
         jcontext->reader_header = header;
@@ -143,9 +155,14 @@ void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents){/*{{{*/
             && !jcontext->reader_header_validator(jcontext)){
         // must send msg to client
         jcontext->err = EBADHEADER;
-        SpxLogFmt1(jcontext->log,SpxLogError,\
-                "validate header is fail.client:%s.",\
-                jcontext->client_ip);
+        SpxLogFmt1(jcontext->log,SpxLogError,
+                "validate header is fail."
+                "and push jc force."
+                "client:%s."
+                "proto:%d,version:%d.",
+                jcontext->client_ip,
+                jcontext->reader_header->protocol,
+                jcontext->reader_header->version);
         if(NULL != jcontext->reader_header_validator_fail){
             jcontext->reader_header_validator_fail(jcontext);
         }
@@ -160,8 +177,11 @@ void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents){/*{{{*/
     if(SpxNioLifeCycleBody == jcontext->lifecycle) {
         jcontext->reader_body_process(loop,watcher->fd, jcontext);
         if(0 != jcontext->err){
-            SpxLog2(jcontext->log,SpxLogError,jcontext->err,\
-                    "recv the body buffer is fail.");
+            SpxLogFmt2(jcontext->log,SpxLogError,jcontext->err,\
+                    "deal body from client:%s by proto:%d is fail."
+                    "and push jc to pool forcly.",
+                jcontext->client_ip,
+                jcontext->reader_header->protocol);
             goto r1;
         }
     }
@@ -185,8 +205,11 @@ void spx_nio_writer(struct ev_loop *loop,ev_io *watcher,int revents){/*{{{*/
     if(EV_ERROR == revents){
         jcontext->err = 0 == errno ? EIO : errno;
         SpxLogFmt2(jcontext->log,SpxLogError,jcontext->err,
-                "nio-read is fail,fd:%d,ip:%s.",
-                jcontext->fd, jcontext->client_ip)
+                "nio-read is fail,fd:%d,ip:%s."
+                "proto:%d,version:%d.",
+                jcontext->fd, jcontext->client_ip,
+                jcontext->writer_header->protocol,
+                jcontext->writer_header->version);
         goto r1;
     }
 
@@ -194,168 +217,230 @@ void spx_nio_writer(struct ev_loop *loop,ev_io *watcher,int revents){/*{{{*/
         struct spx_msg *ctx = spx_header_to_msg(jcontext->writer_header,SpxMsgHeaderSize,&err);
         if(NULL == ctx){
             jcontext->err = err;
-            SpxLog2(jcontext->log,SpxLogError,err,\
-                    "convert writer header to msg ctx is fail."\
-                    "and forced push jcontext to pool.");
+            SpxLogFmt2(jcontext->log,SpxLogError,err,
+                    "convert header to msg ctx is fail."
+                    "proto:%d,version:%d."
+                    "and forced push jcontext to pool.",
+                    jcontext->writer_header->protocol,
+                    jcontext->writer_header->version);
             goto r1;
         }
         jcontext->writer_header_ctx = ctx;
         err =  spx_write_from_msg_nb(watcher->fd,ctx,SpxMsgHeaderSize,&len);
         if(0 != err){
             jcontext->err = err;
-            SpxLogFmt2(jcontext->log,SpxLogError,err,\
-                    "write writer header is fail.client:&s."\
-                    "and forced push jcontext to pool.",\
-                    jcontext->client_ip);
-
-            goto r1;
-        }
-
-        if(SpxMsgHeaderSize != len){
-            jcontext->err = EIO;
-            SpxLogFmt2(jcontext->log,SpxLogError,err,\
-                    "write writer header to client:%s is fail.len:%d."\
-                    "and forced push jcontext to pool.",\
-                    jcontext->client_ip,len);
+            SpxLogFmt2(jcontext->log,SpxLogError,err,
+                    "write writer header is fail.client:%s."
+                    "len:%d."
+                    "proto:%d,version:%d."
+                    "and forced push jcontext to pool.",
+                    jcontext->client_ip,len,
+                    jcontext->writer_header->protocol,
+                    jcontext->writer_header->version);
             goto r1;
         }
         jcontext->lifecycle = SpxNioLifeCycleBody;
     }
 
-    len = 0;
     if(SpxNioLifeCycleBody == jcontext->lifecycle) {
         jcontext->writer_body_process(loop,watcher->fd,jcontext);
         if(0 != jcontext->err){
             SpxLogFmt2(jcontext->log,SpxLogError,jcontext->err,\
-                    "call write body handler to client:%s is fail."\
-                    "and forced push jcontext to pool.",\
-                    jcontext->client_ip);
+                    "call write body handler to client:%s is fail."
+                    "proto:%d,version:%d."
+                    "and forced push jcontext to pool.",
+                    jcontext->client_ip,
+                    jcontext->writer_header->protocol,
+                    jcontext->writer_header->version);
             goto r1;
         }
     }
     return;
 r1:
     spx_job_pool_push(g_spx_job_pool,jcontext);
-
 }/*}}}*/
 
-void spx_nio_reader_body_handler(struct ev_loop *loop,int fd,struct spx_job_context *jcontext){/*{{{*/
-
-    if(0 == fd || NULL == jcontext){
+void spx_nio_reader_body_handler(struct ev_loop *loop,int fd,struct spx_job_context *jc){/*{{{*/
+    if(0 == fd || NULL == jc){
         return;
     }
-    if(SpxNioLifeCycleBody != jcontext->lifecycle){
-        SpxLog1(jcontext->log,SpxLogError,\
-                "the jcontext lifecycle is not body."\
-                "and forced push jcontext to pool.");
+    if(SpxNioLifeCycleBody != jc->lifecycle){
+        jc->err = ENXIO;
+        SpxLogFmt1(jc->log,SpxLogError,
+                "read body is fail and lifecycle is not body,fd:%d,ip:%s."
+                "proto:%d,version:%d.",
+                jc->fd, jc->client_ip,
+                jc->reader_header->protocol,
+                jc->reader_header->version);
         goto r1;
     }
 
-    struct spx_msg_header *header = jcontext->reader_header;
-    if(NULL == header || 0 == header->bodylen){
-        SpxLog1(jcontext->log,SpxLogWarn,\
-                "the jcontext lifecycle is not body."\
-                "and the body length is 0 then no to be read.");
+    struct spx_msg_header *header = jc->reader_header;
+    if(NULL == header){
+        jc->err = ENXIO;
+        SpxLogFmt1(jc->log,SpxLogError,
+                "reader header is null."
+                "client:%s."
+                "proto:%d,version:%d.",
+                jc->client_ip,
+                jc->reader_header->protocol,
+                jc->reader_header->version);
+        goto r1;
+    }
+    if(0 == header->bodylen){
+        jc->err = 0;
+        SpxLogFmt1(jc->log,SpxLogError,
+                "body len is 0 and no need read."
+                "client:%s."
+                "proto:%d,version:%d.",
+                jc->client_ip,
+                jc->reader_header->protocol,
+                jc->reader_header->version);
         return;
     }
 
     size_t len = 0;
-    if(jcontext->is_lazy_recv){
-        struct spx_msg *ctx = spx_msg_new(header->offset,&(jcontext->err));
+    if(jc->is_lazy_recv){
+        struct spx_msg *ctx = spx_msg_new(header->offset,&(jc->err));
         if(NULL == ctx){
-            SpxLogFmt2(jcontext->log,SpxLogError,jcontext->err,\
-                    "alloc body buffer is fail.client:%s.",\
-                    jcontext->client_ip);
+            SpxLogFmt2(jc->log,SpxLogError,jc->err,
+                    "alloc body buffer is fail."
+                    "client:%s."
+                    "proto:%d,version:%d.",
+                    jc->client_ip,
+                    jc->reader_header->protocol,
+                    jc->reader_header->version);
             goto r1;
         }
-        jcontext->reader_body_ctx = ctx;
-        jcontext->err = spx_read_to_msg_nb(fd,ctx,header->offset,&len);
-        if(header->offset != len){
-            jcontext->err = ENOENT;
-            SpxLogFmt2(jcontext->log,SpxLogError,jcontext->err,\
+        jc->reader_body_ctx = ctx;
+        jc->err = spx_read_to_msg_nb(fd,ctx,header->offset,&len);
+        if(0 != jc->err){
+            SpxLogFmt2(jc->log,SpxLogError,jc->err,\
                     "reader body is fail.bodylen:%lld,real body len:%lld.",
-                    header->offset,len);
+                    "client:%s."
+                    "proto:%d,version:%d.",
+                    header->offset,len,
+                    jc->client_ip,
+                    jc->reader_header->protocol,
+                    jc->reader_header->version);
             goto r1;
         }
     } else {
-        struct spx_msg *ctx = spx_msg_new(header->bodylen,&(jcontext->err));
+        struct spx_msg *ctx = spx_msg_new(header->bodylen,&(jc->err));
         if(NULL == ctx){
-            SpxLogFmt2(jcontext->log,SpxLogError,jcontext->err,\
-                    "alloc body buffer is fail.client:%s.",\
-                    jcontext->client_ip);
+            SpxLogFmt2(jc->log,SpxLogError,jc->err,
+                    "alloc body buffer is fail.client:%s.",
+                    "proto:%d,version:%d.",
+                    jc->client_ip,
+                    jc->reader_header->protocol,
+                    jc->reader_header->version);
             goto r1;
         }
-        jcontext->reader_body_ctx = ctx;
-        jcontext->err = spx_read_to_msg_nb(fd,ctx,header->bodylen,&len);
-        if(header->bodylen != len){
-            jcontext->err = ENOENT;
-            SpxLogFmt2(jcontext->log,SpxLogError,jcontext->err,\
-                    "reader body is fail.bodylen:%lld,real body len:%lld.",
-                    header->bodylen,len);
+        jc->reader_body_ctx = ctx;
+        jc->err = spx_read_to_msg_nb(fd,ctx,header->bodylen,&len);
+        if(0 != jc->err){
+            SpxLogFmt2(jc->log,SpxLogError,jc->err,
+                    "reader body is fail.bodylen:%lld,real body len:%lld."
+                    "client:%s."
+                    "proto:%d,version:%d.",
+                    header->bodylen,len,
+                    jc->client_ip,
+                    jc->reader_header->protocol,
+                    jc->reader_header->version);
             goto r1;
         }
     }
     return;
 r1:
-    spx_job_pool_push(g_spx_job_pool,jcontext);
+    spx_job_pool_push(g_spx_job_pool,jc);
 }/*}}}*/
 
-void spx_nio_writer_body_handler(struct ev_loop *loop,int fd,struct spx_job_context *jcontext){/*{{{*/
-    if(0 == fd || NULL == jcontext){
+void spx_nio_writer_body_handler(struct ev_loop *loop,int fd,struct spx_job_context *jc){/*{{{*/
+    if(0 == fd || NULL == jc){
         return;
     }
-    if(SpxNioLifeCycleBody != jcontext->lifecycle){
-        SpxLog1(jcontext->log,SpxLogError,\
-                "the jcontext lifecycle is not body."\
-                "and forced push jcontext to pool.");
+    if(SpxNioLifeCycleBody != jc->lifecycle){
+        jc->err = ENXIO;
+        SpxLogFmt1(jc->log,SpxLogError,
+                "write body is fail and lifecycle is not body,fd:%d,ip:%s."
+                "proto:%d,version:%d.",
+                jc->fd, jc->client_ip,
+                jc->writer_header->protocol,
+                jc->writer_header->version);
         goto r1;
     }
 
-    if(NULL == jcontext->writer_header || 0 == jcontext->writer_header->bodylen){
-        SpxLog1(jcontext->log,SpxLogWarn,\
-                "the jcontext lifecycle is not body."\
-                "and the body length is 0 then no to be send.");
+    if(NULL == jc->writer_header ) {
+        jc->err = ENXIO;
+        SpxLogFmt1(jc->log,SpxLogError,
+                "header of write is null."
+                "client ip:%s."
+                "proto:%d,version:%d.",
+                jc->client_ip,
+                jc->writer_header->protocol,
+                jc->writer_header->version);
+        goto r1;
+    }
+    if( 0 == jc->writer_header->bodylen){
+        SpxLogFmt1(jc->log,SpxLogWarn,\
+                "the body length is 0 then no to be send."
+                "client ip:%s."
+                "proto:%d,version:%d.",
+                jc->client_ip,
+                jc->writer_header->protocol,
+                jc->writer_header->version);
         return;
     }
 
     size_t len = 0;
-    if(jcontext->is_sendfile){
-        if(NULL != jcontext->writer_body_ctx && 0 != jcontext->writer_header->offset) {//no metedata
-            jcontext->err =  spx_write_from_msg_nb(fd,jcontext->writer_body_ctx,\
-                    jcontext->writer_header->offset,&len);
-            if(0 != jcontext->err || jcontext->writer_header->offset != len){
-                SpxLogFmt2(jcontext->log,SpxLogError,jcontext->err,\
-                        "write  header to client :%s is fail.len:%d."\
-                        "and forced push jcontext to pool.",\
-                        jcontext->client_ip,len);
+    if(jc->is_sendfile){
+        if(NULL != jc->writer_body_ctx && 0 != jc->writer_header->offset) {//no metedata
+            jc->err =  spx_write_from_msg_nb(fd,jc->writer_body_ctx,\
+                    jc->writer_header->offset,&len);
+            if(0 != jc->err || jc->writer_header->offset != len){
+                SpxLogFmt2(jc->log,SpxLogError,jc->err,\
+                        "write  header to client :%s is fail.len:%d."
+                        "proto:%d,version:%d."
+                        "and forced push jc to pool.",
+                        jc->client_ip,len,
+                        jc->writer_header->protocol,
+                        jc->writer_header->version);
                 goto r1;
             }
         }
         size_t sendbytes = 0;
-        jcontext->err = spx_sendfile(jcontext->fd,jcontext->sendfile_fd,\
-                jcontext->sendfile_begin,jcontext->sendfile_size,&sendbytes);
-        if(0 != jcontext->err || jcontext->sendfile_size != sendbytes){
-            SpxLogFmt2(jcontext->log,SpxLogError,jcontext->err,\
+        jc->err = spx_sendfile(jc->fd,jc->sendfile_fd,\
+                jc->sendfile_begin,jc->sendfile_size,&sendbytes);
+        if(0 != jc->err || jc->sendfile_size != sendbytes){
+            SpxLogFmt2(jc->log,SpxLogError,jc->err,\
                     "sndfile size:%lld is no equal sendbytes:%lld."
-                    "and forced push jcontext to pool.",
-                    jcontext->sendfile_size,sendbytes);
+                    "client ip:%s."
+                    "proto:%d,version:%d."
+                    "and forced push jc to pool.",
+                    jc->sendfile_size,sendbytes,
+                    jc->client_ip,
+                    jc->writer_header->protocol,
+                    jc->writer_header->version);
             goto r1;
         }
     }else {
-        jcontext->err =  spx_write_from_msg_nb(fd,jcontext->writer_body_ctx,\
-                jcontext->writer_header->bodylen,&len);
-        if(0 != jcontext->err || jcontext->writer_header->bodylen != len){
-            SpxLogFmt2(jcontext->log,SpxLogError,jcontext->err,\
+        jc->err =  spx_write_from_msg_nb(fd,jc->writer_body_ctx,\
+                jc->writer_header->bodylen,&len);
+        if(0 != jc->err || jc->writer_header->bodylen != len){
+            SpxLogFmt2(jc->log,SpxLogError,jc->err,\
                     "write  header to client :%s is fail.len:%d."\
-                    "and forced push jcontext to pool.",\
-                    jcontext->client_ip,len);
+                    "proto:%d,version:%d."
+                    "and forced push jc to pool.",\
+                    jc->client_ip,len,
+                    jc->writer_header->protocol,
+                    jc->writer_header->version);
             goto r1;
         }
     }
-    jcontext->lifecycle = SpxNioLifeCycleNormal;
+    jc->lifecycle = SpxNioLifeCycleNormal;
     return;
 r1:
-    spx_job_pool_push(g_spx_job_pool,jcontext);
+    spx_job_pool_push(g_spx_job_pool,jc);
 }/*}}}*/
 
 
@@ -388,15 +473,6 @@ void spx_nio_writer_faster(struct ev_loop *loop,int fd,struct spx_job_context *j
         err =  spx_write_from_msg_nb(fd,ctx,SpxMsgHeaderSize,&len);
         if(0 != err){
             jc->err = err;
-            SpxLogFmt2(jc->log,SpxLogError,err,\
-                    "write writer header is fail.client:&s."\
-                    "and forced push jc to pool.",\
-                    jc->client_ip);
-            goto r1;
-        }
-
-        if(SpxMsgHeaderSize != len){
-            jc->err = EIO;
             SpxLogFmt2(jc->log,SpxLogError,err,\
                     "write writer header to client:%s is fail.len:%d."\
                     "and forced push jc to pool.",\
@@ -438,7 +514,7 @@ void spx_nio_writer_body_faster_handler(struct ev_loop *loop,int fd,struct spx_j
     if(jc->is_sendfile){
         jc->err =  spx_write_from_msg_nb(fd,jc->writer_body_ctx,\
                 jc->writer_header->offset,&len);
-        if(0 != jc->err || jc->writer_header->offset != len){
+        if(0 != jc->err){
             SpxLogFmt2(jc->log,SpxLogError,jc->err,\
                     "write  header to client :%s is fail.len:%d."\
                     "and forced push jc to pool.",\
@@ -448,7 +524,7 @@ void spx_nio_writer_body_faster_handler(struct ev_loop *loop,int fd,struct spx_j
         size_t sendbytes = 0;
         jc->err = spx_sendfile(jc->fd,jc->sendfile_fd,\
                 jc->sendfile_begin,jc->sendfile_size,&sendbytes);
-        if(0 != jc->err || jc->sendfile_size != sendbytes){
+        if(0 != jc->err){
             SpxLogFmt2(jc->log,SpxLogError,jc->err,\
                     "sndfile size:%lld is no equal sendbytes:%lld."
                     "and forced push jc to pool.",\
@@ -458,7 +534,7 @@ void spx_nio_writer_body_faster_handler(struct ev_loop *loop,int fd,struct spx_j
     }else {
         jc->err =  spx_write_from_msg_nb(fd,jc->writer_body_ctx,\
                 jc->writer_header->bodylen,&len);
-        if(0 != jc->err || jc->writer_header->bodylen != len){
+        if(0 != jc->err){
             SpxLogFmt2(jc->log,SpxLogError,jc->err,\
                     "write  header to client :%s is fail.len:%d."\
                     "and forced push jc to pool.",\

@@ -64,7 +64,7 @@ spx_private void *spx_periodic_run_async(void *arg){/*{{{*/
         timespan.tv_sec = t->sec;
         timespan.tv_usec = t->usec;
         pthread_testcancel();
-        t->err = (select(0,NULL,NULL,NULL,&timespan));
+        t->err = select(0,NULL,NULL,NULL,&timespan);
         pthread_testcancel();
         if(0 > t->err) {
             SpxLog2(t->log,SpxLogError,t->err,
