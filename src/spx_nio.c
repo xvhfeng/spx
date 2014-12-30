@@ -98,11 +98,8 @@ void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents){/*{{{*/
     if(EV_ERROR == revents){
         jcontext->err = 0 == errno ? EIO : errno;
         SpxLogFmt2(jcontext->log,SpxLogError,jcontext->err,
-                "nio-read is fail,fd:%d,ip:%s."
-                "proto:%d,version:%d.",
-                jcontext->fd, jcontext->client_ip,
-                jcontext->reader_header->protocol,
-                jcontext->reader_header->version);
+                "nio-read is fail,fd:%d,ip:%s.",
+                jcontext->fd, jcontext->client_ip);
         goto r1;
     }
 
@@ -112,11 +109,8 @@ void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents){/*{{{*/
             jcontext->err = err;
             SpxLogFmt2(jcontext->log,SpxLogError,err,\
                     "alloc reader header msg is fail."
-                    "client ip:%s."
-                    "proto:%d,version:%d.",
-                    jcontext->client_ip,
-                    jcontext->reader_header->protocol,
-                    jcontext->reader_header->version);
+                    "client ip:%s.",
+                    jcontext->client_ip);
             goto r1;
         }
         jcontext->reader_header_ctx = ctx;
@@ -127,11 +121,8 @@ void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents){/*{{{*/
                     "read header msg is fail."
                     "read len is %d."
                     "client ip:%s.",
-                    "proto:%d,version:%d.",
                     len,
-                    jcontext->client_ip,
-                    jcontext->reader_header->protocol,
-                    jcontext->reader_header->version);
+                    jcontext->client_ip);
             goto r1;
         }
         spx_msg_seek(ctx,0,SpxMsgSeekSet);
@@ -141,10 +132,7 @@ void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents){/*{{{*/
             SpxLogFmt2(jcontext->log,SpxLogError,err,
                     "convert msg-ctx to header is fail."
                     "client ip:%s.",
-                    "proto:%d,version:%d.",
-                    jcontext->client_ip,
-                    jcontext->reader_header->protocol,
-                    jcontext->reader_header->version);
+                    jcontext->client_ip);
             goto r1;
         }
         jcontext->reader_header = header;
@@ -267,11 +255,8 @@ void spx_nio_reader_body_handler(struct ev_loop *loop,int fd,struct spx_job_cont
     if(SpxNioLifeCycleBody != jc->lifecycle){
         jc->err = ENXIO;
         SpxLogFmt1(jc->log,SpxLogError,
-                "read body is fail and lifecycle is not body,fd:%d,ip:%s."
-                "proto:%d,version:%d.",
-                jc->fd, jc->client_ip,
-                jc->reader_header->protocol,
-                jc->reader_header->version);
+                "read body is fail and lifecycle is not body,fd:%d,ip:%s.",
+                jc->fd, jc->client_ip);
         goto r1;
     }
 
@@ -280,11 +265,8 @@ void spx_nio_reader_body_handler(struct ev_loop *loop,int fd,struct spx_job_cont
         jc->err = ENXIO;
         SpxLogFmt1(jc->log,SpxLogError,
                 "reader header is null."
-                "client:%s."
-                "proto:%d,version:%d.",
-                jc->client_ip,
-                jc->reader_header->protocol,
-                jc->reader_header->version);
+                "client:%s.",
+                jc->client_ip);
         goto r1;
     }
     if(0 == header->bodylen){
@@ -362,11 +344,8 @@ void spx_nio_writer_body_handler(struct ev_loop *loop,int fd,struct spx_job_cont
     if(SpxNioLifeCycleBody != jc->lifecycle){
         jc->err = ENXIO;
         SpxLogFmt1(jc->log,SpxLogError,
-                "write body is fail and lifecycle is not body,fd:%d,ip:%s."
-                "proto:%d,version:%d.",
-                jc->fd, jc->client_ip,
-                jc->writer_header->protocol,
-                jc->writer_header->version);
+                "write body is fail and lifecycle is not body,fd:%d,ip:%s.",
+                jc->fd, jc->client_ip);
         goto r1;
     }
 
@@ -374,11 +353,8 @@ void spx_nio_writer_body_handler(struct ev_loop *loop,int fd,struct spx_job_cont
         jc->err = ENXIO;
         SpxLogFmt1(jc->log,SpxLogError,
                 "header of write is null."
-                "client ip:%s."
-                "proto:%d,version:%d.",
-                jc->client_ip,
-                jc->writer_header->protocol,
-                jc->writer_header->version);
+                "client ip:%s.",
+                jc->client_ip);
         goto r1;
     }
     if( 0 == jc->writer_header->bodylen){
