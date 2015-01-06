@@ -24,6 +24,10 @@ struct sds{
     char buf[];
 };
 
+spx_private spx_inline size_t spx_string_rlen(const string_t s) {
+    return strlen(s);
+}
+
 spx_private spx_inline size_t spx_string_len(const string_t s) {
     struct sds *sh = (void*)(s-sizeof *sh);
     return sh->len;
