@@ -170,11 +170,13 @@ void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents){/*{{{*/
                     "and push jc to pool forcly.",
                 jcontext->client_ip,
                 jcontext->reader_header->protocol);
-            goto r1;
+            return;
+//            goto r1;
         }
     }
     return;
 r1:
+//    return;
     spx_job_pool_push(g_spx_job_pool,jcontext);
 }/*}}}*/
 
@@ -240,11 +242,13 @@ void spx_nio_writer(struct ev_loop *loop,ev_io *watcher,int revents){/*{{{*/
                     jcontext->client_ip,
                     jcontext->writer_header->protocol,
                     jcontext->writer_header->version);
-            goto r1;
+            return;
+//            goto r1;
         }
     }
     return;
 r1:
+//    return;
     spx_job_pool_push(g_spx_job_pool,jcontext);
 }/*}}}*/
 
@@ -334,7 +338,8 @@ void spx_nio_reader_body_handler(struct ev_loop *loop,int fd,struct spx_job_cont
     }
     return;
 r1:
-    spx_job_pool_push(g_spx_job_pool,jc);
+    return;
+//    spx_job_pool_push(g_spx_job_pool,jc);
 }/*}}}*/
 
 void spx_nio_writer_body_handler(struct ev_loop *loop,int fd,struct spx_job_context *jc){/*{{{*/
@@ -416,7 +421,8 @@ void spx_nio_writer_body_handler(struct ev_loop *loop,int fd,struct spx_job_cont
     jc->lifecycle = SpxNioLifeCycleNormal;
     return;
 r1:
-    spx_job_pool_push(g_spx_job_pool,jc);
+    return;
+//    spx_job_pool_push(g_spx_job_pool,jc);
 }/*}}}*/
 
 
@@ -472,7 +478,8 @@ void spx_nio_writer_faster(struct ev_loop *loop,int fd,struct spx_job_context *j
     }
     return;
 r1:
-    spx_job_pool_push(g_spx_job_pool,jc);
+    return;
+//    spx_job_pool_push(g_spx_job_pool,jc);
 
 }/*}}}*/
 
@@ -521,6 +528,7 @@ void spx_nio_writer_body_faster_handler(struct ev_loop *loop,int fd,struct spx_j
     jc->lifecycle = SpxNioLifeCycleNormal;
     return;
 r1:
-    spx_job_pool_push(g_spx_job_pool,jc);
+    return;
+//    spx_job_pool_push(g_spx_job_pool,jc);
 }/*}}}*/
 
