@@ -208,6 +208,8 @@ err_t spx_sendfile(int sock,int fd,off_t offset,size_t size,size_t *len){/*{{{*/
     *len = 0;
 #ifdef SpxMac
     while(true){
+        //want is a in/out paras means want to send length when in and sended
+        //length when return
         if(0 != sendfile(fd,sock,offset_new,&want,NULL, 0)){
             if(EAGAIN == errno || EWOULDBLOCK == errno || EINTR == errno){
                 SpxErrReset;
@@ -216,8 +218,8 @@ err_t spx_sendfile(int sock,int fd,off_t offset,size_t size,size_t *len){/*{{{*/
                     err = 0;
                     break;
                 }
-                offset_new = offset + want;
-                want = size - offset_new;
+                offset_new += want;
+                want = size - *len;
                 continue;
             }else {
                 err = errno;
@@ -229,8 +231,8 @@ err_t spx_sendfile(int sock,int fd,off_t offset,size_t size,size_t *len){/*{{{*/
             err = 0;
             break;
         }
-        offset_new += sendbytes;
-        want = size - sendbytes;
+        offset_new += want;
+        want = size - *len;
     }
 
 #endif
@@ -253,7 +255,7 @@ err_t spx_sendfile(int sock,int fd,off_t offset,size_t size,size_t *len){/*{{{*/
             break;
         }
         offset_new += sendbytes;
-        want = size - sendbytes;
+        want = size - *len;
     }
 #endif
     if(0 != err) return err;
