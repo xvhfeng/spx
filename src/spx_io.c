@@ -255,7 +255,7 @@ err_t spx_sendfile(int sock,int fd,off_t offset,size_t size,size_t *len){/*{{{*/
         if(*len == size){
             break;
         }
-        offset_new = *len;
+        offset_new = offset + *len;
         want = size - *len;
     }
 #endif
