@@ -168,15 +168,15 @@ void spx_nio_reader(struct ev_loop *loop,ev_io *watcher,int revents){/*{{{*/
             SpxLogFmt2(jcontext->log,SpxLogError,jcontext->err,\
                     "deal body from client:%s by proto:%d is fail."
                     "and push jc to pool forcly.",
-                jcontext->client_ip,
-                jcontext->reader_header->protocol);
+                    jcontext->client_ip,
+                    jcontext->reader_header->protocol);
             return;
-//            goto r1;
+            //            goto r1;
         }
     }
     return;
 r1:
-//    return;
+    //    return;
     spx_job_pool_push(g_spx_job_pool,jcontext);
 }/*}}}*/
 
@@ -243,12 +243,12 @@ void spx_nio_writer(struct ev_loop *loop,ev_io *watcher,int revents){/*{{{*/
                     jcontext->writer_header->protocol,
                     jcontext->writer_header->version);
             return;
-//            goto r1;
+            //            goto r1;
         }
     }
     return;
 r1:
-//    return;
+    //    return;
     spx_job_pool_push(g_spx_job_pool,jcontext);
 }/*}}}*/
 
@@ -339,7 +339,7 @@ void spx_nio_reader_body_handler(struct ev_loop *loop,int fd,struct spx_job_cont
     return;
 r1:
     return;
-//    spx_job_pool_push(g_spx_job_pool,jc);
+    //    spx_job_pool_push(g_spx_job_pool,jc);
 }/*}}}*/
 
 void spx_nio_writer_body_handler(struct ev_loop *loop,int fd,struct spx_job_context *jc){/*{{{*/
@@ -394,7 +394,7 @@ void spx_nio_writer_body_handler(struct ev_loop *loop,int fd,struct spx_job_cont
                 jc->sendfile_begin,jc->sendfile_size,&sendbytes);
         if(0 != jc->err || jc->sendfile_size != sendbytes){
             SpxLogFmt2(jc->log,SpxLogError,jc->err,\
-                    "sndfile size:%lld is no equal sendbytes:%lld."
+                    "sendfile size:%lld is no equal sendbytes:%lld."
                     "client ip:%s."
                     "proto:%d,version:%d."
                     "and forced push jc to pool.",
@@ -422,7 +422,7 @@ void spx_nio_writer_body_handler(struct ev_loop *loop,int fd,struct spx_job_cont
     return;
 r1:
     return;
-//    spx_job_pool_push(g_spx_job_pool,jc);
+    //    spx_job_pool_push(g_spx_job_pool,jc);
 }/*}}}*/
 
 
@@ -479,7 +479,7 @@ void spx_nio_writer_faster(struct ev_loop *loop,int fd,struct spx_job_context *j
     return;
 r1:
     return;
-//    spx_job_pool_push(g_spx_job_pool,jc);
+    //    spx_job_pool_push(g_spx_job_pool,jc);
 
 }/*}}}*/
 
@@ -529,6 +529,6 @@ void spx_nio_writer_body_faster_handler(struct ev_loop *loop,int fd,struct spx_j
     return;
 r1:
     return;
-//    spx_job_pool_push(g_spx_job_pool,jc);
+    //    spx_job_pool_push(g_spx_job_pool,jc);
 }/*}}}*/
 

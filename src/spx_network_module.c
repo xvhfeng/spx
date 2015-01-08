@@ -62,13 +62,20 @@ void spx_network_module_receive_handler(struct ev_loop *loop,ev_io *w,int revent
                                     break;
                                 }
         case SpxNioMooreResponse:{
-                                     err = spx_nio_regedit_writer(loop,jcontext->fd,jcontext);
-                                     if(0 != err){
-                                         SpxLog2(jcontext->log,SpxLogError,err,\
-                                                 "regedit write event for resopnse is fail."\
-                                                 "and forced push jcontext to pool.");
-                                         goto r1;
-                                     }
+
+                                     //notice:donot use the loop for send file
+                                     //and send data impl
+                                     //so donot deal the err by call
+                                     //writer-faster functions
+                                     /*
+                                        jcontext->lifecycle = SpxNioLifeCycleHeader;
+                                        ev_io_init(&(jcontext->watcher),jcontext->nio_writer,jcontext->fd,EV_WRITE);
+                                        jcontext->watcher.data = jcontext;
+                                        spx_nio_writer(loop,&(jcontext->watcher),EV_WRITE);
+                                        */
+                                     //                                     err = spx_nio_regedit_writer(loop,jcontext->fd,jcontext);
+                                     jcontext->lifecycle = SpxNioLifeCycleHeader;
+                                     spx_nio_writer_faster(loop,jcontext->fd,jcontext);
                                      break;
                                  }
         case SpxNioMooreNormal:
