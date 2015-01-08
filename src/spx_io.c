@@ -229,8 +229,8 @@ err_t spx_sendfile(int sock,int fd,off_t offset,size_t size,size_t *len){/*{{{*/
             err = 0;
             break;
         }
-        offset_new = offset + want;
-        want = size - offset_new;
+        offset_new += sendbytes;
+        want = size - sendbytes;
     }
 
 #endif
@@ -253,7 +253,7 @@ err_t spx_sendfile(int sock,int fd,off_t offset,size_t size,size_t *len){/*{{{*/
             break;
         }
         offset_new += sendbytes;
-        want = size - offset_new;
+        want = size - sendbytes;
     }
 #endif
     if(0 != err) return err;
