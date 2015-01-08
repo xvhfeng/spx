@@ -103,7 +103,8 @@ err_t spx_read_nb(int fd,byte_t *buf,const size_t size,size_t *len){/*{{{*/
             err = errno;
             break;
         }else if(0 == rc){
-            break;
+            continue;
+//            break;
         }else {
             *len += rc;
         }
@@ -254,7 +255,7 @@ err_t spx_sendfile(int sock,int fd,off_t offset,size_t size,size_t *len){/*{{{*/
         if(*len == size){
             break;
         }
-        offset_new += sendbytes;
+        offset_new = *len;
         want = size - *len;
     }
 #endif
