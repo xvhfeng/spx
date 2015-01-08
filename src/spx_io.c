@@ -103,8 +103,7 @@ err_t spx_read_nb(int fd,byte_t *buf,const size_t size,size_t *len){/*{{{*/
             err = errno;
             break;
         }else if(0 == rc){
-            continue;
-//            break;
+            break;
         }else {
             *len += rc;
         }
