@@ -33,15 +33,15 @@
  * this software or lib may be copied only under the terms of the gnu general
  * public license v3, which may be found in the source kit.
  *
- *       Filename:  spx_timer.h
- *        Created:  2014/11/08 09时32分51秒
- *         Author:  Seapeak.Xu (seapeak.cnblog.com), xvhfeng@gmail.com
+ *       Filename:  SpxString.h
+ *        Created:  2015年01月19日 12时43分13秒
+ *         Author:  Seapeak.Xu (www.94geek.com), xvhfeng@gmail.com
  *        Company:  Tencent Literature
  *         Remark:
  *
  ****************************************************************************/
-#ifndef _SPX_TIMER_H_
-#define _SPX_TIMER_H_
+#ifndef _SPXSTRING_H_
+#define _SPXSTRING_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -50,56 +50,70 @@ extern "C" {
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "spx_types.h"
+#include "SpxTypes.h"
+#include "SpxObject.h"
+#include "SpxMFunc.h"
 
-    typedef void *(SpxExpiredDelegate)(void *arg);
+#define _SpxStringConvert(n,s) __SpxTypeConvert((struct SpxString),n, \
+                                __SpxDecr(s,sizeof(struct SpxString)))
 
-    struct SpxTimerElement{
-        u64_t id;
-        u64_t basetime;
-        u32_t expired;
-        SpxExpiredDelegate *expiredHander;
-        void *arg;
-        struct SpxTimerElement *prev;
-        struct SpxTimerElement *next;
+
+#define __SpxStringFree(s) \
+    do { \
+        if(NULL != s && _spxStringFree(s)) { \
+            s = NULL; \
+        } \
+    }while(false)
+
+#define __SpxStringFreeForce(s) \
+    do { \
+        if(NULL != s) {\
+            _spxStringFreeForce(s);\
+            s = NULL; \
+        } \
+    }while(false)
+
+    struct SpxString{
+        SpxObjectBase;
+        size_t _freeSize;
+        char _buf[0];
     };
 
-    struct SpxTimerSlot{
-        u64_t count;
-        u32_t idx;
-        struct SpxTimerElement *header;
-        struct SpxTimerElement *tail;
-    };
 
-    struct SpxTimer{
-        u64_t idx;
-        SpxLogDelegate *log;
-        u64_t basetime;
-        u32_t slotsCount;
-        bool_t running;
-        struct SpxTimerSlot *header;
-        struct SpxTimerSlot *current;
-    };
+    private u32_t __spxStringRefCount(string_t s){
+        if(NULL == s){
+            return 0;
+        }
+        _SpxStringConvert(ss,s);
+        return ss->_spxObjectRefs;
+    }
 
-    struct SpxTimer *SpxTimerNew(SpxLogDelegate *log,
-            u32_t slotsCount,err_t *err);
+    private size_t __spxStringLength(string_t s){
+        if(NULL == s){
+            return 0;
+        }
+        _SpxStringConvert(ss,s);
+        return ss->_spxObjectSize - ss->_freeSize;
+    }
 
-    struct SpxTimerElement *SpxTimerAdd(struct SpxTimer *timer,
-            u32_t expired,
-            SpxExpiredDelegate *expiredHandler,
-            void *arg,
-            err_t *err);
+    private size_t __spxStringSize(string_t s){
+        if(NULL == s){
+            return 0;
+        }
+        _SpxStringConvert(ss,s);
+        return ss->_spxObjectSize;
+    }
 
-    err_t SpxTimerRemove(struct SpxTimer *timer,
-            struct SpxTimerElement *e);
+    private size_t __spxStringFreeSize(string_t s){
+        if(NULL == s){
+            return 0;
+        }
+        _SpxStringConvert(ss,s);
+        return ss->_freeSize;
+    }
 
-    err_t SpxTimerElement *SpxTimerModify(struct SpxTimer *timer,
-            struct SpxTimerElement *e,u32_t expired);
 
-    struct SpxTimerElement *SpxTimerRunning(struct SpxTimer *timer,
-            u32_t *count);
 
-    err_t SpxTimerFree(struct SpxTimer **timer);
 
 
 #ifdef __cplusplus

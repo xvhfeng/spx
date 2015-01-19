@@ -36,12 +36,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "spx_types.h"
-#include "spx_alloc.h"
-#include "spx_defs.h"
-#include "spx_timer.h"
-#include "spx_time.h"
-#include "spx_atomic.h"
+#include "SpxTypes.h"
+#include "SpxObject.h"
 
 struct SpxTimer *SpxTimerNew(SpxLogDelegate *log,
         u32_t slotsCount,err_t *err){
@@ -194,7 +190,7 @@ err_t SpxTimerElement *SpxTimerModify(struct SpxTimer *timer,
     return 0;
 }
 
-struct SpxTimerElement *SpxTimerPoll(struct SpxTimer *timer,
+struct SpxTimerElement *SpxTimerRunning(struct SpxTimer *timer,
         u32_t *count){
     if(!timer->running){
         return NULL;

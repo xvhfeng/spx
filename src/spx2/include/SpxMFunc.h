@@ -33,74 +33,84 @@
  * this software or lib may be copied only under the terms of the gnu general
  * public license v3, which may be found in the source kit.
  *
- *       Filename:  SpxObject.h
- *        Created:  2014/12/03 11时30分48秒
+ *       Filename:  SpxMFunc.h
+ *        Created:  2015年01月12日 09时19分51秒
  *         Author:  Seapeak.Xu (seapeak.cnblog.com), xvhfeng@gmail.com
  *        Company:  Tencent Literature
- *         Remark:  this is alloctor for SpxObject
- *                  and all the object of alloctor is memory-algin
- *                  and all memory-buffer is filled-zero
+ *         Remark:
  *
  ****************************************************************************/
-#ifndef _SPXOBJECT_H_
-#define _SPXOBJECT_H_
+#ifndef _SPXMFUNC_H_
+#define _SPXMFUNC_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
+#include <string.h>
 
-#include "spx_types.h"
-#include "spx_defs.h"
+#include "SpxTypes.h"
+#include "SpxVars.h"
+#include "SpxError.h"
+#include "SpxLimits.h"
 
-#define SpxObjectBase \
-    bool_t _spxObjectIsPooling;\
-    u32_t _spxObjectRefs;\
-    size_t _spxObjectSize;\
-    size_t _spxObjectAvail
 
-    struct SpxObject{
-        SpxObjectBase;
-        char buf[0];
-    };
-
-#define SpxObjectAlignSize SpxAlign(sizeof(struct SpxObject),SpxAlignSize)
-
-    void *spxObjectNew(const size_t s,err_t *err);
-    void *spxObjectNewNumbs(const size_t numbs,const size_t s,err_t *err);
-    void *spxObjectReNew(void *p,const size_t s,err_t *err);
-    bool_t spxObjectFree(void *p);
-    bool_t spxObjectFreeForce(void *p);
-    void *spxObjectRef(void *p);
-    void *spxObjectUnRef(void *p);
-
-    spx_private u32_t spxObjectRefCount(void *p){
-        if(NULL == p){
-            return 0;
-        }
-        struct SpxObject *o = (struct SpxObject *) ((char *) p - SpxObjectAlignSize);
-        return o->_spxObjectRefs;
+#define __SpxLog1(log,level,info) \
+    if(NULL != (log)) {\
+        (log)(level,((string_t) "File:%s,Line:%d,Func:%s.%s."), \
+                __FILE__,__LINE__,__FUNCTION__,info); \
     }
 
-#define SpxObjectFree(p) \
+#define __SpxLog2(log,level,err,info) \
+    if(NULL != (log)) {\
+        (log)(level,((string_t) "File:%s,Line:%d,Func:%s.errno:%d,info:%s.%s."),\
+                __FILE__,__LINE__,__FUNCTION__,err,err >= SpxSuccess ?  spxErrorToString(err) : strerror(err),info);\
+    }
+
+#define __SpxLogFmt1(log,level,fmt,...) \
+    if(NULL != (log)) {\
+        (log)(level,((string_t) "File:%s,Line:%d,Func:%s."fmt),\
+                __FILE__,__LINE__,__FUNCTION__,__VA_ARGS__);\
+    }
+
+#define __SpxLogFmt2(log,level,err,fmt,...) \
+    if(NULL != (log)) {\
+        (log)(level,((string_t) "File:%s,Line:%d,Func:%s.errno:%d,info:%s."fmt),\
+                __FILE__,__LINE__,__FUNCTION__,err,err >= SpxSuccess ? spxErrorToString(err) : strerror(err),__VA_ARGS__);\
+    }
+
+#define __SpxReset(e) ((e) = 0)
+#define __SpxIsSocketRetry(e) (EAGAIN == (e) || EWOULDBLOCK == (e) || EINTR == (e))
+#define __SpxIsSocketReAttach(e) __SpxIsSocketRetry(e)
+#define __SpxIsErr(e) (0 != (e))
+
+#define __SpxMin(a,b) ((a) < (b) ? (a) : (b))
+#define __SpxMax(a,b) ((a) > (b) ? (a) : (b))
+#define __SpxAbs(a) ((a) < 0 ? -(a) : a)
+
+#define __SpxTypeConvert(t,newp,old) t *newp = (t *) (old)
+
+#define __SpxClose(fd)  \
     do { \
-        if(NULL != p && spxObjectFree(p)) { \
-            p = NULL; \
+        if(0 != fd) { \
+            close(fd);\
+            fd = 0;\
         } \
     }while(false)
 
-#define SpxObjectFreeForce(p) \
-    do { \
-        if(NULL != p) {\
-            spxObjectFreeForce(p);\
-            p = NULL; \
-        } \
-    }while(false)
-#ifdef __cplusplus
-}
-#endif
-#endif
+
+#define __SpxAlign(d, a)     (((d) + (a - 1)) & ~(a - 1))
+#define __SpxAligned(d) __SpxAlign(s,SpxAlignSize);
+
+#define __SpxIncr(p,s) (((char *) p) + (s))
+#define __SpxDecr(p,s) (((char *) p) - (s))
+#define __SpxOffset(p1,p2) ((size_t ) (((char *) p1) - ((char *) p2)))
+
+#define __SpxSSet(o,p,v) o->p = (v)
+#define __SpxZero(v) memset(&v,0,sizeof(v));
 
 #ifdef __cplusplus
 }

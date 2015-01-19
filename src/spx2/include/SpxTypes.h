@@ -33,73 +33,135 @@
  * this software or lib may be copied only under the terms of the gnu general
  * public license v3, which may be found in the source kit.
  *
- *       Filename:  spx_timer.h
- *        Created:  2014/11/08 09时32分51秒
+ *       Filename:  SpxTypes.h
+ *        Created:  2015年01月09日 22时15分35秒
  *         Author:  Seapeak.Xu (seapeak.cnblog.com), xvhfeng@gmail.com
  *        Company:  Tencent Literature
  *         Remark:
  *
  ****************************************************************************/
-#ifndef _SPX_TIMER_H_
-#define _SPX_TIMER_H_
+#ifndef _SPXTYPES_H_
+#define _SPXTYPES_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
+#include <stddef.h>
+#include <wchar.h>
+#include <sys/types.h>
 
-#include "spx_types.h"
+#ifndef string_t
+    typedef char *string_t;
+#endif
 
-    typedef void *(SpxExpiredDelegate)(void *arg);
+#ifndef var
+    typedef void *var;
+#endif
 
-    struct SpxTimerElement{
-        u64_t id;
-        u64_t basetime;
-        u32_t expired;
-        SpxExpiredDelegate *expiredHander;
-        void *arg;
-        struct SpxTimerElement *prev;
-        struct SpxTimerElement *next;
+#ifndef byte_t
+    typedef signed char byte_t;
+#endif
+
+#ifndef ubyte_t
+    typedef unsigned char ubyte_t;
+#endif
+
+#ifndef uchar_t
+    typedef unsigned char uchar_t;
+#endif
+
+#ifndef u64_t
+    typedef u_int64_t u64_t;
+#endif
+
+#ifndef u32_t
+    typedef u_int32_t u32_t;
+#endif
+
+#ifndef u16_t
+    typedef u_int16_t u16_t;
+#endif
+
+#ifndef u8_t
+    typedef u_int8_t u8_t;
+#endif
+
+#ifndef i64_t
+    typedef int64_t i64_t;
+#endif
+
+#ifndef i32_t
+    typedef int32_t i32_t;
+#endif
+
+#ifndef i16_t
+    typedef int16_t i16_t;
+#endif
+
+#ifndef i8_t
+    typedef int8_t i8_t;
+#endif
+
+#ifndef SpxLogDelegate
+    typedef void (SpxLogDelegate)(int level,string_t fmt,...);
+#endif
+
+#ifndef ptr_t
+    typedef char *ptr_t;
+#endif
+
+
+#ifndef err_t
+#define err_t int
+#endif
+
+#ifndef SpxInline
+#define SpxInline inline
+#endif
+
+#ifndef private
+#define private static
+#endif
+
+#ifndef public
+#define public
+#endif
+
+    struct SpxHost{
+        string_t ip;
+        int port;
     };
 
-    struct SpxTimerSlot{
-        u64_t count;
-        u32_t idx;
-        struct SpxTimerElement *header;
-        struct SpxTimerElement *tail;
+    struct SpxDate{
+        int year;
+        int month;
+        int day;
     };
 
-    struct SpxTimer{
-        u64_t idx;
-        SpxLogDelegate *log;
-        u64_t basetime;
-        u32_t slotsCount;
-        bool_t running;
-        struct SpxTimerSlot *header;
-        struct SpxTimerSlot *current;
+    struct SpxTime{
+        int hour;
+        int min;
+        int second;
     };
 
-    struct SpxTimer *SpxTimerNew(SpxLogDelegate *log,
-            u32_t slotsCount,err_t *err);
+    struct SpxDateTime{
+        int year;
+        int month;
+        int day;
+        int hour;
+        int min;
+        int second;
+    };
 
-    struct SpxTimerElement *SpxTimerAdd(struct SpxTimer *timer,
-            u32_t expired,
-            SpxExpiredDelegate *expiredHandler,
-            void *arg,
-            err_t *err);
-
-    err_t SpxTimerRemove(struct SpxTimer *timer,
-            struct SpxTimerElement *e);
-
-    err_t SpxTimerElement *SpxTimerModify(struct SpxTimer *timer,
-            struct SpxTimerElement *e,u32_t expired);
-
-    struct SpxTimerElement *SpxTimerRunning(struct SpxTimer *timer,
-            u32_t *count);
-
-    err_t SpxTimerFree(struct SpxTimer **timer);
+#ifndef bool_t
+    typedef enum {
+        false = 0,
+        true = 1
+    }bool_t;
+#endif
 
 
 #ifdef __cplusplus

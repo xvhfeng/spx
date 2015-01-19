@@ -33,15 +33,15 @@
  * this software or lib may be copied only under the terms of the gnu general
  * public license v3, which may be found in the source kit.
  *
- *       Filename:  spx_timer.h
- *        Created:  2014/11/08 09时32分51秒
+ *       Filename:  SpxAlloc.h
+ *        Created:  2015年01月09日 22时11分23秒
  *         Author:  Seapeak.Xu (seapeak.cnblog.com), xvhfeng@gmail.com
  *        Company:  Tencent Literature
  *         Remark:
  *
  ****************************************************************************/
-#ifndef _SPX_TIMER_H_
-#define _SPX_TIMER_H_
+#ifndef _SPXALLOC_H_
+#define _SPXALLOC_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -50,57 +50,20 @@ extern "C" {
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "spx_types.h"
+var spxAlloc(const size_t s,err_t *err);
+var spxAllocNumbs(const size_t numbs,const size_t s,err_t *err);
+var spxAllocAlone(const size_t s,err_t *err);
+var spxAllocAlign(const size_t size,err_t *err) ;
+var spxAllocPointer(const size_t numbs,err_t *err);
+var spxRealloc(var p,const size_t size,err_t *err);
 
-    typedef void *(SpxExpiredDelegate)(void *arg);
-
-    struct SpxTimerElement{
-        u64_t id;
-        u64_t basetime;
-        u32_t expired;
-        SpxExpiredDelegate *expiredHander;
-        void *arg;
-        struct SpxTimerElement *prev;
-        struct SpxTimerElement *next;
-    };
-
-    struct SpxTimerSlot{
-        u64_t count;
-        u32_t idx;
-        struct SpxTimerElement *header;
-        struct SpxTimerElement *tail;
-    };
-
-    struct SpxTimer{
-        u64_t idx;
-        SpxLogDelegate *log;
-        u64_t basetime;
-        u32_t slotsCount;
-        bool_t running;
-        struct SpxTimerSlot *header;
-        struct SpxTimerSlot *current;
-    };
-
-    struct SpxTimer *SpxTimerNew(SpxLogDelegate *log,
-            u32_t slotsCount,err_t *err);
-
-    struct SpxTimerElement *SpxTimerAdd(struct SpxTimer *timer,
-            u32_t expired,
-            SpxExpiredDelegate *expiredHandler,
-            void *arg,
-            err_t *err);
-
-    err_t SpxTimerRemove(struct SpxTimer *timer,
-            struct SpxTimerElement *e);
-
-    err_t SpxTimerElement *SpxTimerModify(struct SpxTimer *timer,
-            struct SpxTimerElement *e,u32_t expired);
-
-    struct SpxTimerElement *SpxTimerRunning(struct SpxTimer *timer,
-            u32_t *count);
-
-    err_t SpxTimerFree(struct SpxTimer **timer);
-
+#define __SpxFree(p) \
+do {\
+    if(NULL != p) { \
+        free(p); \
+        p = NULL; \
+    } \
+}while(false)
 
 #ifdef __cplusplus
 }

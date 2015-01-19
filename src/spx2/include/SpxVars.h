@@ -33,15 +33,15 @@
  * this software or lib may be copied only under the terms of the gnu general
  * public license v3, which may be found in the source kit.
  *
- *       Filename:  spx_timer.h
- *        Created:  2014/11/08 09时32分51秒
- *         Author:  Seapeak.Xu (seapeak.cnblog.com), xvhfeng@gmail.com
+ *       Filename:  SpxVars.h
+ *        Created:  2015年01月12日 10时20分37秒
+ *         Author:  Seapeak.Xu (www.94geek.com), xvhfeng@gmail.com
  *        Company:  Tencent Literature
  *         Remark:
  *
  ****************************************************************************/
-#ifndef _SPX_TIMER_H_
-#define _SPX_TIMER_H_
+#ifndef _SPXVARS_H_
+#define _SPXVARS_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -50,57 +50,49 @@ extern "C" {
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "spx_types.h"
-
-    typedef void *(SpxExpiredDelegate)(void *arg);
-
-    struct SpxTimerElement{
-        u64_t id;
-        u64_t basetime;
-        u32_t expired;
-        SpxExpiredDelegate *expiredHander;
-        void *arg;
-        struct SpxTimerElement *prev;
-        struct SpxTimerElement *next;
+    private char *SpxBoolDesc[] = {
+        "false",
+        "true"
     };
 
-    struct SpxTimerSlot{
-        u64_t count;
-        u32_t idx;
-        struct SpxTimerElement *header;
-        struct SpxTimerElement *tail;
+#define SpxLogDebug 0
+#define SpxLogInfo 1
+#define SpxLogWarn 2
+#define SpxLogError 3
+#define SpxLogMark 4
+
+    private char *SpxLogDesc[] = {
+        "Debug.",
+        "Info.",
+        "Warn.",
+        "Error.",
+        "Mark."
     };
 
-    struct SpxTimer{
-        u64_t idx;
-        SpxLogDelegate *log;
-        u64_t basetime;
-        u32_t slotsCount;
-        bool_t running;
-        struct SpxTimerSlot *header;
-        struct SpxTimerSlot *current;
+    private int SpxLogDescLength[] = {
+        6,
+        5,
+        5,
+        6,
+        5
     };
 
-    struct SpxTimer *SpxTimerNew(SpxLogDelegate *log,
-            u32_t slotsCount,err_t *err);
+    private char *SpxDiskUnitDesc[]={
+        "PB",
+        "TB",
+        "GB",
+        "MB",
+        "KB",
+        "B"
+    };
 
-    struct SpxTimerElement *SpxTimerAdd(struct SpxTimer *timer,
-            u32_t expired,
-            SpxExpiredDelegate *expiredHandler,
-            void *arg,
-            err_t *err);
 
-    err_t SpxTimerRemove(struct SpxTimer *timer,
-            struct SpxTimerElement *e);
-
-    err_t SpxTimerElement *SpxTimerModify(struct SpxTimer *timer,
-            struct SpxTimerElement *e,u32_t expired);
-
-    struct SpxTimerElement *SpxTimerRunning(struct SpxTimer *timer,
-            u32_t *count);
-
-    err_t SpxTimerFree(struct SpxTimer **timer);
-
+#define SpxDiskUnitPB 0
+#define SpxDiskUnitTB 1
+#define SpxDiskUnitGB 2
+#define SpxDiskUnitMB 3
+#define SpxDiskUnitKB 4
+#define SpxDiskUnitB 5
 
 #ifdef __cplusplus
 }
