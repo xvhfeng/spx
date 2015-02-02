@@ -131,7 +131,7 @@ var spxObjectRef(var p) {/*{{{*/
     return p;
 }/*}}}*/
 
-bool_t _spxObjectFree(var p){/*{{{*/
+bool_t spxObjectFree(var p){/*{{{*/
     if(NULL == p){
         return true;
     }
@@ -144,7 +144,7 @@ bool_t _spxObjectFree(var p){/*{{{*/
     return false;
 }/*}}}*/
 
-bool_t _spxObjectFreeForce(var p){/*{{{*/
+bool_t spxObjectFreeForce(var p){/*{{{*/
     if(NULL == p){
         return true;
     }

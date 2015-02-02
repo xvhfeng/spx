@@ -33,15 +33,15 @@
  * this software or lib may be copied only under the terms of the gnu general
  * public license v3, which may be found in the source kit.
  *
- *       Filename:  SpxDateTime.h
- *        Created:  2015年01月17日 22时23分58秒
+ *       Filename:  SpxList.h
+ *        Created:  2015年01月22日 11时55分37秒
  *         Author:  Seapeak.Xu (www.94geek.com), xvhfeng@gmail.com
  *        Company:  Tencent Literature
  *         Remark:
  *
  ****************************************************************************/
-#ifndef _SPXDATETIME_H_
-#define _SPXDATETIME_H_
+#ifndef _SPXLIST_H_
+#define _SPXLIST_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -52,44 +52,44 @@ extern "C" {
 
 #include "SpxTypes.h"
 
-u64_t spxClock();
+    typedef err_t (SpxListNodeFreeDelegate)(var arg);
+    typedef var (SpxListNodeNewDelegate)(size_t i,var arg,err_t *err);
 
-struct SpxDateTime *spxCurrentDateTime(err_t *err);
-struct SpxDate *spxToday(err_t *err);
-time_t spxNow() ;
-time_t spxZeroClock(struct SpxDate *d);
-time_t spxMakeTime(struct SpxDateTime *dt);
-time_t spxTodayZeroClock();
-time_t spxMakeZeroClock(struct SpxDate *dt);
-struct SpxDateTime *spxTimeToDateTime(time_t *t,err_t *err);
-struct SpxDate *spxTimeToDate(time_t *t,err_t *err) ;
-void spxDateTimeAddDays(struct SpxDateTime *dt,int days);
-void spxDateAddDays(struct SpxDate *d,int days);
-err_t spxCurrentDateTimeReFresh(struct SpxDateTime *sdt);
-err_t spxDateReFresh(struct SpxDate *sdt);
+    struct SpxList{
+        SpxLogDelegate *log;
+        size_t _freeSize;
+        size_t _busySize;
+        size_t _size;
+        SpxListNodeFreeDelegate *_nodeFreeHandler;
+        var *_nodes;
+    };
 
-/*
- * -1 : the day is before today
- *  0 : the day is today
- *  1 : the day after today
- */
-int spxDateIsBAT(struct SpxDate *d);
+    struct SpxList *spxListNew(SpxLogDelegate *log,\
+            size_t size,\
+            SpxListNodeFreeDelegate *nodeFreeHandler,\
+            err_t *err);
 
-int spxDateTimeIsBAT(struct SpxDateTime *dt);
+    struct SpxList *spxListInit(SpxLogDelegate *log,
+        size_t size,
+        SpxListNodeNewDelegate *newHandler,
+        var arg,
+        SpxListNodeFreeDelegate *freeHandler,
+        err_t *err);
 
-err_t spxModifyFiletime(const string_t filename,u64_t secs);
+    var spxListGet(struct SpxList *list,int idx);
+    var spxListOut(struct SpxList *list,int idx);
+    err_t spxListRemove(struct SpxList *list,int idx);
+    err_t spxListInsert(struct SpxList *list,int idx,var v);
+    err_t spxListAdd(struct SpxList *list,var v);
+    bool_t spxListFree(struct SpxList *list);
+    err_t spxListSet(struct SpxList *list,int idx,var v);
 
-/*
- * fmt:yyyy-MM-dd
- */
-struct SpxDate *spxDateConvert(string_t s,char *fmt,err_t *err);
-
-/*
- * fmt:hh:mm:ss
- */
-struct SpxTime *spxTimeConvert(string_t s,char *fmt,err_t *err) ;
-
-struct SpxDateTime *spxDateTimeConvert(string_t s,char *fmt,err_t *err) ;
+#define __SpxListFree(v) \
+    do { \
+        if(NULL != v && spxListFree(v)){ \
+            v = NULL;\
+        } \
+    }while(false)
 
 
 #ifdef __cplusplus

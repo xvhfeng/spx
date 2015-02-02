@@ -52,8 +52,16 @@
 #include "SpxTypes.h"
 #include "SpxVars.h"
 #include "SpxMFunc.h"
-#include "SpxObejct.h"
+#include "SpxObject.h"
+#include "SpxString.h"
+#include "SpxLimits.h"
 #include "SpxError.h"
+
+private err_t _spxSocketReUseAddr(int sock);
+private err_t _spxSocketKeepAlive(int fd,bool_t enable,\
+        size_t aliveTimeout,size_t detectTimes,size_t detectTimeout);
+private err_t _spxSocketLinger(const int fd,bool_t enable, size_t timeout) ;
+private err_t _spxSocketTimeout(int fd, size_t timeout) ;
 
 private err_t _spxSocketReUseAddr(int sock){/*{{{*/
 	int optval = 1;
@@ -146,13 +154,13 @@ int spxSocketNew(err_t *err){/*{{{*/
     return fd;
 }/*}}}*/
 
-err_t spxSocketStart(const int fd,\
-        string_t ip,const int port,\
-        bool_t isKeepAlive,size_t aliveTimeout,\
-        size_t detectTimes,size_t detectTimeout,\
-        bool_t isLinger,size_t lingerTimeout,\
-        bool_t isNoDelay,\
-        bool_t isTimeout,size_t timeout,\
+err_t spxSocketStart(const int fd,
+        string_t ip,const int port,
+        bool_t isKeepAlive,size_t aliveTimeout,
+        size_t detectTimes,size_t detectTimeout,
+        bool_t isLinger,size_t lingerTimeout,
+        bool_t isNoDelay,
+        bool_t isTimeout,size_t timeout,
         size_t listens){/*{{{*/
 
     err_t err = 0;
@@ -160,7 +168,7 @@ err_t spxSocketStart(const int fd,\
         return err;
     }
 
-    if(0 != (err = _spxSocketAlive(fd,isKeepAlive,
+    if(0 != (err = _spxSocketKeepAlive(fd,isKeepAlive,
                     aliveTimeout,detectTimes,detectTimeout))){
         return err;
     }
@@ -170,15 +178,15 @@ err_t spxSocketStart(const int fd,\
     if(0 != (err = spxTcpNoDelay(fd,isNoDelay))){
         return err;
     }
-    if(isTimeout && (0 != (err = _spxSOcketTimeout(fd,timeout)))){
+    if(isTimeout && (0 != (err = _spxSocketTimeout(fd,timeout)))){
         return err;
     }
 
     struct sockaddr_in addr;
-    SpxZero(addr);
+    __SpxZero(addr);
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
-    if(SpxStringIsNullOrEmpty(ip)){
+    if(__SpxStringIsNullOrEmpty(ip)){
         addr.sin_addr.s_addr = htonl(INADDR_ANY);
     } else{
         inet_aton(ip,&(addr.sin_addr));
@@ -194,10 +202,10 @@ err_t spxSocketStart(const int fd,\
         return errno;
 	}
     return 0;
-}/*}}}*/
+}
 
 string_t spxSocketIp(int sock,err_t *err) {/*{{{*/
-	string_t ip = spxStringNewLength(SpxIpv4Size,err);
+	string_t ip = __SpxStringNewLength(SpxIpv4Length,err);
 	if(NULL == ip){
         return NULL;
     }
@@ -210,7 +218,7 @@ string_t spxSocketIp(int sock,err_t *err) {/*{{{*/
 
 	char *tmp;
 	tmp = inet_ntoa(addr.sin_addr);
-	spxStringCat(ip,tmp,err);
+	__SpxStringAppendChars(ip,tmp,err);
 	if(0 != *err){
 	    __SpxStringFree(ip);
         return NULL;
@@ -220,12 +228,13 @@ string_t spxSocketIp(int sock,err_t *err) {/*{{{*/
 
 
 string_t spxHostToString(struct SpxHost *host,err_t *err){/*{{{*/
-    string_t shost = spxStringNewEmpty(err);
+    string_t shost = __SpxStringNewEmpty(err);
     if(NULL == shost){
         return NULL;
     }
 
-    string_t new = spxStringCatPrintf(err,shost,"%s:%d",host->ip,host->port);
+    string_t new = NULL;
+    *err = spxStringAppendFormat(&new,shost,"%s:%d",host->ip,host->port);
     if(NULL == new){
         goto r1;
     }
@@ -259,7 +268,7 @@ err_t spxSocketConnectNoBlocking(int fd,string_t ip,int port,u32_t timeout){/*{{
         //filter this errno,socket is not connect to server and return at once
         if (EINPROGRESS == errno) {
             struct timeval tv;
-            SpxZero(tv);
+            __SpxZero(tv);
             tv.tv_sec = timeout;
             tv.tv_usec = 0;
             fd_set frd;
@@ -278,7 +287,7 @@ err_t spxSocketConnectNoBlocking(int fd,string_t ip,int port,u32_t timeout){/*{{
                 err = EXDEV;
                 return err;
             }
-            SpxErrReset;
+            err = errno = 0;
             return 0;
         } else {
             return errno;
@@ -287,11 +296,11 @@ err_t spxSocketConnectNoBlocking(int fd,string_t ip,int port,u32_t timeout){/*{{
     return 0;
 }/*}}}*/
 
-err_t spxSocketSet(const int fd,\
-        bool_t isKeepAlive,size_t aliveTimeout,\
-        size_t detecTtimes,size_t detectTimeout,\
-        bool_t isLinger,size_t lingerTimeout,\
-        bool_t isNoDelay,\
+err_t spxSocketSet(const int fd,
+        bool_t isKeepAlive,size_t aliveTimeout,
+        size_t detectTimes,size_t detectTimeout,
+        bool_t isLinger,size_t lingerTimeout,
+        bool_t isNoDelay,
         bool_t isTimeout,size_t timeout){/*{{{*/
     err_t err = 0;
     if(0 != (err = _spxSocketReUseAddr(fd))){
@@ -308,7 +317,7 @@ err_t spxSocketSet(const int fd,\
     if(0 != (err = spxTcpNoDelay(fd,isNoDelay))){
         return err;
     }
-    if(isTimeout && (0 != (err = _spxSOcketTimeout(fd,timeout)))){
+    if(isTimeout && (0 != (err = _spxSocketTimeout(fd,timeout)))){
         return err;
     }
 
@@ -319,11 +328,11 @@ string_t spxSocketGetNameByHostName(string_t name,err_t *err){/*{{{*/
     string_t hostname = NULL;
     string_t ip = NULL;
     if(NULL == name){
-        hostname = spxStringNew(NULL,SpxHostNameSize,err);
+        hostname = spxStringNew(NULL,SpxHostNameLength,err);
         if(NULL == hostname){
             return NULL;
         }
-        *err = gethostname(hostname,SpxHostNameSize);
+        *err = gethostname(hostname,SpxHostNameLength);
         if(0 != *err){
             goto r1;
         }
@@ -337,11 +346,12 @@ string_t spxSocketGetNameByHostName(string_t name,err_t *err){/*{{{*/
     }
     struct in_addr addr;
     memcpy(&addr, hosts->h_addr_list[0], sizeof(struct in_addr));
-    ip = spxStringNew(NULL,SpxIpv4Size,err);
+    ip = spxStringNew(NULL,SpxIpv4Length,err);
     if(NULL == ip){
         goto r1;
     }
-    string_t newip = spxStringCat(ip,inet_ntoa(addr),err);
+    char *tmp = inet_ntoa(addr);
+    string_t newip = __SpxStringAppendChars(ip,tmp,err);
     if(__SpxStringIsNullOrEmpty(newip)){
         __SpxStringFree(ip);
         goto r1;
@@ -361,7 +371,7 @@ bool_t spxSocketIsIp(string_t ip){/*{{{*/
 
 bool_t spxSocketWaitRead(int fd,u32_t timeout){/*{{{*/
     struct timeval tv;
-    SpxZero(tv);
+    __SpxZero(tv);
     tv.tv_sec = timeout;
     tv.tv_usec = 0;
     fd_set frd;

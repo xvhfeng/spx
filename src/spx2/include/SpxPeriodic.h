@@ -33,15 +33,15 @@
  * this software or lib may be copied only under the terms of the gnu general
  * public license v3, which may be found in the source kit.
  *
- *       Filename:  SpxDateTime.h
- *        Created:  2015年01月17日 22时23分58秒
+ *       Filename:  SpxPeriodic.h
+ *        Created:  2015年01月27日 11时38分38秒
  *         Author:  Seapeak.Xu (www.94geek.com), xvhfeng@gmail.com
  *        Company:  Tencent Literature
  *         Remark:
  *
  ****************************************************************************/
-#ifndef _SPXDATETIME_H_
-#define _SPXDATETIME_H_
+#ifndef _SPXPERIODIC_H_
+#define _SPXPERIODIC_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -50,47 +50,7 @@ extern "C" {
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "SpxTypes.h"
-
-u64_t spxClock();
-
-struct SpxDateTime *spxCurrentDateTime(err_t *err);
-struct SpxDate *spxToday(err_t *err);
-time_t spxNow() ;
-time_t spxZeroClock(struct SpxDate *d);
-time_t spxMakeTime(struct SpxDateTime *dt);
-time_t spxTodayZeroClock();
-time_t spxMakeZeroClock(struct SpxDate *dt);
-struct SpxDateTime *spxTimeToDateTime(time_t *t,err_t *err);
-struct SpxDate *spxTimeToDate(time_t *t,err_t *err) ;
-void spxDateTimeAddDays(struct SpxDateTime *dt,int days);
-void spxDateAddDays(struct SpxDate *d,int days);
-err_t spxCurrentDateTimeReFresh(struct SpxDateTime *sdt);
-err_t spxDateReFresh(struct SpxDate *sdt);
-
-/*
- * -1 : the day is before today
- *  0 : the day is today
- *  1 : the day after today
- */
-int spxDateIsBAT(struct SpxDate *d);
-
-int spxDateTimeIsBAT(struct SpxDateTime *dt);
-
-err_t spxModifyFiletime(const string_t filename,u64_t secs);
-
-/*
- * fmt:yyyy-MM-dd
- */
-struct SpxDate *spxDateConvert(string_t s,char *fmt,err_t *err);
-
-/*
- * fmt:hh:mm:ss
- */
-struct SpxTime *spxTimeConvert(string_t s,char *fmt,err_t *err) ;
-
-struct SpxDateTime *spxDateTimeConvert(string_t s,char *fmt,err_t *err) ;
-
+void spxPeriodicSleep(int sec,int msec);
 
 #ifdef __cplusplus
 }

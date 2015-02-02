@@ -33,15 +33,15 @@
  * this software or lib may be copied only under the terms of the gnu general
  * public license v3, which may be found in the source kit.
  *
- *       Filename:  SpxDateTime.h
- *        Created:  2015年01月17日 22时23分58秒
+ *       Filename:  SpxMsg.h
+ *        Created:  2015年01月21日 12时08分55秒
  *         Author:  Seapeak.Xu (www.94geek.com), xvhfeng@gmail.com
  *        Company:  Tencent Literature
  *         Remark:
  *
  ****************************************************************************/
-#ifndef _SPXDATETIME_H_
-#define _SPXDATETIME_H_
+#ifndef _SPXMSG_H_
+#define _SPXMSG_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -51,46 +51,47 @@ extern "C" {
 #include <stdio.h>
 
 #include "SpxTypes.h"
+#include "SpxObject.h"
+#include "SpxMFunc.h"
+#include "SpxMsg.h"
 
-u64_t spxClock();
+#define SpxMsgHeaderSize (4 * sizeof(u32_t) + 2 * sizeof(u64_t) + sizeof(char))
 
-struct SpxDateTime *spxCurrentDateTime(err_t *err);
-struct SpxDate *spxToday(err_t *err);
-time_t spxNow() ;
-time_t spxZeroClock(struct SpxDate *d);
-time_t spxMakeTime(struct SpxDateTime *dt);
-time_t spxTodayZeroClock();
-time_t spxMakeZeroClock(struct SpxDate *dt);
-struct SpxDateTime *spxTimeToDateTime(time_t *t,err_t *err);
-struct SpxDate *spxTimeToDate(time_t *t,err_t *err) ;
-void spxDateTimeAddDays(struct SpxDateTime *dt,int days);
-void spxDateAddDays(struct SpxDate *d,int days);
-err_t spxCurrentDateTimeReFresh(struct SpxDateTime *sdt);
-err_t spxDateReFresh(struct SpxDate *sdt);
+    struct SpxMsgHeader{
+        u32_t version;
+        u32_t protocol;
+        u64_t bodylen;
+        u64_t offset;
+        u32_t charset;
+        bool_t isKeepalive;
+        u32_t err;
+    };
 
-/*
- * -1 : the day is before today
- *  0 : the day is today
- *  1 : the day after today
- */
-int spxDateIsBAT(struct SpxDate *d);
+#define __SpxMsgPackI32(s,offset,i,err) spxMsgPackU32(s,offset,(u32_t) (i),err)
+#define __SpxMsgPackI64(s,offset,i,err) spxMsgPackU64(s,offset,(u64_t) (i),err)
+#define __SpxMsgUnpackI32(s,offset,err) ((i32_t) spxMsgUnpackU32(s,offset,err))
+#define __SpxMsgUnpackI64(s,offset,err) ((i64_t) spxMsgUnpackU64(s,offset,err))
 
-int spxDateTimeIsBAT(struct SpxDateTime *dt);
 
-err_t spxModifyFiletime(const string_t filename,u64_t secs);
+string_t spxMsgPackU32(string_t s,i32_t offset,u32_t n,err_t *err);
+string_t spxMsgPackU64(string_t s,i32_t offset,u64_t n,err_t *err);
+string_t spxMsgPackBool(string_t s,i32_t offset, bool_t b,err_t *err);
+string_t spxMsgPackString(string_t s,i32_t offset,string_t v,err_t *err);
+string_t spxMsgPackAlignedString(string_t s,i32_t offset,string_t v,size_t align,err_t *err);
+string_t spxMsgPackChars(string_t s,i32_t offset,char *v,err_t *err);
+string_t spxMsgPackAlginedChars(string_t s,i32_t offset,char *v,size_t algin,err_t *err);
+string_t spxMsgPackDouble(string_t s,i32_t offset,double d,err_t *err);
+string_t spxMsgPackFloat(string_t s,i32_t offset,float f,err_t *err);
 
-/*
- * fmt:yyyy-MM-dd
- */
-struct SpxDate *spxDateConvert(string_t s,char *fmt,err_t *err);
+u32_t spxMsgUnpackU32(string_t s,i32_t offset,err_t *err);
+u64_t spxMsgUnpackU64(string_t s,i32_t offset,err_t *err);
+bool_t spxMsgUnpackBool(string_t s,i32_t offset,err_t *err);
+string_t spxMsgUnpackString(string_t s,i32_t offset,size_t len,err_t *err);
+double spxMsgUnpackDouble(string_t s,i32_t offset,err_t *err);
+float spxMsgUnpackFloat(string_t s,i32_t offset,err_t *err);
 
-/*
- * fmt:hh:mm:ss
- */
-struct SpxTime *spxTimeConvert(string_t s,char *fmt,err_t *err) ;
-
-struct SpxDateTime *spxDateTimeConvert(string_t s,char *fmt,err_t *err) ;
-
+struct SpxMsgHeader *spxMsgUnpackHeader(string_t s,i32_t offset,err_t *err);
+string_t spxMsgPackHeader(string_t s,struct SpxMsgHeader *header,err_t *err);
 
 #ifdef __cplusplus
 }

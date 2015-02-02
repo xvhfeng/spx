@@ -58,6 +58,8 @@ extern "C" {
 
 #define SpxObjectAlignSize __SpxAlign(sizeof(struct SpxObject),SpxAlignSize)
 
+#define __SpxObjectConvert(n,p) __SpxTypeConvert(struct SpxObject,n,__SpxDecr(p,SpxObjectAlignSize))
+
 #define SpxObjectBase \
     u32_t _spxObjectRefs;\
     size_t _spxObjectSize
@@ -67,13 +69,22 @@ extern "C" {
         char _buf[0];
     };
 
+
     var spxObjectNew(const size_t s,err_t *err);
     var spxObjectNewNumbs(const size_t numbs,const size_t s,err_t *err);
     var spxObjectReNew(var p,const size_t s,err_t *err);
     var spxObjectReNewNumbs(var p,const size_t numbs,const size_t s,err_t *err);
     var spxObjectRef(var p);
-    bool_t _spxObjectFree(var p);
-    bool_t _spxObjectFreeForce(var p);
+    /*
+     * note:please use __SpxObejctFree first
+     * and if you must use this function,you must konw what you do.
+     * */
+    bool_t spxObjectFree(var p);
+    /*
+     * note:please use __SpxObejctFree first
+     * and if you must use this function,you must konw what you do.
+     * */
+    bool_t spxObjectFreeForce(var p);
 
     private u32_t __spxObjectRefCount(var p){
         if(NULL == p){
@@ -92,9 +103,12 @@ extern "C" {
         return;
     }
 
+#define __SpxObjectNew(t,err)  (t *) spxObjectNew(sizeof(t),err)
+#define __SpxObjectNewNumbs(t,numbs,err) (t *) spxObjectNewNumbs(numbs,sizeof(t),err)
+
 #define __SpxObjectFree(p) \
     do { \
-        if(NULL != p && _spxObjectFree(p)) { \
+        if(NULL != p && spxObjectFree(p)) { \
             p = NULL; \
         } \
     }while(false)
@@ -102,7 +116,7 @@ extern "C" {
 #define __SpxObjectFreeForce(p) \
     do { \
         if(NULL != p) {\
-            _spxObjectFreeForce(p);\
+            spxObjectFreeForce(p);\
             p = NULL; \
         } \
     }while(false)

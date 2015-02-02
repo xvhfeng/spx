@@ -124,7 +124,7 @@ struct spx_module_context *spx_module_new(\
         u32_t threadsize,\
         size_t stack_size,
         SpxReceiveTriggerDelegate *receive_handler,
-        err_t *err){
+        err_t *err){/*{{{*/
     struct spx_module_context *mc = (struct spx_module_context *)\
                                     spx_alloc_alone(sizeof(*mc),err);
     if(NULL == mc){
@@ -197,7 +197,7 @@ r1:
 r2:
     spx_module_free(&mc);
     return NULL;
-}
+}/*}}}*/
 
 err_t spx_module_free(struct spx_module_context **mc){
     //must free thread pool first

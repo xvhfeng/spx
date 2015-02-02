@@ -83,8 +83,11 @@ extern "C" {
     }
 
 #define __SpxReset(e) ((e) = 0)
-#define __SpxIsSocketRetry(e) (EAGAIN == (e) || EWOULDBLOCK == (e) || EINTR == (e))
-#define __SpxIsSocketReAttach(e) __SpxIsSocketRetry(e)
+#define __SpxMainSocketIsReAttach(e) (EAGAIN == (e) || EWOULDBLOCK == (e) \
+                                        || EINTR == (e) || ECONNABORTED == (e) \
+                                        || EPROTO == (e))
+#define __SpxFileDescIsRetry(e) (EAGAIN == (e) || EWOULDBLOCK == (e) || EINTR == (e))
+#define __SpxFileDescIsReAttach(e) __SpxFileDescIsRetry(e)
 #define __SpxIsErr(e) (0 != (e))
 
 #define __SpxMin(a,b) ((a) < (b) ? (a) : (b))
@@ -103,7 +106,7 @@ extern "C" {
 
 
 #define __SpxAlign(d, a)     (((d) + (a - 1)) & ~(a - 1))
-#define __SpxAligned(d) __SpxAlign(s,SpxAlignSize);
+#define __SpxAligned(d) __SpxAlign(d,SpxAlignSize);
 
 #define __SpxIncr(p,s) (((char *) p) + (s))
 #define __SpxDecr(p,s) (((char *) p) - (s))

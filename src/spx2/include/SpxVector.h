@@ -33,15 +33,15 @@
  * this software or lib may be copied only under the terms of the gnu general
  * public license v3, which may be found in the source kit.
  *
- *       Filename:  SpxDateTime.h
- *        Created:  2015年01月17日 22时23分58秒
+ *       Filename:  SpxVector.h
+ *        Created:  2015年01月22日 11时50分30秒
  *         Author:  Seapeak.Xu (www.94geek.com), xvhfeng@gmail.com
  *        Company:  Tencent Literature
  *         Remark:
  *
  ****************************************************************************/
-#ifndef _SPXDATETIME_H_
-#define _SPXDATETIME_H_
+#ifndef _SPXVECTOR_H_
+#define _SPXVECTOR_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -52,45 +52,49 @@ extern "C" {
 
 #include "SpxTypes.h"
 
-u64_t spxClock();
+struct SpxVectorNode{
+    struct SpxVectorNode *_prev;
+    struct SpxVectorNode *_next;
+    void *_v;
+};
 
-struct SpxDateTime *spxCurrentDateTime(err_t *err);
-struct SpxDate *spxToday(err_t *err);
-time_t spxNow() ;
-time_t spxZeroClock(struct SpxDate *d);
-time_t spxMakeTime(struct SpxDateTime *dt);
-time_t spxTodayZeroClock();
-time_t spxMakeZeroClock(struct SpxDate *dt);
-struct SpxDateTime *spxTimeToDateTime(time_t *t,err_t *err);
-struct SpxDate *spxTimeToDate(time_t *t,err_t *err) ;
-void spxDateTimeAddDays(struct SpxDateTime *dt,int days);
-void spxDateAddDays(struct SpxDate *d,int days);
-err_t spxCurrentDateTimeReFresh(struct SpxDateTime *sdt);
-err_t spxDateReFresh(struct SpxDate *sdt);
+typedef err_t (SpxVectorValueFreeDelegate)(var v);
 
-/*
- * -1 : the day is before today
- *  0 : the day is today
- *  1 : the day after today
- */
-int spxDateIsBAT(struct SpxDate *d);
+struct SpxVector{
+    struct SpxVectorNode *_header;
+    struct SpxVectorNode *_tail;
+    SpxVectorValueFreeDelegate *_handle;
+    size_t _size;
+    SpxLogDelegate *log;
+};
 
-int spxDateTimeIsBAT(struct SpxDateTime *dt);
 
-err_t spxModifyFiletime(const string_t filename,u64_t secs);
+struct SpxVectorIter{
+    struct SpxVector *_vector;
+    struct SpxVectorNode *_curr;
+};
 
-/*
- * fmt:yyyy-MM-dd
- */
-struct SpxDate *spxDateConvert(string_t s,char *fmt,err_t *err);
+struct SpxVector *spxVectorInit(SpxLogDelegate *log,\
+        SpxVectorValueFreeDelegate *handle,err_t *err);
+bool_t spxVectorFree(struct SpxVector *vector);
+err_t spxVectorAdd(struct SpxVector *vector,void *v);
+var spxVectorGet(struct SpxVector *vector,size_t idx,err_t *err);
+err_t spxVectorPush(struct SpxVector *vector,void *v);
+var spxVectorPop(struct SpxVector *vector, err_t *err);
 
-/*
- * fmt:hh:mm:ss
- */
-struct SpxTime *spxTimeConvert(string_t s,char *fmt,err_t *err) ;
 
-struct SpxDateTime *spxDateTimeConvert(string_t s,char *fmt,err_t *err) ;
+struct SpxVectorIter *spxVectorNew(struct SpxVector *vector,\
+        err_t *err);
+err_t spxVectorIterFree(struct SpxVectorIter *iter);
+var spxVectorIterNext(struct SpxVectorIter *iter) ;
+void spxVectorIterReset(struct SpxVectorIter *iter);
 
+#define __SpxVectorFree(v) \
+    do { \
+        if(NULL != v && spxVectorFree(v)){ \
+            v = NULL;\
+        } \
+    }while(false)
 
 #ifdef __cplusplus
 }

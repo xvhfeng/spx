@@ -33,15 +33,15 @@
  * this software or lib may be copied only under the terms of the gnu general
  * public license v3, which may be found in the source kit.
  *
- *       Filename:  SpxDateTime.h
- *        Created:  2015年01月17日 22时23分58秒
+ *       Filename:  SpxModule.h
+ *        Created:  2015年01月21日 17时05分55秒
  *         Author:  Seapeak.Xu (www.94geek.com), xvhfeng@gmail.com
  *        Company:  Tencent Literature
  *         Remark:
  *
  ****************************************************************************/
-#ifndef _SPXDATETIME_H_
-#define _SPXDATETIME_H_
+#ifndef _SPXMODULE_H_
+#define _SPXMODULE_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -49,48 +49,42 @@ extern "C" {
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <pthread.h>
 
 #include "SpxTypes.h"
+#include "SpxEventLoop.h"
+#include "SpxList.h"
 
-u64_t spxClock();
+    struct SpxModuleThreadContext{
+        struct SpxEventLoop *loop;
+        //in here,loop and watcher can in the same struct
+        //because they are the 1:1,and notify with pipe
+        //you can read with loop while no the data attach again
+        struct SpxWatcher watcher;
+        SpxWatcherDelegate *handler;
+        SpxLogDelegate *log;
+        size_t _idx;
+        pthread_t _tid;
+        int _pipe[2];
+    };
 
-struct SpxDateTime *spxCurrentDateTime(err_t *err);
-struct SpxDate *spxToday(err_t *err);
-time_t spxNow() ;
-time_t spxZeroClock(struct SpxDate *d);
-time_t spxMakeTime(struct SpxDateTime *dt);
-time_t spxTodayZeroClock();
-time_t spxMakeZeroClock(struct SpxDate *dt);
-struct SpxDateTime *spxTimeToDateTime(time_t *t,err_t *err);
-struct SpxDate *spxTimeToDate(time_t *t,err_t *err) ;
-void spxDateTimeAddDays(struct SpxDateTime *dt,int days);
-void spxDateAddDays(struct SpxDate *d,int days);
-err_t spxCurrentDateTimeReFresh(struct SpxDateTime *sdt);
-err_t spxDateReFresh(struct SpxDate *sdt);
+    struct SpxModuleContext{
+        struct SpxList *_threadpool;//struct SpxModuleThreadContext
+        size_t _threadSize;
+        SpxLogDelegate *log;
+    };
 
-/*
- * -1 : the day is before today
- *  0 : the day is today
- *  1 : the day after today
- */
-int spxDateIsBAT(struct SpxDate *d);
+struct SpxModuleContext *spxModuleNew(
+        SpxLogDelegate *log,
+        u32_t threadSize,
+        size_t stackSize,
+        size_t maxEvents,
+        SpxWatcherDelegate *handler,
+        err_t *err);
 
-int spxDateTimeIsBAT(struct SpxDateTime *dt);
-
-err_t spxModifyFiletime(const string_t filename,u64_t secs);
-
-/*
- * fmt:yyyy-MM-dd
- */
-struct SpxDate *spxDateConvert(string_t s,char *fmt,err_t *err);
-
-/*
- * fmt:hh:mm:ss
- */
-struct SpxTime *spxTimeConvert(string_t s,char *fmt,err_t *err) ;
-
-struct SpxDateTime *spxDateTimeConvert(string_t s,char *fmt,err_t *err) ;
-
+    err_t _spxModuleFree(struct SpxModuleContext *smc);
+    err_t spxModuleThreadWakeup(struct SpxModuleThreadContext *smtc,var arg);
+    struct SpxModuleThreadContext *spxModuleGetThreadContext(struct SpxModuleContext *smc,size_t idx);
 
 #ifdef __cplusplus
 }

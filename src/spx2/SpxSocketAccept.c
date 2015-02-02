@@ -48,7 +48,6 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <ev.h>
 
 #include "SpxTypes.h"
 #include "SpxMFunc.h"
@@ -56,68 +55,75 @@
 #include "SpxEventLoop.h"
 #include "SpxString.h"
 #include "SpxObject.h"
+#include "SpxModule.h"
+#include "SpxNetworkModule.h"
+#include "SpxServerContext.h"
 
 
 private struct SpxWatcher _mainWatcher;
 private void _spxMainSocketHandler(struct SpxEventLoop *loop,
-       int fd,int revents, struct SpxWatcher *w);
+            struct SpxWatcher *w,int revents,var arg);
 
 void spxSocketAcceptNoBlocking(SpxLogDelegate *log,
-        struct SpxEventLoop *loop,int fd);
+        struct SpxEventLoop *loop,int fd){
     __SpxZero(_mainWatcher);
-
+    err_t err = 0;
     //no the timeout
-    err = spxWatcherInit(&(_mainWatcher),fd,0,0,
-            SpxEvRead,_spxMainSocketHandler,log);
-    spxWatcherAttach(loop,&(_mainWatcher));
-    SpxEventLoopRunning(loop,0);
+    err = spxWatcherInit(&(_mainWatcher),fd,0);
+    if(0 != err) {
+
+    }
+    err = spxWatcherAddHandler(&(_mainWatcher),SpxEvRead,0,0,
+            _spxMainSocketHandler,log);
+    if(0 != err) {
+
+    }
+    err = spxWatcherAttach(loop,&(_mainWatcher));
+    if(0 != err) {
+
+    }
+    spxEventLoopStart(loop,0);
 }
 
 private void _spxMainSocketHandler(struct SpxEventLoop *loop,
-       int fd,int revents, struct SpxWatcher *w){
+            struct SpxWatcher *w,int revents,var arg){
     if(SpxEvRead & ~revents){
         spxWatcherAttach(loop,&(_mainWatcher));
         return;
     }
-    SpxLogDelegate *log = (SpxLogDelegate *) watcher->arg;
+    SpxLogDelegate *log = (SpxLogDelegate *) w->_r.arg;
     err_t err = 0;
     while(true){
         struct sockaddr_in client_addr;
         unsigned int socket_len = 0;
         int client_sock = 0;
         socket_len = sizeof(struct sockaddr_in);
-        client_sock = accept(watcher->fd, (struct sockaddr *) &client_addr,
+        client_sock = accept(w->fd, (struct sockaddr *) &client_addr,
                 &socket_len);
         if (0 > client_sock) {
-            if (!__SpxIsSocketReAttach(errno)) {
+            if (!__SpxMainSocketIsReAttach(errno)) {
                 __SpxLog2(log,SpxLogError,errno,
-                        "accept is fail,but re-attach."):
+                        "accept is fail,but re-attach.");
             }
-                break;
+            break;
         }
 
         if (0 == client_sock) {
             break;
         }
 
-        size_t idx = client_sock % g_spx_notifier_module->threadpool->size;
-        struct spx_job_context *jc =  spx_job_pool_pop(g_spx_job_pool,&err);
-        if(NULL == jc){
+        struct SpxModuleThreadContext *smtc = spxModuleGetThreadContext(gSpxNetworkModule,client_sock);
+        struct SpxServerContext *ssc = spxServerContextPoolPop(gSpxServerContextPool,&err);
+        if(NULL == ssc){
             __SpxClose(client_sock);
             __SpxLog1(log,SpxLogError,\
                     "pop nio context is fail.");
             break;
         }
 
-        __SpxLogFmt1(log,SpxLogDebug,"recv socket conntect.wakeup notifier module idx:%d.jc idx:%d."
-                ,idx,jc->idx);
-
-        jc->fd = client_sock;
-        jc->request_timespan = spxNow();
-
-        struct spx_thread_context *tc = spx_get_thread(g_spx_notifier_module,idx);
-        jc->tc = tc;
-        SpxModuleDispatch(spx_notifier_module_wakeup_handler,jc);
+        spxServerContextInit(ssc,w->fd,SpxMooreRead);
+        __SpxServerContextSetThreadContext(ssc,smtc);
+        spxModuleThreadWakeup(smtc,ssc);
     }
     spxWatcherAttach(loop,&(_mainWatcher));
 }

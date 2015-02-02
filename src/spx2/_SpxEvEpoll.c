@@ -46,7 +46,7 @@
 #include "SpxAlloc.h"
 #include "SpxObject.h"
 
-err_t _spxCreateEvent(struct SpxEventLoop *loop){
+err_t _spxCreateEvent(struct SpxEventLoop *loop){/*{{{*/
     err_t err = 0;
     loop->_fd = epoll_create(1024);
     if(-1 == loop->_fd){
@@ -57,10 +57,10 @@ err_t _spxCreateEvent(struct SpxEventLoop *loop){
         __SpxClose(loop->_fd);
     }
     return err;
-}
+}/*}}}*/
 
 err_t spxWatcherAttach(struct SpxEventLoop *loop,
-        struct SpxWatcher *w){
+        struct SpxWatcher *w){/*{{{*/
     if(NULL == loop || NULL == w){
         return EINVAL;
     }
@@ -80,8 +80,8 @@ err_t spxWatcherAttach(struct SpxEventLoop *loop,
 
     struct epoll_event ev;
     w->_events = w->_events | EPOLLET
-        | (SpxEvRead & w->_marks) ? EPOLLIN : 0
-        | (SpxEvWrite & w->_marks) ? EPOLLOUT : 0;
+        | (SpxEvRead & w->_mask) ? EPOLLIN : 0
+        | (SpxEvWrite & w->_mask) ? EPOLLOUT : 0;
     ev.events = w->_events;
 
     ev.data.u64 = (uint64_t)(uint32_t)fd
@@ -97,49 +97,132 @@ err_t spxWatcherAttach(struct SpxEventLoop *loop,
         return err;
     }
 
-    if(SpxEvTimeout & w->_marks){
-        if(NULL == w->_timer){
-            w->_timer = spxObjectNew(sizeof(struct SpxTimerWatcher),&err);
-            if(NULL == w->_timer){
+    if(SpxEvRead & w->_mask){
+        if(0 != w->_r.sec || 0 != w->_r.msec){
+            w->_r._timer = spxObjectNew(sizeof(struct SpxTimerWatcher),&err);
+            if(NULL == w->_r._timer){
                 epoll_ctl (loop->_fd,EPOLL_CTL_DEL, fd, &ev);
-                return err;
+                goto r1;
             }
-            spxTimerWatcherInit(w->_timer,w->sec,w->msec,NULL,w);
-            err = spxTimerWatcherAttach(loop,w->_timer);
-        } else {
-            err = spxTimerWatcherModify(loop,w->_timer,
-                    w->sec,w->msec,w->_timer->_handler,w);
+            spxTimerWatcherInit(w->_r._timer,w->_r.sec,w->_r.msec,NULL,w);
+            err = spxTimerWatcherAttach(loop,w->_r._timer);
+            if(0 != err){
+                __SpxLog2(loop->log,SpxLogError,err,
+                        "add fd:%d timeout watcher for reader is fail.");
+                epoll_ctl (loop->_fd,EPOLL_CTL_DEL, fd, &ev);
+                goto r1;
+            }
         }
-        if(0 != err){
-            __SpxLog2(loop->log,SpxLogError,err,
-                    "add fd:%d timeout watcher for reader is fail.");
-            epoll_ctl (loop->_fd,EPOLL_CTL_DEL, fd, &ev);
-            return err;
+    }
+    if(SpxEvWrite & w->_mask){
+        if(0 != w->_w.sec || 0 != w->_w.msec){
+            w->_w._timer = spxObjectNew(sizeof(struct SpxTimerWatcher),&err);
+            if(NULL == w->_w._timer){
+                epoll_ctl (loop->_fd,EPOLL_CTL_DEL, fd, &ev);
+                goto r1;
+            }
+            spxTimerWatcherInit(w->_w._timer,w->_w.sec,w->_w.msec,NULL,w);
+            err = spxTimerWatcherAttach(loop,w->_w._timer);
+            if(0 != err){
+                __SpxLog2(loop->log,SpxLogError,err,
+                        "add fd:%d timeout watcher for reader is fail.");
+                epoll_ctl (loop->_fd,EPOLL_CTL_DEL, fd, &ev);
+                goto r1;
+            }
         }
     }
     w->_flags = SpxWatcherAttached;
     loop->_watchers[fd] = w;
     return 0;
-}
+r1:
+    if(NULL != w->_r._timer && SpxWatcherAttached == w->_r._timer->_flags){
+        spxTimerWatcherDetach(loop,w->_r._timer);
+    }
+    if(NULL != w->_w._timer && SpxWatcherAttached == w->_w._timer->_flags){
+        spxTimerWatcherDetach(loop,w->_w._timer);
+    }
+    return err;
+}/*}}}*/
 
-err_t spxWatcherDetach(struct SpxEventLoop *loop,int fd){
+err_t spxWatcherRemove(struct SpxEventLoop *loop,int fd,int delmasks){/*{{{*/
     struct SpxWatcher *w = loop->_watchers[fd];
     if(NULL == w){
         return EINVAL;
     }
 
-    if(NULL != w->_timer){
-        spxTimerWatcherDetach(loop,w->_timer);
-        w->_timer = NULL;
+    if(SpxWatcherAttached != w->_flags
+            || SpxWatcherPartOfFired != w->_flags){
+        return SpxEFlags;
+    }
+
+    //the watcher is fired
+    if(delmasks & w->_firedMask){
+        return SpxEOptr;
+    }
+
+    int mask = w->_mask & (~delmasks);
+
+    struct epoll_event ev;
+    __SpxZero(ev);
+    int events = EPOLLET
+        | (SpxEvRead & w->_mask) ? EPOLLIN : 0
+        | (SpxEvWrite & w->_mask) ? EPOLLOUT : 0;
+    ev.events = events;
+    w->_events = events;
+    ev.data.u64 = (uint64_t)(uint32_t)fd
+        | ((uint64_t)(uint32_t)w->_egen << 32);
+    if (mask != SpxEvNone) {
+        epoll_ctl(loop->_fd,EPOLL_CTL_MOD,fd,&ev);
+    } else {
+        epoll_ctl(loop->_fd,EPOLL_CTL_DEL,fd,&ev);
+    }
+    if((SpxEvRead & delmasks) && NULL != w->_r._timer
+            && SpxWatcherAttached == w->_r._timer->_flags){
+        spxTimerWatcherDetach(loop,w->_r._timer);
+        __SpxObjectFree(w->_r._timer);
+        w->_r._timer = NULL;
+    }
+    if((SpxEvWrite & delmasks) && NULL != w->_w._timer
+            && SpxWatcherAttached == w->_w._timer->_flags){
+        spxTimerWatcherDetach(loop,w->_w._timer);
+        __SpxObjectFree(w->_w._timer);
+        w->_w._timer = NULL;
+    }
+    return 0;
+
+}/*}}}*/
+
+err_t spxWatcherDetach(struct SpxEventLoop *loop,int fd){/*{{{*/
+    struct SpxWatcher *w = loop->_watchers[fd];
+    if(NULL == w){
+        return EINVAL;
+    }
+
+    if(SpxWatcherAttached != w->_flags
+            || SpxWatcherPartOfFired != w->_flags){
+        return SpxEFlags;
+    }
+
+    if((SpxEvRead & w->_mask) && NULL != w->_r._timer
+            && SpxWatcherAttached == w->_r._timer->_flags){
+        spxTimerWatcherDetach(loop,w->_r._timer);
+        __SpxObjectFree(w->_r._timer);
+        w->_r._timer = NULL;
+    }
+    if((SpxEvWrite & w->_mask) && NULL != w->_w._timer
+            && SpxWatcherAttached == w->_w._timer->_flags){
+        spxTimerWatcherDetach(loop,w->_w._timer);
+        __SpxObjectFree(w->_w._timer);
+        w->_w._timer = NULL;
     }
     epoll_ctl(loop->_fd, EPOLL_CTL_DEL, fd, NULL);
     w->_flags = SpxWatcherOver;
     w->_events = 0;
-    w->_marks = SpxEvNone;
+    w->_mask = SpxEvNone;
     return 0;
-}
+}/*}}}*/
 
-err_t _spxWatcherWait(struct SpxEventLoop *loop,int *fds){
+err_t _spxWatcherWait(struct SpxEventLoop *loop,int *fds){/*{{{*/
     if(NULL == loop){
         return EINVAL;
     }
@@ -165,14 +248,26 @@ err_t _spxWatcherWait(struct SpxEventLoop *loop,int *fds){
             | (ev->events & (EPOLLIN  | EPOLLERR | EPOLLHUP) ? SpxEvRead  : 0);
 
         //if in-event is attached and the out-event is attached in the same time
-        if(w->_marks & ~got){
+        if(w->_mask & ~got){
             continue;
         }
 
-        w->_firedMarks = got;
-        if(w->_marks & SpxEvTimeout && NULL != w->_timer) {
-            spxTimerWatcherDetach(loop,w->_timer);
+        w->_pendingMask = got;
+        w->_firedMask |= got;
+
+        if((SpxEvRead & got) && NULL != w->_r._timer
+                && SpxWatcherAttached == w->_r._timer->_flags){
+            spxTimerWatcherDetach(loop,w->_r._timer);
+            __SpxObjectFree(w->_r._timer);
+            w->_r._timer = NULL;
         }
+        if((SpxEvWrite & got) && NULL != w->_w._timer
+                && SpxWatcherAttached == w->_w._timer->_flags){
+            spxTimerWatcherDetach(loop,w->_w._timer);
+            __SpxObjectFree(w->_w._timer);
+            w->_w._timer = NULL;
+        }
+
         w->_flags = SpxWatcherPending;
         int idx = w->_priority - 1;
         if(NULL == tail[idx]){
@@ -183,6 +278,6 @@ err_t _spxWatcherWait(struct SpxEventLoop *loop,int *fds){
         tail[idx] = w;
     }
     return 0;
-}
+}/*}}}*/
 
 

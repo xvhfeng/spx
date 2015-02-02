@@ -25,8 +25,8 @@
  * this software or lib may be copied only under the terms of the gnu general
  * public license v3, which may be found in the source kit.
  *
- *       Filename:  SpxError.c
- *        Created:  2015年01月12日 10时38分43秒
+ *       Filename:  SpxJobModule.c
+ *        Created:  2015年01月22日 10时36分42秒
  *         Author:  Seapeak.Xu (www.94geek.com), xvhfeng@gmail.com
  *        Company:  Tencent Literature
  *         Remark:
@@ -35,40 +35,42 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
-#include <errno.h>
-#include <math.h>
 
+#include "SpxObject.h"
 #include "SpxTypes.h"
-#include "SpxError.h"
+#include "SpxVars.h"
+#include "SpxModule.h"
+#include "SpxEventLoop.h"
+#include "SpxMFunc.h"
+#include "SpxStdio.h"
+#include "SpxServerContext.h"
+#include "SpxJobModule.h"
 
-#define SpxEFlags 514
-#define SpxECreateEventLoop 515
-#define SpxEOptr 516
-#define SpxENOSpace 517
-#define SpxEOverFlow 518
+struct SpxModuleContext *gSpxJobModule = NULL;
 
+void spxJobModuleListening(struct SpxEventLoop *loop,
+        struct SpxWatcher *w,int revents){
+    err_t err = 0;
+    if(SpxEvRead & revents){
+        while(true){
+            struct SpxServerContext *ssc = NULL;
+            size_t len = 0;
+            if(0 != (err = spxReadWithAck(w->fd,(char *) &ssc,sizeof(ssc),&len))){
+                if(__SpxFileDescIsReAttach(err)){
+                    break;
+                }
+                __SpxLog2(loop->log,SpxLogError,err,
+                        "job thread listen server-context is fail.");
+                break;
+            }
 
-private char *spxErrorInfo[] = {
-    "Success.",
-    "alloc object is fail.",
-    "the obejct flags is fail.",
-    "creant event loop is fail.",
-    "the operator is not access.",
-    "no the space for operator.",
-    "the variable array or int-type is overflow.",
-};
-
-public char *spxErrorToString(err_t err){
-    int e = 0;
-    e = 0 > err ? (0 - err) : err;
-    if(err >= SpxSuccess) {
-        e -= SpxSuccess;
-        return spxErrorInfo[e];
-    } else {
-        char *p = strerror(e);
-        return p;
+            if(NULL != ssc->jobHandler){
+                spxAsyncWatcherInit(&(ssc->jobWatcher),0,ssc->jobHandler,ssc);
+                spxAsyncWatcherAttach(loop,&(ssc->jobWatcher));
+            }
+        }
     }
-    return NULL;
+    spxWatcherAttach(loop,w);
+    return;
 }
 

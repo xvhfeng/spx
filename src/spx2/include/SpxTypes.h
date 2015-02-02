@@ -144,7 +144,7 @@ extern "C" {
     struct SpxTime{
         int hour;
         int min;
-        int second;
+        int sec;
     };
 
     struct SpxDateTime{
@@ -153,7 +153,7 @@ extern "C" {
         int day;
         int hour;
         int min;
-        int second;
+        int sec;
     };
 
 #ifndef bool_t

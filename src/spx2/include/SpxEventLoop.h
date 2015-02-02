@@ -50,6 +50,11 @@ extern "C" {
 #include <stdlib.h>
 #include <stdio.h>
 
+#if SpxEpoll
+#include <sys/epoll.h>
+#elif SpxKqueue
+#endif
+
 #include "SpxTypes.h"
 
 #define SpxEvNone 0x00
@@ -58,15 +63,21 @@ extern "C" {
 #define SpxEvTimeout 0x04
 #define SpxEvError 0x08
 
+#define SpxWatcherNormal 0x00
 #define SpxWatcherInited 0x01
 #define SpxWatcherAttached 0x02
 #define SpxWatcherPending 0x04
-#define SpxWatcherFired 0x08
-#define SpxWatcherOver 0x10
+#define SpxWatcherPartOfFired 0x08
+#define SpxWatcherFired 0x10
+#define SpxWatcherOver 0x20
 
 #define SpxEventLoopDefault 0x00
 #define SpxEventLoopWait SpxLoopDefault
 #define SpxEventLoopOnce 0x01
+
+#define SpxEventLoopInited 0x01
+#define SpxEventLoopRunning 0x02
+#define SpxEventLoopBreaked 0x03
 
 #define SpxTimerTick 10
 #define SpxTimerSlotCount 10
@@ -77,26 +88,30 @@ extern "C" {
     struct SpxTimerWatcher;
 
     typedef void SpxWatcherDelegate(struct SpxEventLoop *loop,
-            int fd,int events,struct SpxWatcher *w);
-    typedef void SpxAsyncWatcherDelegate(struct SpxEventLoop *loop, struct SpxAsyncWatcher *w);
-    typedef void SpxTimerWatcherDelegate(struct SpxEventLoop *loop, struct SpxTimerWatcher *w);
+            struct SpxWatcher *w,int revents,var arg);
+    typedef void SpxAsyncWatcherDelegate(struct SpxEventLoop *loop, struct SpxAsyncWatcher *w,var arg);
+    typedef void SpxTimerWatcherDelegate(struct SpxEventLoop *loop, struct SpxTimerWatcher *w,var arg);
 
     struct SpxWatcher{
         int fd;
-        u64_t sec;
-        u64_t msec;
-        int _flags;
         int _events;//events to poll
-        int _marks;//events use SpxEvent
-        int _firedMarks;
+        u32_t _priority;
+        u32_t _mask;//events use SpxEvent
+        u32_t _firedMask;
+        u32_t _pendingMask;
+        u32_t _flags;
         int _egen;
-        int _priority;
-        SpxWatcherDelegate *_handler;
+
+        struct {
+            u64_t sec;
+            u64_t msec;
+            SpxWatcherDelegate *handler;
+            struct SpxTimerWatcher *_timer;
+            var arg;
+        }_r,_w;
         //if the nio with timeout
         //the callback function of the te is null
-        struct SpxTimerWatcher *_timer;
         struct SpxWatcher *_next;
-        var arg;
     };
 
     struct SpxAsyncWatcher{
@@ -105,7 +120,7 @@ extern "C" {
         bool_t _touched;
         int _flags;
         SpxAsyncWatcherDelegate *_handler;
-        var *arg;
+        var arg;
     };
 
     struct SpxTimerWatcher {
@@ -163,32 +178,47 @@ extern "C" {
 
         struct _SpxTimer *_timer;
         bool_t _isBreak;
+        int _flags;
     };
 
     err_t spxWatcherResize(struct SpxEventLoop *loop, int fd);
-    err_t spxWatcherInit(struct SpxWatcher *w,
-            int fd,u64_t sec,u64_t msec,
-            int marks,SpxWatcherDelegate *handler,var arg);
-    void spxWatcherSetPriority(struct SpxWatcher *w,u32_t priority);
+    err_t spxWatcherInit(struct SpxWatcher *w,int fd,u32_t priority);
+    err_t spxWatcherRelive(struct SpxWatcher *w);
+    err_t spxWatcherAddHandler(struct SpxWatcher *w,u32_t mask,u64_t sec,u64_t msec,
+            SpxWatcherDelegate *handler,var arg);
     err_t spxWatcherAttach(struct SpxEventLoop *loop,struct SpxWatcher *w);
+    err_t spxWatcherRemove(struct SpxEventLoop *loop,int fd,int delmasks);
     err_t spxWatcherDetach(struct SpxEventLoop *loop,int fd);
 
     void spxTimerWatcherInit(struct SpxTimerWatcher *w,u64_t sec,u64_t msec,
             SpxTimerWatcherDelegate *handler,var arg);
-
     err_t spxTimerWatcherAttach(struct SpxEventLoop *loop,struct SpxTimerWatcher *w);
     err_t spxTimerWatcherModify(struct SpxEventLoop *loop,struct SpxTimerWatcher *w,
             u64_t sec,u64_t msec,SpxTimerWatcherDelegate *handler,var arg);
     err_t spxTimerWatcherDetach(struct SpxEventLoop *loop, struct SpxTimerWatcher *w);
 
 
+    err_t spxAsyncWatcherInit(struct SpxAsyncWatcher *w,u32_t priority,SpxAsyncWatcherDelegate *handler,var arg);
+    err_t spxAsyncWatcherAttach(struct SpxEventLoop *loop,struct SpxAsyncWatcher *w);
+    err_t spxAsyncWatcherDetach(struct SpxEventLoop *loop,struct SpxAsyncWatcher *w);
+    void spxAsyncWatcherClear(struct SpxAsyncWatcher *w);
 
-    struct SpxEventLoop *SpxEventLoopNew();
-    int SpxEventLoopSuspend(struct SpxEventLoop *loop);
-    int SpxEventLoopResume(struct SpxEventLoop *loop);
-    int SpxEventLoopBreak(struct SpxEventLoop *loop,int how);
-    int SpxEventLoopRunning(struct SpxEventLoop *loop,int flags);
+    struct SpxEventLoop *spxEventLoopNew(SpxLogDelegate *log,
+            size_t maxEvents,err_t *err);
+    int spxEventLoopSuspend(struct SpxEventLoop *loop);
+    int spxEventLoopResume(struct SpxEventLoop *loop);
+    void spxEventLoopBreak(struct SpxEventLoop *loop);
 
+    err_t spxEventLoopStart(struct SpxEventLoop *loop,int how);
+
+    bool_t spxEventLoopFree(struct SpxEventLoop *loop);
+
+#define __SpxEventLoopFree(loop) \
+    do {\
+        if(NULL != loop && spxEventLoopFree(loop)) {\
+            loop = NULL; \
+        } \
+    }while(false)
 
 #ifdef __cplusplus
 }

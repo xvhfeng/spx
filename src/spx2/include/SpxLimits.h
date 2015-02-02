@@ -77,6 +77,10 @@ extern "C" {
 #define SpxI64Length sizeof("-9223372036854775808")
 #define SpxU64Length SpxI64Length
 
+#define SpxBoolTransportSize 1
+
+
+
 #define SpxPB (1024 * 1024 * 1024 * 1024 * 1024)
 #define SpxTB (1024 * 1024 * 1024 * 1024)
 #define SpxGB (1024 * 1024 * 1024)

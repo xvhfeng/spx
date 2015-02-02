@@ -1,0 +1,53 @@
+c 语言编码规范
+
+宏：
+    1：宏定义常量首字母大写，驼峰风格;
+        例如：SpxLinePathLength
+    2：带参宏定义（类似于函数），使用双下划线开头，首字母大写，驼峰风格；
+        例如：SpxTypeConvert(type,name,ptr)
+
+函数：
+    1：头文件中的private函数，双下划线开头，首字母小写，驼峰风格；
+        例如：__spxObjectFree()
+    2：c文件中的private函数：单下划线开头，首字母小写，驼峰风格；
+        例如：_spxObjectFree()
+    3：c文件中的public函数：首字母小写，驼峰风格；
+        例如：spxObjectFree()
+
+struct(emnu和unio参照此列）:
+    1：struct中的item：
+        1：private级属性：单下划线开头，首字母小写，驼峰风格；
+            注意：私有是指无法让程序员直接调用，但是可以在提供的init/new函数进
+            行赋值，也可以通过调用专门的函数操作这个变量，但是不能直接使用；
+        2：public属性：首字母小写，驼峰风格；
+        3：只读、只写变量，在变量的最后面加大写的W或者R；
+    2：头文件中的struct名称：public:大写字母开头，驼峰风格；
+                            private:下划线开头，驼峰风格;
+    3：c文件中的struct（属于private）的名称：小写字母开头，驼峰风格；
+        例如：
+            struct SpxObject {
+                int _spxOBjectRefs;//private:just use in inner-file by author
+
+                int realSize;//public item,everybody can W/R
+                int realSizeW;//public but write only
+                int realSizeR;//public but read only
+            }
+
+变量：
+    1：常量：
+        1：头文件中的常量：使用小写g开头，首字母大写，驼峰风格；
+            例如：gSpxMemoryCount
+        2：c文件中（private）的常量：单下划线+小写字母g开头，首字母大写，驼峰风格；
+            例如：_gSpxMemoryCount
+    2：函数形参：首字母小写，驼峰风格；
+        例如：spxObjectFree(var objectPointer)
+    3：auto变量：首字母小写，驼峰风格；
+        例如：int realSize
+
+总结：
+    单下划线开头的都是不能在文件外调用的；
+    双下线开头，或者没有下划线开头的都是可以调用的；
+    只要命名，一定要带上项目名称，最好是3字左右的缩写；
+    只要是第一级对外的名称(struct item除外的所有public命名），一定形如:
+        前缀修饰+项目名+变量真实名
+

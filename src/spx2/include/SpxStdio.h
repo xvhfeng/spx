@@ -33,15 +33,15 @@
  * this software or lib may be copied only under the terms of the gnu general
  * public license v3, which may be found in the source kit.
  *
- *       Filename:  SpxDateTime.h
- *        Created:  2015年01月17日 22时23分58秒
+ *       Filename:  SpxStdio.h
+ *        Created:  2015年01月27日 15时55分27秒
  *         Author:  Seapeak.Xu (www.94geek.com), xvhfeng@gmail.com
  *        Company:  Tencent Literature
  *         Remark:
  *
  ****************************************************************************/
-#ifndef _SPXDATETIME_H_
-#define _SPXDATETIME_H_
+#ifndef _SPXSTDIO_H_
+#define _SPXSTDIO_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -52,45 +52,28 @@ extern "C" {
 
 #include "SpxTypes.h"
 
-u64_t spxClock();
 
-struct SpxDateTime *spxCurrentDateTime(err_t *err);
-struct SpxDate *spxToday(err_t *err);
-time_t spxNow() ;
-time_t spxZeroClock(struct SpxDate *d);
-time_t spxMakeTime(struct SpxDateTime *dt);
-time_t spxTodayZeroClock();
-time_t spxMakeZeroClock(struct SpxDate *dt);
-struct SpxDateTime *spxTimeToDateTime(time_t *t,err_t *err);
-struct SpxDate *spxTimeToDate(time_t *t,err_t *err) ;
-void spxDateTimeAddDays(struct SpxDateTime *dt,int days);
-void spxDateAddDays(struct SpxDate *d,int days);
-err_t spxCurrentDateTimeReFresh(struct SpxDateTime *sdt);
-err_t spxDateReFresh(struct SpxDate *sdt);
+#define __SpxWriteOpen(filename,is_clear) \
+    open(filename,is_clear \
+            ? O_RDWR|O_CREAT|O_TRUNC \
+            : O_RDWR|O_CREAT|O_APPEND,0744)
+#define __SpxReadOpen(filename) open(filename,O_RDONLY)
+#define __SpxFWriteOpen(filename,is_clear) fopen(filename,is_clear ? "w" : "a")
+#define __SpxFReadOpen(filename) fopen(filename,"r")
 
-/*
- * -1 : the day is before today
- *  0 : the day is today
- *  1 : the day after today
- */
-int spxDateIsBAT(struct SpxDate *d);
+#define __SpxFileExist(filename) ( 0 == access(filename,F_OK))
+#define __SpxFileReadable(filename) (0 == access(filename,R_OK))
+#define __SpxFileWritable(filename) (0 == access(filename,W_OK))
+#define __SpxFileExecutable(filename) (0 == access(filename,X_OK))
 
-int spxDateTimeIsBAT(struct SpxDateTime *dt);
 
-err_t spxModifyFiletime(const string_t filename,u64_t secs);
-
-/*
- * fmt:yyyy-MM-dd
- */
-struct SpxDate *spxDateConvert(string_t s,char *fmt,err_t *err);
-
-/*
- * fmt:hh:mm:ss
- */
-struct SpxTime *spxTimeConvert(string_t s,char *fmt,err_t *err) ;
-
-struct SpxDateTime *spxDateTimeConvert(string_t s,char *fmt,err_t *err) ;
-
+err_t spxFileDescSetNoBlocking(int fd);
+err_t spxWriteWithNoAck(int fd,string_t buff,size_t size,size_t *len);
+err_t spxWriteWithAck(int fd,string_t buff,size_t size,size_t *len);
+err_t spxReadWithNoAck(int fd,string_t buff,size_t size,size_t *len);
+err_t spxReadWithAck(int fd,string_t buff,size_t size,size_t *len);
+err_t spxSendfileWithNoAck(int sock,int fd,off_t offset,size_t size,size_t *len);
+err_t spxSendfileWithAck(int sock,int fd,off_t offset,size_t size,size_t *len);
 
 #ifdef __cplusplus
 }

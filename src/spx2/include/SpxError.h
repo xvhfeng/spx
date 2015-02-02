@@ -59,6 +59,7 @@ extern "C" {
 #define SpxECreateEventLoop 515
 #define SpxEOptr 516
 #define SpxENOSpace 517
+#define SpxEOverFlow 518
 
 
 

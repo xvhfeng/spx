@@ -51,6 +51,34 @@ extern "C" {
 #include <stdio.h>
 
 
+#include "SpxTypes.h"
+
+err_t spxTcpNoDelay(int fd,bool_t enable);
+int spxSocketNew(err_t *err);
+err_t spxSocketStart(const int fd,
+        string_t ip,const int port,
+        bool_t isKeepAlive,size_t aliveTimeout,
+        size_t detectTimes,size_t detectTimeout,
+        bool_t isLinger,size_t lingerTimeout,
+        bool_t isNoDelay,
+        bool_t isTimeout,size_t timeout,
+        size_t listens);
+string_t spxSocketIp(int sock,err_t *err);
+string_t spxHostToString(struct SpxHost *host,err_t *err);
+err_t spxSocketConnect(int fd,string_t ip,int port);
+err_t spxSocketConnectNoBlocking(int fd,string_t ip,int port,u32_t timeout);
+err_t spxSocketSet(const int fd,
+        bool_t isKeepAlive,size_t aliveTimeout,
+        size_t detecTtimes,size_t detectTimeout,
+        bool_t isLinger,size_t lingerTimeout,
+        bool_t isNoDelay,
+        bool_t isTimeout,size_t timeout);
+string_t spxSocketGetNameByHostName(string_t name,err_t *err);
+bool_t spxSocketIsIp(string_t ip);
+bool_t spxSocketWaitRead(int fd,u32_t timeout);
+bool_t spxSocketTest(int fd);
+
+
 #ifdef __cplusplus
 }
 #endif

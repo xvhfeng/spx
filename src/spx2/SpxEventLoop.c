@@ -38,6 +38,7 @@
 #include <errno.h>
 #include <unistd.h>
 
+#include "SpxTypes.h"
 #include "SpxMFunc.h"
 #include "SpxError.h"
 #include "SpxVars.h"
@@ -45,8 +46,9 @@
 #include "SpxAtomic.h"
 #include "SpxObject.h"
 #include "SpxEventLoop.h"
+#include "SpxPeriodic.h"
 
-private SpxInline u64_t _spxTimerClock();
+private  u64_t _spxTimerClock();
 private SpxInline u64_t _spxTimerClockConvert(u64_t sec,u64_t msecs);
 private struct _SpxTimer *_spxTimerNew(SpxLogDelegate *log,
         u64_t tick, u32_t slotsCount,err_t *err);
@@ -54,7 +56,7 @@ private struct SpxTimerWatcher *_spxTimerRunning(
         struct _SpxTimer *timer,u32_t *count);
 private err_t _spxTimerFree(struct _SpxTimer **timer);
 private void _spxAsyncWatcherHandler(struct SpxEventLoop *loop,
-            int fd,int events,struct SpxWatcher *w);
+        struct SpxWatcher *w,int revents,var arg);
 
 //------------io---------------
 #if SpxEpoll
@@ -63,45 +65,66 @@ private void _spxAsyncWatcherHandler(struct SpxEventLoop *loop,
 #include "_SpxEvKqueue.c"
 #endif
 
-err_t spxWatcherInit(struct SpxWatcher *w,
-        int fd,u64_t sec,u64_t msec,
-        int marks,SpxWatcherDelegate *handler,var arg){/*{{{*/
-    if(NULL == w || 0 > fd || 0 > marks){
+err_t spxWatcherInit(struct SpxWatcher *w,int fd,u32_t priority){/*{{{*/
+    if(NULL == w || 0 > fd){
         return EINVAL;
     }
-    if(SpxEvNone & marks){
-        return ENOENT;
-    }
-    w->_marks = SpxEvNone;
     w->fd = fd;
     w->_events = 0;
-    w->_priority = 5;
-    if(SpxEvRead & marks){
-        w->_handler = handler;
-        w->arg = arg;
-    }
-    if(SpxEvWrite & marks){
-        w->_handler = handler;
-        w->arg = arg;
-    }
-    w->sec = sec;
-    w->msec = msec;
-    if(0 != sec || 0 != msec){
-        w->_marks |= SpxEvTimeout;
-    }
-    w->_flags = SpxWatcherInited;
-    return 0;
-}/*}}}*/
-
-void spxWatcherSetPriority(struct SpxWatcher *w,u32_t priority){/*{{{*/
-    if(NULL == w){
-        return;
-    }
+    w->_mask = SpxEvNone;
+    w->_firedMask = SpxEvNone;
+    w->_pendingMask = SpxEvNone;
+    w->_egen = 0;
+    w->_next = NULL;
     w->_priority = 0 == priority
         ? 5
         : 10 <= priority
         ? 10
         : priority;
+    w->_flags = SpxWatcherNormal;
+    return 0;
+}/*}}}*/
+
+err_t spxWatcherRelive(struct SpxWatcher *w){/*{{{*/
+    if(NULL == w || 0 > w->fd){
+        return EINVAL;
+    }
+    if(SpxWatcherFired != w->_flags
+            || SpxWatcherOver != w->_flags){
+        return SpxEFlags;
+    }
+
+    w->_events = 0;
+    w->_firedMask = SpxEvNone;
+    w->_pendingMask = SpxEvNone;
+    w->_flags = SpxWatcherNormal;
+    return 0;
+}/*}}}*/
+
+err_t spxWatcherAddHandler(struct SpxWatcher *w,u32_t mask,u64_t sec,u64_t msec,
+        SpxWatcherDelegate *handler,var arg){/*{{{*/
+    if(NULL == w || (SpxEvNone == mask)){
+        return ENOENT;
+    }
+    if(SpxWatcherNormal != w->_flags){
+        return SpxEFlags;
+    }
+    if(SpxEvRead & mask){
+        w->_r.sec = sec;
+        w->_r.msec = msec;
+        w->_r.handler = handler;
+        w->_r.arg = arg;
+        w->_mask |= SpxEvRead;
+    }
+    if(SpxEvWrite & mask){
+        w->_w.sec = sec;
+        w->_w.msec = msec;
+        w->_w.handler = handler;
+        w->_w.arg = arg;
+        w->_mask |= SpxEvWrite;
+    }
+    w->_flags = SpxWatcherInited;
+    return 0;
 }/*}}}*/
 
 err_t spxWatcherResize(struct SpxEventLoop *loop, int fd) {/*{{{*/
@@ -121,12 +144,12 @@ err_t spxWatcherResize(struct SpxEventLoop *loop, int fd) {/*{{{*/
 }/*}}}*/
 
 //------------io---------------
-#include "SpxEventLoop.h"
+
 
 //------------timer---------------
-private SpxInline u64_t _spxTimerClock(){/*{{{*/
+private  u64_t _spxTimerClock(){/*{{{*/
     u64_t usecs = spxClock();
-    return (u64_t) usecs / SpxMSecToTimerClock;
+    return (u64_t) (usecs / SpxMSecToTimerClock);
 }/*}}}*/
 
 private SpxInline u64_t _spxTimerClockConvert(u64_t sec,u64_t msecs){/*{{{*/
@@ -364,18 +387,18 @@ private err_t _spxTimerFree(struct _SpxTimer **timer){/*{{{*/
 
 //------------async---------------
 private void _spxAsyncWatcherHandler(struct SpxEventLoop *loop,
-            int fd,int events,struct SpxWatcher *w){/*{{{*/
-    if(NULL == w || NULL == w->_handler){
+        struct SpxWatcher *w,int revents,var arg){
+    if(NULL == w || NULL == w->_r.handler){
         return;
     }
-    if(SpxEvRead & events){
-        struct SpxAsyncWatcher *aw = w->arg;
+    if(SpxEvRead & revents){
+        struct SpxAsyncWatcher *aw = w->_r.arg;
         if(NULL == aw || NULL == aw->_handler){
             return;
         }
-        aw->_handler(loop,aw);
+        aw->_handler(loop,aw,aw->arg);
     }
-}/*}}}*/
+}
 
 err_t spxAsyncWatcherInit(struct SpxAsyncWatcher *w,u32_t priority,SpxAsyncWatcherDelegate *handler,var arg){/*{{{*/
     if(NULL == w){
@@ -388,27 +411,26 @@ err_t spxAsyncWatcherInit(struct SpxAsyncWatcher *w,u32_t priority,SpxAsyncWatch
     if(0 != pipe(w->_pipe)){
         return errno;
     }
-    if(0 != (err = spxWatcherInit(&(w->_watcher),w->_pipe[1],0,0,SpxEvRead,_spxAsyncWatcherHandler,w))){
+    if(0 != (err = spxWatcherInit(&(w->_watcher),w->_pipe[1],priority))){
         __SpxClose(w->_pipe[0]);
         __SpxClose(w->_pipe[1]);
     }
-    if(0 != priority) {
-        spxWatcherSetPriority(&(w->_watcher),priority);
-    }
+    spxWatcherAddHandler(&(w->_watcher),SpxEvRead,0,0,_spxAsyncWatcherHandler,w);
     return 0;
 
 }/*}}}*/
 
-err_t spxAsyncWatcherAttach(struct SpxEventLoop *loop,struct SpxAsyncWatcher *w){/*{{{*/
+
+err_t spxAsyncWatcherAttach(struct SpxEventLoop *loop,struct SpxAsyncWatcher *w) {/*{{{*/
     if(NULL == loop || NULL == w){
         return EINVAL;
     }
-    return spxWatcherAttach(loop,&(w->_watcher));
-}/*}}}*/
-
-err_t spxAsyncWatcherTouch(struct SpxEventLoop *loop,struct SpxAsyncWatcher *w) {/*{{{*/
     if(w->_touched){
         return SpxEOptr;
+    }
+    err_t err = 0;
+    if(0 != (err = spxWatcherAttach(loop,&(w->_watcher)))){
+        return err;
     }
     if(__SpxAtomicVIsCas(w->_touched,false,true)){
         if(sizeof(w) != (write(w->_pipe[0],w,sizeof(w)))){
@@ -437,7 +459,7 @@ void spxAsyncWatcherClear(struct SpxAsyncWatcher *w){/*{{{*/
 //------------async---------------
 
 
-struct SpxEventLoop *SpxEventLoopNew(
+struct SpxEventLoop *spxEventLoopNew(
         SpxLogDelegate *log,
         size_t maxEvents,err_t *err){/*{{{*/
     if(0 == maxEvents){
@@ -475,14 +497,18 @@ struct SpxEventLoop *SpxEventLoopNew(
         return NULL;
     }
 
+    loop->_flags = SpxEventLoopInited;
     return loop;
 }/*}}}*/
 
-int SpxEventLoopRunning(struct SpxEventLoop *loop,int how){/*{{{*/
+
+err_t spxEventLoopStart(struct SpxEventLoop *loop,int how){
     u32_t count = 0;
     err_t err = 0;
     int fds = 0;
+    loop->_flags = SpxEventLoopRunning;
     do{
+        if(loop->_isBreak) break;
         err =  _spxWatcherWait(loop,&fds);
         if(0 != err && EAGAIN != err){
             __SpxLog2(loop->log,SpxLogError,err,
@@ -490,12 +516,17 @@ int SpxEventLoopRunning(struct SpxEventLoop *loop,int how){/*{{{*/
                     "and break the loop,leave the timeout and async.");
             break;
         }
-        int i = 0;
-        for( ; i < 10; i++){
+        int i = 9;
+        for( ; i >= 0; i++){
             struct SpxWatcher *w = loop->_firedWatchers[i];
             while(NULL != w){
-                w->_flags = SpxWatcherFired;
-                w->_handler(loop,w->fd,w->_firedMarks,w);
+                if(SpxEvRead & w->_pendingMask){
+                    w->_r.handler(loop,w,SpxEvRead,w->_r.arg);
+                }
+                if(SpxEvWrite & w->_pendingMask){
+                    w->_w.handler(loop,w,SpxEvWrite,w->_w.arg);
+                }
+                w->_flags = (w->_mask == w->_firedMask) ? SpxWatcherFired : SpxWatcherPartOfFired;
                 w = w->_next;
             }
         }
@@ -508,28 +539,49 @@ int SpxEventLoopRunning(struct SpxEventLoop *loop,int how){/*{{{*/
                 if(NULL == timer->_handler){
                     //delete event from kqueue/epoll
                     struct SpxWatcher *w = timer->arg;
-                    if(SpxEvTimeout & w->_marks) {
-                        spxWatcherDetach(loop,w->fd);
-                        w->_flags = SpxWatcherFired;
-                        w->_handler(loop,w->fd,SpxEvTimeout,w);
+                    if(NULL == w){
+                        continue;
                     }
+                    if(SpxEvRead & w->_mask
+                            && timer == w->_r._timer
+                            && NULL != w->_r.handler){
+                        w->_r.handler(loop,w,SpxEvTimeout,w->_r.arg);
+                        w->_firedMask |= SpxEvRead;
+                        __SpxObjectFree(w->_r._timer);
+                    }
+                    if(SpxEvWrite & w->_mask
+                            && timer == w->_w._timer
+                            && NULL != w->_w.handler){
+                        w->_w.handler(loop,w,SpxEvTimeout,w->_w.arg);
+                        w->_firedMask |= SpxEvWrite;
+                        __SpxObjectFree(w->_w._timer);
+                    }
+                    w->_flags = (w->_mask == w->_firedMask) ? SpxWatcherFired : SpxWatcherPartOfFired;
                 } else {
                     timer->_flags = SpxWatcherFired;
-                    timer->_handler(loop,timer);
+                    timer->_handler(loop,timer,timer->arg);
                 }
                 header = timer->_next;
             }
         }
 
-    }while(loop->_isBreak && (!(how & SpxEventLoopOnce)));
-    return 0;
-}/*}}}*/
+    }while(how != SpxEventLoopOnce);
+    loop->_flags = SpxEventLoopBreaked;
+    return err;
+}
 
+void spxEventLoopBreak(struct SpxEventLoop *loop){
+    loop->_isBreak = true;
+}
 
-void SpxEventLoopFree(struct SpxEventLoop *loop){/*{{{*/
+bool_t spxEventLoopFree(struct SpxEventLoop *loop){/*{{{*/
+    while(SpxEventLoopRunning == loop->_flags){
+        spxEventLoopBreak(loop);
+        spxPeriodicSleep(0,loop->_tick);
+    }
     __SpxClose(loop->_fd);
     _spxTimerFree(&(loop->_timer));
     __SpxObjectFree(loop);
-    return;
+    return true;
 }/*}}}*/
 

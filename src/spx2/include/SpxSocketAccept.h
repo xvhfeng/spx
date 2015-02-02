@@ -50,6 +50,12 @@ extern "C" {
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "SpxTypes.h"
+#include "SpxMFunc.h"
+#include "SpxEventLoop.h"
+
+void spxSocketAcceptNoBlocking(SpxLogDelegate *log,
+        struct SpxEventLoop *loop,int fd);
 #ifdef __cplusplus
 }
 #endif
