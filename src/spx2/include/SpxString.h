@@ -151,25 +151,33 @@ bool_t _spxStringFreeForce(string_t s);
 string_t spxStringAppend(string_t s,const var t,size_t len,err_t *err);
 string_t spxStringAlignedAppend(string_t s,const var t,const size_t len,
         const size_t align,err_t *err);
+
 string_t spxStringInsert(string_t s,const i32_t offset,
         const var t,const size_t len,err_t *err);
 string_t spxStringAlignedInsert(string_t s,const i32_t offset,
         const var t,const size_t len,
         size_t align,err_t *err);
+
 string_t spxStringCopy(string_t s,int begin,const var t,size_t len,err_t *err);
+
 err_t spxStringAppendPrint(string_t *dest,string_t s,const char *fmt,va_list ap);
 err_t spxStringAppendFormat(string_t *dest,string_t s,const char *fmt,...);
+
 void spxStringRange(string_t s,int start,int end);
 string_t spxStringRangeNew(string_t s,int start,int end,err_t *err);
+
 void spxStringTrimSet(string_t s,const char *cset);
 void spxStringLeftTrimSet(string_t s,const char *cset);
 void spxStringRightTrimSet(string_t s,const char *cset);
+
 void spxStringUpdate(string_t s);
 void spxStringClear(string_t s);
+
 string_t spxStringFromNumber(i64_t value,err_t *err);
 string_t *spxStringSplitChars(const char *s,int len,
         const char *sep,int seplen,int *count,err_t *err);
 void spxStringSplitFree(string_t *tokens, int count);
+
 void spxStringToLower(string_t s);
 void spxStringToUpper(string_t s);
 

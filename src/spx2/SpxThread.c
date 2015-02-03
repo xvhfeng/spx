@@ -41,6 +41,9 @@
 #include "SpxMFunc.h"
 #include "SpxVars.h"
 #include "SpxObject.h"
+#include "SpxCounter.h"
+#include "SpxAlloc.h"
+#include "SpxAtomic.h"
 
 
 struct _SpxThreadTransport{
@@ -56,6 +59,37 @@ pthread_t spxThreadNew(SpxLogDelegate *log,
     pthread_t tid = 0;
     pthread_attr_t attr;
     pthread_attr_init(&attr);
+    size_t ostackSize = 0;
+    pthread_attr_getstacksize(&attr, &ostackSize);
+    do{
+        if (ostackSize != stackSize
+                && (0 != (*err = pthread_attr_setstacksize(&attr,stackSize)))){
+            __SpxLog2(log,SpxLogError,*err,\
+                    "set thread stack size is fail.");
+            pthread_attr_destroy(&attr);
+            break;
+        }
+        if (0 !=(*err =  pthread_create(&(tid), &attr, startRoutine,
+                        arg))){
+            __SpxLog2(log,SpxLogError,*err,\
+                    "create nio thread is fail.");
+            pthread_attr_destroy(&attr);
+            break;
+        }
+    }while(false);
+    pthread_attr_destroy(&attr);
+    return tid;
+}
+
+pthread_t spxThreadNewDetached(SpxLogDelegate *log,
+        size_t stackSize,
+        var (*startRoutine)(var),
+        var arg,
+        err_t *err){
+    pthread_t tid = 0;
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
     size_t ostackSize = 0;
     pthread_attr_getstacksize(&attr, &ostackSize);
     do{
@@ -117,6 +151,16 @@ pthread_mutex_t *spxThreadMutexNew(SpxLogDelegate *log,
     return m;
 }
 
+bool_t spxThreadMutexFree(pthread_mutex_t *m){
+    __SpxTypeConvert(struct SpxObject,o,m);
+    if(0 == __SpxAtomicVDecr(o->_spxObjectRefs)){
+        pthread_mutex_destroy(m);
+        __SpxAtomicVSub(gSpxMemoryUseSize, SpxObjectAlignSize + o->_spxObjectSize);
+        __SpxFree(o);
+        return true;
+    }
+    return false;
+}
 
 pthread_cond_t *spxThreadCondNew(SpxLogDelegate *log,
         err_t *err){
@@ -130,4 +174,13 @@ pthread_cond_t *spxThreadCondNew(SpxLogDelegate *log,
 
 }
 
-
+bool_t spxThreadCondFree(pthread_cond_t *c){
+    __SpxTypeConvert(struct SpxObject,o,c);
+    if(0 == __SpxAtomicVDecr(o->_spxObjectRefs)){
+        pthread_cond_destroy(c);
+        __SpxAtomicVSub(gSpxMemoryUseSize, SpxObjectAlignSize + o->_spxObjectSize);
+        __SpxFree(o);
+        return true;
+    }
+    return false;
+}

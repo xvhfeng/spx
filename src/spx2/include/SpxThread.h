@@ -52,13 +52,19 @@ extern "C" {
 
 pthread_t spxThreadNew(SpxLogDelegate *log,
         size_t stackSize,
-        var (*startRoutine)(void*),
+        var (*startRoutine)(var),
         var arg,
         err_t *err);
 
 pthread_t spxThreadNewCancelability(SpxLogDelegate *log,
         size_t stackSize,
-        var (*startRoutine)(void *),
+        var (*startRoutine)(var ),
+        var arg,
+        err_t *err);
+
+pthread_t spxThreadNewDetached(SpxLogDelegate *log,
+        size_t stackSize,
+        var (*startRoutine)(var),
         var arg,
         err_t *err);
 
@@ -67,6 +73,26 @@ pthread_mutex_t *spxThreadMutexNew(SpxLogDelegate *log,
 
 pthread_cond_t *spxThreadCondNew(SpxLogDelegate *log,
         err_t *err);
+
+bool_t spxThreadMutexFree(pthread_mutex_t *m);
+bool_t spxThreadCondFree(pthread_cond_t *c);
+
+#define __SpxThreadMutexFree(m) \
+ do {\
+     if(NULL != m && spxThreadMutexFree(m)) {\
+         m = NULL; \
+     }\
+ }while(false)
+
+
+#define __SpxThreadCondFree(c) \
+ do {\
+     if(NULL != c && spxThreadCondFree(c)) {\
+         c = NULL; \
+     }\
+ }while(false)
+
+
 
 #ifdef __cplusplus
 }

@@ -50,7 +50,27 @@ extern "C" {
 #include <stdlib.h>
 #include <stdio.h>
 
-void spxPeriodicSleep(int sec,int msec);
+    typedef var (SpxPeriodicDelegate)(var arg);
+
+#define SpxperiodicRunning 0
+#define SpxperiodicSetPausing 1
+#define SpxperiodicPausing 2
+
+    struct SpxPeriodic{
+        SpxLogDelegate *log;
+        SpxPeriodicDelegate *_periodicHandler;
+        u32_t _sec;
+        u64_t _usec;
+        err_t err;
+        bool_t _isRun;
+        i32_t _status;
+        var arg;
+        pthread_t _tid;
+        pthread_mutex_t *_mlock;
+        pthread_cond_t *_clock;
+    };
+
+    void spxPeriodicSleep(int sec,int msec);
 
 #ifdef __cplusplus
 }
