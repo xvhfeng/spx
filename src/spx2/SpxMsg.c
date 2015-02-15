@@ -52,15 +52,6 @@
 #define _SpxMsgHeaderOffsetOfIsKeepalive (3 * sizeof(u32_t) + 2 * sizeof(u64_t))
 #define _SpxMsgHeaderOffsetOfErr (3 * sizeof(u32_t) + 2 * sizeof(u64_t) + SpxBoolTransportSize)
 
-union _SpxDoubleToU64{
-    double d;
-    u64_t u;
-};
-
-union _SpxFloatToU32{
-    float f;
-    u32_t u;
-};
 
 private void _spxU32ToMsg(string_t s,const u32_t n){/*{{{*/
     *s++ = (n >> 24) & 0xFF;
@@ -168,7 +159,7 @@ string_t spxMsgPackDouble(string_t s,i32_t offset,double d,err_t *err){/*{{{*/
         *err = EINVAL;
         return 0;
     }
-    union _SpxDoubleToU64 dtu;
+    union SpxDoubleToU64 dtu;
     __SpxZero(dtu);
     dtu.d = d;
     return spxMsgPackU64(s,offset,(u64_t) dtu.u,err);
@@ -179,7 +170,7 @@ string_t spxMsgPackFloat(string_t s,i32_t offset,float f,err_t *err){/*{{{*/
         *err = EINVAL;
         return 0;
     }
-    union _SpxFloatToU32 ftu;
+    union SpxFloatToU32 ftu;
     __SpxZero(ftu);
     ftu.f = f;
     return spxMsgPackU32(s,offset,(u32_t) ftu.u,err);
@@ -262,7 +253,7 @@ double spxMsgUnpackDouble(string_t s,i32_t offset,err_t *err){/*{{{*/
         *err = SpxEOverFlow;
         return 0;
     }
-    union _SpxDoubleToU64 dtu;
+    union SpxDoubleToU64 dtu;
     __SpxZero(dtu);
     dtu.u = spxMsgUnpackU64(s,offset,err);
     return dtu.d;
@@ -281,7 +272,7 @@ float spxMsgUnpackFloat(string_t s,i32_t offset,err_t *err){/*{{{*/
         *err = SpxEOverFlow;
         return 0;
     }
-    union _SpxFloatToU32 ftu;
+    union SpxFloatToU32 ftu;
     __SpxZero(ftu);
     ftu.u = spxMsgUnpackU32(s,offset,err);
     return ftu.f;

@@ -122,6 +122,7 @@ private void _spxMainSocketHandler(struct SpxEventLoop *loop,
         }
 
         spxServerContextInit(ssc,w->fd,SpxMooreRead);
+        ssc->protocolType = SpxProtocolTypeTcp;
         __SpxServerContextSetThreadContext(ssc,smtc);
         spxModuleThreadWakeup(smtc,ssc);
     }

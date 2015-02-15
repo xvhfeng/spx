@@ -64,6 +64,9 @@ extern "C" {
 #define SpxMooreRead 1
 #define SpxMooreWrite 2
 
+#define SpxProtocolTypeTcp 0
+#define SpxProtocolTypeHttp 1
+
     extern struct SpxServerContextPool *gSpxServerContextPool;
 
 
@@ -78,6 +81,8 @@ extern "C" {
         SpxLogDelegate *log;
         u32_t lifecycle;
         u32_t moore;
+        u32_t protocolType;
+
         struct SpxModuleThreadContext *currentThreadContext;
 
         struct SpxMsgHeader *readerHeader;

@@ -55,6 +55,11 @@ extern "C" {
         "true"
     };
 
+    private int SpxBoolDescLength[] = {
+        5,
+        4
+    };
+
 #define SpxLogDebug 0
 #define SpxLogInfo 1
 #define SpxLogWarn 2
@@ -93,6 +98,8 @@ extern "C" {
 #define SpxDiskUnitMB 3
 #define SpxDiskUnitKB 4
 #define SpxDiskUnitB 5
+
+#define SpxHttpLineEnd "\r\n"
 
 #ifdef __cplusplus
 }

@@ -17,7 +17,7 @@ CFLAG = -pipe -o0  -W -Wall -Werror -g  \
 INC_PATH = -I/usr/local/include \
 		   -I$(SPX_HEADER_PATH) 
 
-LIB_PATH = -L/usr/local/lib -lpthread
+LIB_PATH = -L/usr/local/lib -lpthread -lm
 
 DEFS := 
 TARGET := 

@@ -62,6 +62,12 @@ extern "C" {
         reutrn p & 3;
     }
 
+    u32_t __spxTrickOut(u64_t *p){
+        u32_t trick = *p & 3;
+        *p &= ~3;
+        return trick;
+    }
+
     var __spxTrickCleanup(u64_t *p){
         *p &= ~3;
         return p;

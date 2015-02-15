@@ -163,6 +163,15 @@ extern "C" {
     }bool_t;
 #endif
 
+union SpxDoubleToU64{
+    double d;
+    u64_t u;
+};
+
+union SpxFloatToU32{
+    float f;
+    u32_t u;
+};
 
 #ifdef __cplusplus
 }

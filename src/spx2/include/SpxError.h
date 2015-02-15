@@ -60,7 +60,9 @@ extern "C" {
 #define SpxEOptr 516
 #define SpxENOSpace 517
 #define SpxEOverFlow 518
-
+#define SpxEJsonNameFormat 519
+#define SpxEJsonObjectForamt 520
+#define SpxENotImpl 521
 
 
 char *spxErrorToString(err_t err);
