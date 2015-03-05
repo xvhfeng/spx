@@ -19,10 +19,6 @@ union f2i{
     uint32_t i;
 };
 
-spx_private void spx_msg_i2b(uchar_t *b,const i32_t n);
-spx_private i32_t spx_msg_b2i(uchar_t *b);
-spx_private void spx_msg_l2b(uchar_t *b,const i64_t n) ;
-spx_private i64_t spx_msg_b2l(uchar_t *b);
 
 struct spx_msg *spx_msg_new(const size_t len,err_t *err){/*{{{*/
     if (0 == len){
@@ -335,20 +331,20 @@ struct spx_msg *spx_header_to_msg(struct spx_msg_header *header,size_t len,err_t
 
 
 
-spx_private void spx_msg_i2b(uchar_t *b,const i32_t n){/*{{{*/
+ void spx_msg_i2b(uchar_t *b,const i32_t n){/*{{{*/
     *b++ = (n >> 24) & 0xFF;
     *b++ = (n >> 16) & 0xFF;
     *b++ = (n >> 8) & 0xFF;
     *b++ = n & 0xFF;
 }/*}}}*/
-spx_private i32_t spx_msg_b2i(uchar_t *b){/*{{{*/
+ i32_t spx_msg_b2i(uchar_t *b){/*{{{*/
     i32_t n =  (i32_t ) ((((i32_t) (*b)) << 24)
             | (((i32_t) (*(b + 1))) << 16)
             | (((i32_t) (*(b+2))) << 8)
             | ((i32_t) (*(b+3))));
     return n;
 }/*}}}*/
-spx_private void spx_msg_l2b(uchar_t *b,const i64_t n){/*{{{*/
+ void spx_msg_l2b(uchar_t *b,const i64_t n){/*{{{*/
     *b++ = (n >> 56) & 0xFF;
     *b++ = (n >> 48) & 0xFF;
     *b++ = (n >> 40) & 0xFF;
@@ -358,7 +354,7 @@ spx_private void spx_msg_l2b(uchar_t *b,const i64_t n){/*{{{*/
     *b++ = (n >> 8) & 0xFF;
     *b++ = n & 0xFF;
 }/*}}}*/
-spx_private i64_t spx_msg_b2l(uchar_t *b){/*{{{*/
+ i64_t spx_msg_b2l(uchar_t *b){/*{{{*/
     i64_t n =  (((i64_t) (*b)) << 56)
         | (((i64_t) (*(b+1))) << 48)
         | (((i64_t) (*(b + 2))) << 40)

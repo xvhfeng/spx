@@ -22,6 +22,7 @@
 #include "spx_defs.h"
 #include "spx_fixed_vector.h"
 #include "spx_alloc.h"
+#include "spx_thread.h"
 
 struct spx_fixed_vector *spx_fixed_vector_new(SpxLogDelegate *log,\
         size_t size,\
@@ -36,6 +37,13 @@ struct spx_fixed_vector *spx_fixed_vector_new(SpxLogDelegate *log,\
     if(NULL == vector) {
         SpxLog2(log,SpxLogError,rc,\
                 "alloc vector is fail.");
+        return NULL;
+    }
+    vector->locker = spx_thread_mutex_new(log,err);
+    if(!vector->locker){
+        SpxFree(vector);
+        SpxLog2(log,SpxLogError,rc,\
+                "alloc vector locker is fail.");
         return NULL;
     }
     size_t i = 0;
@@ -80,44 +88,57 @@ err_t spx_fixed_vector_free(struct spx_fixed_vector **vector){
         return 0;
     }
     err_t rc = 0;
-    struct spx_vector_node *node = NULL;
-    while(NULL !=(node =  (*vector)->header)){
-        (*vector)->header = (*vector)->header->next;
-        if(NULL != (*vector)->node_free_handle){
-            (*vector)->node_free_handle(&(node->v));
+    pthread_mutex_t *locker = (*vector)->locker;
+    if(!pthread_mutex_lock((*vector)->locker)) {
+        struct spx_vector_node *node = NULL;
+        while(NULL !=(node =  (*vector)->header)){
+            (*vector)->header = (*vector)->header->next;
+            if(NULL != (*vector)->node_free_handle){
+                (*vector)->node_free_handle(&(node->v));
+            }
+            SpxFree(node);
         }
-        SpxFree(node);
+        while(NULL !=(node =  (*vector)->busy_header)){
+            (*vector)->busy_header = (*vector)->busy_header->next;
+            SpxFree(node);
+        }
+        (*vector)->size = 0;
+        (*vector)->tail = NULL;
+        SpxFree(*vector);
     }
-    while(NULL !=(node =  (*vector)->busy_header)){
-        (*vector)->busy_header = (*vector)->busy_header->next;
-        SpxFree(node);
-    }
-    (*vector)->size = 0;
-    (*vector)->tail = NULL;
-    SpxFree(*vector);
+    pthread_mutex_unlock(locker);
+    spx_thread_mutex_free(&locker);
     return rc;
 }
 
 err_t spx_fixed_vector_push(struct spx_fixed_vector *vector,void *v){
     err_t rc = 0;
-    struct spx_vector_node *node = NULL;
-    if(NULL == vector->busy_header){
-        SpxLog1(vector->log,SpxLogError,"the busy node is null.");
-        return ENOENT;
+
+    if(0 != (rc = pthread_mutex_lock(vector->locker))) {
+        return rc;
     }
-    node = vector->busy_header;
-    vector->busy_header = node->next;
-    node->v = v;
-    node->next = NULL;
-    if(NULL == vector->header){
-        vector->header = node;
-        vector->tail = node;
-    }else {
-        vector->tail->next = node;
-        node->prev = vector->tail;
-        vector->tail = node;
-    }
-    vector->busysize --;
+    do{
+        struct spx_vector_node *node = NULL;
+        if(NULL == vector->busy_header){
+            SpxLog1(vector->log,SpxLogError,"the busy node is null.");
+            rc = ENOENT;
+            break;
+        }
+        node = vector->busy_header;
+        vector->busy_header = node->next;
+        node->v = v;
+        node->next = NULL;
+        if(NULL == vector->header){
+            vector->header = node;
+            vector->tail = node;
+        }else {
+            vector->tail->next = node;
+            node->prev = vector->tail;
+            vector->tail = node;
+        }
+        vector->busysize --;
+    }while(false);
+    pthread_mutex_unlock(vector->locker);
     return rc;
 }
 
@@ -128,34 +149,43 @@ void *spx_fixed_vector_pop(struct spx_fixed_vector *vector, err_t *err){
         return NULL;
     }
 
-    struct spx_vector_node *node = NULL;
     void *v = NULL;
-    if(NULL != vector->header){
-        node = vector->header;
-        vector->header = node->next;
+    if(0 != (*err = pthread_mutex_lock(vector->locker))) {
+        return NULL;
+    }
+    do{
+        struct spx_vector_node *node = NULL;
         if(NULL != vector->header){
-            vector->header->prev = NULL;
+            node = vector->header;
+            vector->header = node->next;
+            if(NULL != vector->header){
+                vector->header->prev = NULL;
+            }
+            v = node->v;
+            node->prev = NULL;
+            node->next = NULL;
+            if(NULL == vector->busy_header){
+                vector->busy_header = node;
+                vector->busy_tail = node;
+            }else{
+                node->prev = vector->busy_tail;
+                vector->busy_tail->next = node;
+                vector->busy_tail = node;
+            }
+            node->v = NULL;
+            vector->busysize ++;
+        } else {
+            v = NULL;
+            *err = ENOENT;
         }
-        v = node->v;
-        node->prev = NULL;
-        node->next = NULL;
-        if(NULL == vector->busy_header){
-            vector->busy_header = node;
-            vector->busy_tail = node;
-        }else{
-            node->prev = vector->busy_tail;
-            vector->busy_tail->next = node;
-            vector->busy_tail = node;
+        if(NULL == vector->header){
+            vector->tail = NULL;
         }
-        node->v = NULL;
-        vector->busysize ++;
-    } else {
-        v = NULL;
-        *err = ENOENT;
-    }
-    if(NULL == vector->header){
-        vector->tail = NULL;
-    }
+
+        SpxLogFmt1(vector->log,SpxLogDebug,"fixed vector size:%d,busy size:%d.",
+                vector->size,vector->busysize);
+    }while(false);
+    pthread_mutex_unlock(vector->locker);
     return v;
 }
 

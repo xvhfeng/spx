@@ -23,6 +23,7 @@ extern "C" {
 
 #include "spx_types.h"
 #include "spx_vector.h"
+#include "spx_thread.h"
 
 
     typedef void *SpxFixedVectorValueNewDeledate(size_t idx,void *arg,err_t *err);
@@ -36,6 +37,7 @@ extern "C" {
         size_t size;
         size_t busysize;
         SpxLogDelegate *log;
+        pthread_mutex_t *locker;
     };
 
 

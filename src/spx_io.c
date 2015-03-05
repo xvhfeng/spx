@@ -19,17 +19,16 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include  <string.h>
-
-#ifdef SpxMac
 #include <sys/types.h>
 #include <sys/socket.h>
+
+#ifdef SpxMac
 #include <sys/uio.h>
 #endif
 
 #ifdef SpxLinux
 #include <sys/sendfile.h>
 #endif
-
 
 
 #include "spx_types.h"
@@ -100,6 +99,71 @@ err_t spx_read_nb(int fd,byte_t *buf,const size_t size,size_t *len){/*{{{*/
                 SpxErrReset;
                 continue;
             }
+            err = errno;
+            break;
+        }else if(0 == rc){
+            break;
+        }else {
+            *len += rc;
+        }
+    }
+    if(0 != err) return err;
+    if(size != *len) return EIO;
+    return 0;
+}/*}}}*/
+
+
+err_t spx_read_ack(int fd,byte_t *buf,const size_t size,size_t *len){/*{{{*/
+    SpxErrReset;
+    err_t err = 0;
+    i64_t rc = 0;
+    while(*len < size){
+        rc = read(fd,((char *) buf) + *len,size - *len);
+        if(0 > rc){
+            err = errno;
+            break;
+        }else if(0 == rc){
+            break;
+        }else {
+            *len += rc;
+        }
+    }
+    if(0 != err) return err;
+    if(size != *len) return EIO;
+    return 0;
+}/*}}}*/
+
+
+err_t spx_perread_ack(int fd,byte_t *buf,const size_t size,size_t *len){/*{{{*/
+    SpxErrReset;
+    *len = 0;
+    err_t err = 0;
+    i64_t rc = 0;
+    while(*len < size){
+        rc = recv(fd,buf + *len,size - *len,MSG_PEEK);
+        if(0 > rc){
+            err = errno;
+            break;
+        }else if(0 == rc){
+            break;
+        }else {
+            *len += rc;
+        }
+    }
+    if(0 != err) return err;
+    if(size != *len) return EIO;
+    return 0;
+}/*}}}*/
+
+
+err_t spx_write_ack(int fd,byte_t *buf,const size_t size,size_t *len){/*{{{*/
+    SpxErrReset;
+    *len = 0;
+    err_t err = 0;
+    i64_t rc = 0;
+    while(*len < size){
+        rc = write(fd,((char *) buf) + *len,size - *len);
+        if(0 > rc){
             err = errno;
             break;
         }else if(0 == rc){

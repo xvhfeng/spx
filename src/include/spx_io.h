@@ -58,6 +58,12 @@ extern "C" {
     err_t spx_write_from_msg_nb(int fd,struct spx_msg *ctx,const size_t size,size_t *len);
     err_t spx_fwrite_string(FILE *fp,string_t s,size_t size,size_t *len);
 
+    err_t spx_read_ack(int fd,byte_t *buf,const size_t size,size_t *len);
+    err_t spx_perread_ack(int fd,byte_t *buf,const size_t size,size_t *len);
+    err_t spx_write_ack(int fd,byte_t *buf,const size_t size,size_t *len);
+
+
+
     err_t spx_sendfile(int sock,int fd,off_t offset,size_t size,size_t *len);
     err_t spx_set_nb(int fd);
 
