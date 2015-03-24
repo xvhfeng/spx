@@ -337,6 +337,7 @@ struct spx_msg *spx_header_to_msg(struct spx_msg_header *header,size_t len,err_t
     *b++ = (n >> 8) & 0xFF;
     *b++ = n & 0xFF;
 }/*}}}*/
+
  i32_t spx_msg_b2i(uchar_t *b){/*{{{*/
     i32_t n =  (i32_t ) ((((i32_t) (*b)) << 24)
             | (((i32_t) (*(b + 1))) << 16)
@@ -344,6 +345,22 @@ struct spx_msg *spx_header_to_msg(struct spx_msg_header *header,size_t len,err_t
             | ((i32_t) (*(b+3))));
     return n;
 }/*}}}*/
+
+ void spx_msg_i2b_le(uchar_t *b,const i32_t n){/*{{{*/
+    *b++ = n & 0xFF;
+    *b++ = (n >> 8) & 0xFF;
+    *b++ = (n >> 16) & 0xFF;
+    *b++ = (n >> 24) & 0xFF;
+}/*}}}*/
+
+i32_t spx_msg_b2i_le(uchar_t *b){
+    i32_t n =  (i32_t ) (((i32_t) (*b))
+            | (((i32_t) (*(b + 1))) << 8)
+            | (((i32_t) (*(b+2))) << 16)
+            | (((i32_t) (*(b+3))) << 24 ));
+    return n;
+}
+
  void spx_msg_l2b(uchar_t *b,const i64_t n){/*{{{*/
     *b++ = (n >> 56) & 0xFF;
     *b++ = (n >> 48) & 0xFF;

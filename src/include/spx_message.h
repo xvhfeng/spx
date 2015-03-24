@@ -91,6 +91,8 @@ extern "C" {
  i32_t spx_msg_b2i(uchar_t *b);
  void spx_msg_l2b(uchar_t *b,const i64_t n) ;
  i64_t spx_msg_b2l(uchar_t *b);
+ void spx_msg_i2b_le(uchar_t *b,const i32_t n);
+    i32_t spx_msg_b2i_le(uchar_t *b);
 
     spx_private spx_inline size_t spx_msg_size(struct spx_msg *ctx){
         return ctx->s;
