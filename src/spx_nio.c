@@ -465,8 +465,8 @@ void spx_nio_writer_faster(struct ev_loop *loop,int fd,struct spx_job_context *j
     }
 
     len = 0;
-    if((SpxNioLifeCycleBody == jc->lifecycle) \
-            && (0 != jc->writer_header->bodylen)){
+    if(SpxNioLifeCycleBody == jc->lifecycle) {
+//            && (0 != jc->writer_header->bodylen)){
         jc->writer_body_process(loop,fd,jc);
         if(0 != jc->err){
             SpxLogFmt2(jc->log,SpxLogError,jc->err,\

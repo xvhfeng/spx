@@ -89,7 +89,7 @@ err_t spx_fixed_vector_free(struct spx_fixed_vector **vector){
     }
     err_t rc = 0;
     pthread_mutex_t *locker = (*vector)->locker;
-    if(!pthread_mutex_lock((*vector)->locker)) {
+    if(!pthread_mutex_lock(locker)) {
         struct spx_vector_node *node = NULL;
         while(NULL !=(node =  (*vector)->header)){
             (*vector)->header = (*vector)->header->next;

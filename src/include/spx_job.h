@@ -111,11 +111,21 @@ extern "C" {
         off_t sendfile_begin;
         size_t sendfile_size;
 
+        struct spx_job_context *prev;
+        struct spx_job_context *next;
+
     };
 
     struct spx_job_pool {
         SpxLogDelegate *log;
-        struct spx_fixed_vector *pool;
+        struct spx_job_context *header;
+        struct spx_job_context *tail;
+        struct spx_job_context *busy_header;
+        struct spx_job_context *busy_tail;
+        size_t size;
+        size_t busysize;
+        pthread_mutex_t *locker;
+//        struct spx_fixed_vector *pool;
     };
 
     void *spx_job_context_new(size_t idx,void *arg,err_t *err);

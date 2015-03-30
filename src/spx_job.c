@@ -25,11 +25,12 @@
 #include "spx_message.h"
 #include "spx_job.h"
 #include "spx_time.h"
+#include "spx_thread.h"
 
 
 struct spx_job_pool *g_spx_job_pool = NULL;
 
-void *spx_job_context_new(size_t idx,void *arg,err_t *err){
+void *spx_job_context_new(size_t idx,void *arg,err_t *err){/*{{{*/
     struct spx_job_context_transport *jct = (struct spx_job_context_transport *) arg;
     struct spx_job_context *jc = NULL;
     jc = spx_alloc_alone(sizeof(*jc),err);
@@ -52,14 +53,14 @@ void *spx_job_context_new(size_t idx,void *arg,err_t *err){
     jc->is_sendfile = false;
     return jc;
 
-}
+}/*}}}*/
 
-err_t spx_job_context_free(void **arg){
+err_t spx_job_context_free(void **arg){/*{{{*/
     struct spx_job_context **jc = (struct spx_job_context **) arg;
     spx_job_context_clear(*jc);
     SpxFree(*jc);
     return 0;
-}
+}/*}}}*/
 
 void spx_job_context_clear(struct spx_job_context *jc){/*{{{*/
     if(NULL != jc->reader_body_ctx){
@@ -101,7 +102,7 @@ void spx_job_context_clear(struct spx_job_context *jc){/*{{{*/
 }/*}}}*/
 
 
-void spx_job_context_reset(struct spx_job_context *jc){
+void spx_job_context_reset(struct spx_job_context *jc){/*{{{*/
     if(NULL != jc->reader_header){
         SpxFree(jc->reader_header);
     }
@@ -132,7 +133,7 @@ void spx_job_context_reset(struct spx_job_context *jc){
     jc->err = 0;
     jc->moore = SpxNioMooreNormal;
     jc->request_timespan = spx_now();
-}
+}/*}}}*/
 
 
 struct spx_job_pool *spx_job_pool_new(SpxLogDelegate *log,\
@@ -155,6 +156,52 @@ struct spx_job_pool *spx_job_pool_new(SpxLogDelegate *log,\
         return NULL;
     }
 
+    pool->log = log;
+    pool->size = size;
+    pool->locker = spx_thread_mutex_new(log,err);
+    if(!pool->locker){
+        SpxFree(pool);
+        SpxLog2(log,SpxLogError,*err,\
+                "alloc vector locker is fail.");
+        return NULL;
+    }
+
+    size_t i = 0;
+    for(; i < size; i++) {
+        struct spx_job_context *jc = (struct spx_job_context *)
+            spx_alloc_alone(sizeof(*jc),err);
+        if(!jc){
+            SpxFree(pool);
+            return NULL;
+        }
+
+        jc->log = log;
+        jc->idx = i;
+        jc->timeout = timeout;
+        jc->nio_reader = nio_reader;
+        jc->nio_writer = nio_writer;
+        jc->reader_body_process = reader_body_process;
+        jc->reader_header_validator = reader_header_validator;
+        jc->reader_body_process_before = reader_body_process_before;
+        jc->writer_body_process = writer_body_process;
+        jc->reader_header_validator_fail = reader_header_validator_fail;
+        jc->config = config;
+        jc->is_lazy_recv = false;
+        jc->is_sendfile = false;
+
+        if(!pool->header){
+            pool->header = jc;
+            pool->tail = jc;
+        }else {
+            pool->tail->next = jc;
+            jc->prev = pool->tail;
+            pool->tail = jc;
+        }
+    }
+
+    return pool;
+
+    /*
     struct spx_job_context_transport arg;
     SpxZero(arg);
     arg.timeout = timeout;
@@ -178,26 +225,85 @@ struct spx_job_pool *spx_job_pool_new(SpxLogDelegate *log,\
         SpxFree(pool);
         return NULL;
     }
+  */
     return pool;
 }
 
 struct spx_job_context *spx_job_pool_pop(struct spx_job_pool *pool,err_t *err){
-    struct spx_job_context *jc = spx_fixed_vector_pop(pool->pool,err);
-    if(NULL == jc){
-        *err = 0 == *err ? ENOENT : *err;
-        return NULL;
+    struct spx_job_context *jc = NULL;
+    if(!pthread_mutex_lock(pool->locker)) {
+        if(pool->tail){
+            jc = pool->tail;
+            pool->tail = jc->prev;
+            if(pool->tail){
+                pool->tail->next = NULL;
+            }else {
+                pool->header = NULL;
+            }
+            jc->prev = NULL;
+            pool->busysize ++;
+
+            if(!pool->busy_header){
+                pool->busy_header = jc;
+                pool->busy_tail = jc;
+            }else {
+                pool->busy_tail->next = jc;
+                jc->prev = pool->busy_tail;
+                pool->busy_tail = jc;
+            }
+        }
     }
+
+    pthread_mutex_unlock(pool->locker);
+
+
+//    struct spx_job_context *jc = spx_fixed_vector_pop(pool->pool,err);
+//    if(NULL == jc){
+//        *err = 0 == *err ? ENOENT : *err;
+//        return NULL;
+//    }
     return jc;
 }
 
 err_t spx_job_pool_push(struct spx_job_pool *pool,struct spx_job_context *jc){
     spx_job_context_clear(jc);
-    return spx_fixed_vector_push(pool->pool,jc);
+    if(!pthread_mutex_lock(pool->locker)) {
+        if(1 == pool->busysize){
+            pool->busy_header = NULL;
+            pool->busy_tail = NULL;
+        } else {
+            if(jc->prev){
+                jc->prev->next = jc->next;
+            }else {
+                pool->busy_header = jc->next;
+            }
+            if(jc->next){
+                jc->next->prev = jc->prev;
+            } else {
+                pool->busy_tail = jc->prev;
+            }
+        }
+
+        if(!pool->header){
+            pool->header = jc;
+            pool->tail = jc;
+        }else {
+            pool->tail->next = jc;
+            jc->prev = pool->tail;
+            pool->tail = jc;
+        }
+        pool->busysize --;
+    }
+
+    pthread_mutex_unlock(pool->locker);
+    return 0;
+
+//    return spx_fixed_vector_push(pool->pool,jc);
 }
 
 err_t spx_job_pool_free(struct spx_job_pool **pool){
     err_t err = 0;
-    err = spx_fixed_vector_free(&((*pool)->pool));
+//    err = spx_fixed_vector_free(&((*pool)->pool));
     SpxFree(*pool);
     return err;
 }
