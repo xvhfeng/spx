@@ -87,12 +87,18 @@ extern "C" {
     struct spx_msg_header *spx_msg_to_header(struct spx_msg *ctx,err_t *err);
     struct spx_msg *spx_header_to_msg(struct spx_msg_header *header,size_t len,err_t *err);
 
+void spx_header_pack(char *buf,struct spx_msg_header *h);
+void spx_header_unpack(char *buf,struct spx_msg_header *h);
+
  void spx_msg_i2b(uchar_t *b,const i32_t n);
  i32_t spx_msg_b2i(uchar_t *b);
  void spx_msg_l2b(uchar_t *b,const i64_t n) ;
  i64_t spx_msg_b2l(uchar_t *b);
  void spx_msg_i2b_le(uchar_t *b,const i32_t n);
     i32_t spx_msg_b2i_le(uchar_t *b);
+
+void spx_msg_ul2b(uchar_t *b,const u64_t n);
+u64_t spx_msg_b2ul(uchar_t *b);
 
     spx_private spx_inline size_t spx_msg_size(struct spx_msg *ctx){
         return ctx->s;

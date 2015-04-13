@@ -330,15 +330,41 @@ struct spx_msg *spx_header_to_msg(struct spx_msg_header *header,size_t len,err_t
 }/*}}}*/
 
 
+void spx_header_unpack(char *buf,struct spx_msg_header *h){/*{{{*/
+    uchar_t *tmp = (uchar_t *) buf;
+    h->version = spx_msg_b2i(tmp);
+    h->protocol = spx_msg_b2i(tmp + sizeof(u32_t));
+    h->bodylen = spx_msg_b2l(tmp + (2 * sizeof(u32_t)));
+    h->offset = spx_msg_b2l(tmp + ( 2 * sizeof(u32_t) + sizeof(u64_t)));
+    h->is_keepalive = (bool_t) *(tmp + ( 2 * sizeof(u32_t) + 2 * sizeof(u64_t)));
+    h->err = spx_msg_b2i(tmp + ( 2 * sizeof(u32_t) + 2 * sizeof(u64_t) + sizeof(char)));
+}/*}}}*/
 
- void spx_msg_i2b(uchar_t *b,const i32_t n){/*{{{*/
+void spx_header_pack(char *buf,struct spx_msg_header *h){/*{{{*/
+    uchar_t *tmp = (uchar_t *) buf;
+    spx_msg_i2b(tmp,h->version);
+    spx_msg_i2b(tmp + sizeof(u32_t),h->protocol);
+    spx_msg_l2b(tmp + (2 * sizeof(u32_t)),h->bodylen);
+    spx_msg_l2b(tmp + (2 * sizeof(u32_t) + sizeof(u64_t)),h->offset);
+    if(h->is_keepalive){
+        *(tmp + (2 * sizeof(u32_t) + 2 * sizeof(u64_t))) = (uchar_t) true;
+    } else {
+        *(tmp + (2 * sizeof(u32_t) + 2 * sizeof(u64_t))) = (uchar_t) false;
+    }
+    spx_msg_i2b(tmp + (2 * sizeof(u32_t) + 2 * sizeof(u64_t) + sizeof(char)),h->err);
+}/*}}}*/
+
+
+
+
+void spx_msg_i2b(uchar_t *b,const i32_t n){/*{{{*/
     *b++ = (n >> 24) & 0xFF;
     *b++ = (n >> 16) & 0xFF;
     *b++ = (n >> 8) & 0xFF;
     *b++ = n & 0xFF;
 }/*}}}*/
 
- i32_t spx_msg_b2i(uchar_t *b){/*{{{*/
+i32_t spx_msg_b2i(uchar_t *b){/*{{{*/
     i32_t n =  (i32_t ) ((((i32_t) (*b)) << 24)
             | (((i32_t) (*(b + 1))) << 16)
             | (((i32_t) (*(b+2))) << 8)
@@ -346,7 +372,7 @@ struct spx_msg *spx_header_to_msg(struct spx_msg_header *header,size_t len,err_t
     return n;
 }/*}}}*/
 
- void spx_msg_i2b_le(uchar_t *b,const i32_t n){/*{{{*/
+void spx_msg_i2b_le(uchar_t *b,const i32_t n){/*{{{*/
     *b++ = n & 0xFF;
     *b++ = (n >> 8) & 0xFF;
     *b++ = (n >> 16) & 0xFF;
@@ -361,7 +387,7 @@ i32_t spx_msg_b2i_le(uchar_t *b){
     return n;
 }
 
- void spx_msg_l2b(uchar_t *b,const i64_t n){/*{{{*/
+void spx_msg_l2b(uchar_t *b,const i64_t n){/*{{{*/
     *b++ = (n >> 56) & 0xFF;
     *b++ = (n >> 48) & 0xFF;
     *b++ = (n >> 40) & 0xFF;
@@ -371,7 +397,8 @@ i32_t spx_msg_b2i_le(uchar_t *b){
     *b++ = (n >> 8) & 0xFF;
     *b++ = n & 0xFF;
 }/*}}}*/
- i64_t spx_msg_b2l(uchar_t *b){/*{{{*/
+
+i64_t spx_msg_b2l(uchar_t *b){/*{{{*/
     i64_t n =  (((i64_t) (*b)) << 56)
         | (((i64_t) (*(b+1))) << 48)
         | (((i64_t) (*(b + 2))) << 40)
@@ -384,5 +411,26 @@ i32_t spx_msg_b2i_le(uchar_t *b){
 }/*}}}*/
 
 
+void spx_msg_ul2b(uchar_t *b,const u64_t n){/*{{{*/
+    *b++ = (n >> 56) & 0xFF;
+    *b++ = (n >> 48) & 0xFF;
+    *b++ = (n >> 40) & 0xFF;
+    *b++ = (n >> 32) & 0xFF;
+    *b++ = (n >> 24) & 0xFF;
+    *b++ = (n >> 16) & 0xFF;
+    *b++ = (n >> 8) & 0xFF;
+    *b++ = n & 0xFF;
+}/*}}}*/
+u64_t spx_msg_b2ul(uchar_t *b){/*{{{*/
+    i64_t n =  (((u64_t) (*b)) << 56)
+        | (((u64_t) (*(b+1))) << 48)
+        | (((u64_t) (*(b + 2))) << 40)
+        | (((u64_t) (*(b + 3))) << 32)
+        | (((u64_t) (*(b + 4))) << 24)
+        | (((u64_t) (*(b + 5))) << 16)
+        | (((u64_t) (*(b + 6))) << 8)
+        | ((u64_t) (*(b + 7)));
+    return n;
+}/*}}}*/
 
 

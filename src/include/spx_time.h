@@ -81,6 +81,7 @@ extern "C" {
             const string_t fname,
             u64_t secs
             );
+    time_t spx_get_token();
 
 #if __cplusplus
 }
